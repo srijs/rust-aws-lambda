@@ -1,0 +1,14 @@
+[package]
+name = "aws_lambda_runtime"
+version = "0.1.0"
+authors = ["Sam Rijs <srijs@airpost.net>"]
+workspace = ".."
+
+[dependencies]
+gob = { git = "https://github.com/srijs/rust-gob" }
+serde = "1.0.39"
+serde_bytes = "0.10.4"
+serde_derive = "1.0.42"
+serde_json = "1.0.18"
+serde_schema = { git = "https://github.com/srijs/rust-serde-schema", features = ["bytes"] }
+serde_schema_derive = { git = "https://github.com/srijs/rust-serde-schema" }

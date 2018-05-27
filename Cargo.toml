@@ -1,0 +1,5 @@
+[workspace]
+members = [
+  "aws_lambda_runtime",
+  "aws_lambda_bundle"
+]
