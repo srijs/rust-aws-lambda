@@ -1,5 +1,6 @@
 use std::io::Read;
 use std::marker::PhantomData;
+use std::time::Duration;
 
 use gob::StreamDeserializer;
 use serde::de::DeserializeOwned;
@@ -17,7 +18,7 @@ struct RPCRequest<'a> {
 
 pub enum Request<T> {
     Ping(u64),
-    Invoke(u64, ::context::LambdaContext, T),
+    Invoke(u64, Duration, ::context::LambdaContext, T),
 }
 
 pub struct Decoder<R, T> {
@@ -80,9 +81,11 @@ where
             client_context: None,
         };
 
+        let deadline = Duration::new(message.deadline.secs as u64, message.deadline.nanos as u32);
+
         let payload = ::serde_json::from_slice(message.payload.as_ref()).unwrap();
 
-        Some(Request::Invoke(seq, ctx, payload))
+        Some(Request::Invoke(seq, deadline, ctx, payload))
     }
 }
 
@@ -139,9 +142,11 @@ mod tests {
 
         let request2 = decoder.next().unwrap();
         match request2 {
-            Request::Invoke(seq, ctx, payload) => {
+            Request::Invoke(seq, deadline, ctx, payload) => {
                 assert_eq!(1, seq);
                 assert_eq!("2ed80e4e-6196-11e8-876a-4f41bd893c42", ctx.aws_request_id);
+                assert_eq!(1527415833, deadline.as_secs());
+                assert_eq!(32849522, deadline.subsec_nanos());
                 assert_eq!(3, payload.len());
                 assert_eq!("value1", payload["key1"]);
                 assert_eq!("value2", payload["key2"]);
