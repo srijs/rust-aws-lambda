@@ -5,6 +5,7 @@ authors = ["Sam Rijs <srijs@airpost.net>"]
 workspace = ".."
 
 [dependencies]
+failure = "0.1.1"
 gob = { git = "https://github.com/srijs/rust-gob" }
 serde = "1.0.39"
 serde_bytes = "0.10.4"

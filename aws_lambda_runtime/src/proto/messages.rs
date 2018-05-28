@@ -3,7 +3,7 @@ use serde_bytes::{ByteBuf, Bytes};
 #[derive(Clone, Debug, Deserialize)]
 pub(crate) struct PingRequest {}
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, SchemaSerialize)]
 pub(crate) struct PingResponse {}
 
 #[derive(Clone, Debug, Deserialize)]
@@ -35,15 +35,15 @@ pub(crate) struct InvokeRequest<'a> {
     pub client_context: Option<Bytes<'a>>,
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, SchemaSerialize)]
 pub(crate) struct InvokeResponse {
     #[serde(rename = "Payload")]
     pub payload: ByteBuf,
-    #[serde(rename = "Error")]
+    #[serde(rename = "Error", skip_serializing_if = "Option::is_none")]
     pub error: Option<InvokeResponseError>,
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, SchemaSerialize)]
 #[serde(rename = "InvokeResponse_Error")]
 pub(crate) struct InvokeResponseError {
     #[serde(rename = "Message")]
@@ -56,7 +56,7 @@ pub(crate) struct InvokeResponseError {
     pub should_exit: bool,
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, SchemaSerialize)]
 #[serde(rename = "InvokeResponse_Error_StackFrame")]
 pub(crate) struct InvokeResponseErrorStackFrame {
     #[serde(rename = "Path")]

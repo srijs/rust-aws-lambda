@@ -9,7 +9,7 @@ use super::messages;
 use context;
 
 #[derive(Deserialize)]
-struct RPCRequest<'a> {
+struct RpcRequest<'a> {
     #[serde(rename = "ServiceMethod")]
     service_method: &'a str,
     #[serde(rename = "Seq", default)]
@@ -44,7 +44,7 @@ where
 
     fn next(&mut self) -> Option<Request<T>> {
         let (seq, is_invoke) = {
-            match self.stream.deserialize::<RPCRequest<'_>>().unwrap() {
+            match self.stream.deserialize::<RpcRequest<'_>>().unwrap() {
                 None => {
                     return None;
                 }
