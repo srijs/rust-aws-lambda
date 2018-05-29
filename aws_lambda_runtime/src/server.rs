@@ -101,7 +101,7 @@ where
     T: DeserializeOwned,
 {
     for req in decoder {
-        sender.unbounded_send(req).unwrap();
+        sender.unbounded_send(req.unwrap()).unwrap();
     }
 }
 
@@ -113,7 +113,7 @@ fn res_loop<W, T>(
     T: Serialize,
 {
     for res in receiver.wait() {
-        encoder.encode(res.unwrap());
+        encoder.encode(res.unwrap()).unwrap();
     }
 }
 

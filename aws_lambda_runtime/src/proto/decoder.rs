@@ -2,6 +2,7 @@ use std::io::Read;
 use std::marker::PhantomData;
 use std::time::Duration;
 
+use failure::Error;
 use gob::StreamDeserializer;
 use serde::de::DeserializeOwned;
 
@@ -33,41 +34,35 @@ impl<R, T> Decoder<R, T> {
             _phan: PhantomData,
         }
     }
-}
 
-impl<R, T> Iterator for Decoder<R, T>
-where
-    R: Read,
-    T: DeserializeOwned,
-{
-    type Item = Request<T>;
-
-    fn next(&mut self) -> Option<Request<T>> {
+    fn decode(&mut self) -> Result<Option<Request<T>>, Error>
+    where
+        R: Read,
+        T: DeserializeOwned,
+    {
         let (seq, is_invoke) = {
-            match self.stream.deserialize::<RpcRequest<'_>>().unwrap() {
+            match self.stream.deserialize::<RpcRequest<'_>>()? {
                 None => {
-                    return None;
+                    return Ok(None);
                 }
                 Some(req) => match req.service_method {
                     "Function.Ping" => (req.seq, false),
                     "Function.Invoke" => (req.seq, true),
-                    _ => panic!("unknown service method"),
+                    method => bail!("unknown service method: {}", method),
                 },
             }
         };
 
         if !is_invoke {
             self.stream
-                .deserialize::<messages::PingRequest>()
-                .unwrap()
-                .unwrap();
-            return Some(Request::Ping(seq));
+                .deserialize::<messages::PingRequest>()?
+                .ok_or_else(|| format_err!("unexpected end of stream"))?;
+            return Ok(Some(Request::Ping(seq)));
         }
 
         let message = self.stream
-            .deserialize::<messages::InvokeRequest>()
-            .unwrap()
-            .unwrap();
+            .deserialize::<messages::InvokeRequest>()?
+            .ok_or_else(|| format_err!("unexpected end of stream"))?;
 
         let identity = context::CognitoIdentity {
             cognito_identity_id: message.cognito_identity_id.map(|s| s.to_owned()),
@@ -83,9 +78,25 @@ where
 
         let deadline = Duration::new(message.deadline.secs as u64, message.deadline.nanos as u32);
 
-        let payload = ::serde_json::from_slice(message.payload.as_ref()).unwrap();
+        let payload = ::serde_json::from_slice(message.payload.as_ref())?;
 
-        Some(Request::Invoke(seq, deadline, ctx, payload))
+        Ok(Some(Request::Invoke(seq, deadline, ctx, payload)))
+    }
+}
+
+impl<R, T> Iterator for Decoder<R, T>
+where
+    R: Read,
+    T: DeserializeOwned,
+{
+    type Item = Result<Request<T>, Error>;
+
+    fn next(&mut self) -> Option<Result<Request<T>, Error>> {
+        match self.decode() {
+            Err(err) => Some(Err(err)),
+            Ok(Some(req)) => Some(Ok(req)),
+            Ok(None) => None,
+        }
     }
 }
 
@@ -132,7 +143,7 @@ mod tests {
 
         let mut decoder = Decoder::<_, HashMap<String, String>>::new(::std::io::Cursor::new(bytes));
 
-        let request1 = decoder.next().unwrap();
+        let request1 = decoder.next().unwrap().unwrap();
         match request1 {
             Request::Ping(seq) => {
                 assert_eq!(0, seq);
@@ -140,7 +151,7 @@ mod tests {
             _ => panic!("wrong request type"),
         }
 
-        let request2 = decoder.next().unwrap();
+        let request2 = decoder.next().unwrap().unwrap();
         match request2 {
             Request::Invoke(seq, deadline, ctx, payload) => {
                 assert_eq!(1, seq);

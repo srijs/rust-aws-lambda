@@ -37,37 +37,33 @@ impl<W, T> Encoder<W, T> {
         }
     }
 
-    pub fn encode(&mut self, res: Response<T>)
+    pub fn encode(&mut self, res: Response<T>) -> Result<(), Error>
     where
         W: Write,
         T: Serialize,
     {
         match res {
             Response::Ping(seq) => {
-                self.stream
-                    .serialize(&RpcResponse {
-                        service_method: "Function.Ping",
-                        seq: seq,
-                        error: None,
-                    })
-                    .unwrap();
-                self.stream.serialize(&messages::PingResponse {}).unwrap()
+                self.stream.serialize(&RpcResponse {
+                    service_method: "Function.Ping",
+                    seq: seq,
+                    error: None,
+                })?;
+                self.stream.serialize(&messages::PingResponse {})?;
             }
             Response::Invoke(seq, result) => {
-                self.stream
-                    .serialize(&RpcResponse {
-                        service_method: "Function.Invoke",
-                        seq: seq,
-                        error: None,
-                    })
-                    .unwrap();
+                self.stream.serialize(&RpcResponse {
+                    service_method: "Function.Invoke",
+                    seq: seq,
+                    error: None,
+                })?;
                 match result {
                     Ok(payload) => {
-                        let payload_bytes = ::serde_json::to_vec(&payload).unwrap();
+                        let payload_bytes = ::serde_json::to_vec(&payload)?;
                         self.stream.serialize(&messages::InvokeResponse {
                             payload: ByteBuf::from(payload_bytes),
                             error: None,
-                        })
+                        })?;
                     }
                     Err(err) => {
                         let invoke_error = messages::InvokeResponseError {
@@ -79,11 +75,12 @@ impl<W, T> Encoder<W, T> {
                         self.stream.serialize(&messages::InvokeResponse {
                             payload: ByteBuf::new(),
                             error: Some(invoke_error),
-                        })
+                        })?;
                     }
-                }.unwrap()
+                }
             }
         }
+        Ok(())
     }
 }
 
@@ -98,8 +95,10 @@ mod tests {
         let mut buffer = Vec::<u8>::new();
         {
             let mut encoder = Encoder::<_, String>::new(&mut buffer);
-            encoder.encode(Response::Ping(0));
-            encoder.encode(Response::Invoke(1, Ok("Hello ƛ!".to_owned())));
+            encoder.encode(Response::Ping(0)).unwrap();
+            encoder
+                .encode(Response::Invoke(1, Ok("Hello ƛ!".to_owned())))
+                .unwrap();
         }
 
         assert_eq!(
