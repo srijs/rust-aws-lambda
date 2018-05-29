@@ -1,5 +1,6 @@
 #[macro_use]
 extern crate failure;
+#[macro_use]
 extern crate futures;
 extern crate gob;
 extern crate serde;
@@ -18,4 +19,6 @@ mod proto;
 pub mod runtime;
 mod server;
 
+pub use context::Context;
+pub use runtime::Runtime;
 pub use runtime::start;

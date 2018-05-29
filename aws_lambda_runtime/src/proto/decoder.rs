@@ -17,18 +17,18 @@ struct RpcRequest<'a> {
     seq: u64,
 }
 
-pub enum Request<T> {
+pub(crate) enum Request<T> {
     Ping(u64),
     Invoke(u64, Duration, ::context::LambdaContext, T),
 }
 
 #[derive(Debug)]
-pub enum DecodeError {
+pub(crate) enum DecodeError {
     Frame(Error),
     User(u64, Error),
 }
 
-pub struct Decoder<R, T> {
+pub(crate) struct Decoder<R, T> {
     stream: StreamDeserializer<R>,
     _phan: PhantomData<T>,
 }

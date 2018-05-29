@@ -1,7 +1,8 @@
+use std::cell::RefCell;
 use std::collections::HashMap;
+use std::sync::Arc;
 
 /// Metadata about the calling application.
-#[derive(Deserialize)]
 pub struct ClientApplication {
     pub(crate) installation_id: String,
     pub(crate) app_title: String,
@@ -10,32 +11,67 @@ pub struct ClientApplication {
 }
 
 /// Information about the client application passed by the calling application.
-#[derive(Deserialize)]
 pub struct ClientContext {
-    #[serde(rename = "Client")]
     pub(crate) client: ClientApplication,
     pub(crate) env: HashMap<String, String>,
     pub(crate) custom: HashMap<String, String>,
 }
 
 /// The cognito identity used by the calling application.
-#[derive(Deserialize)]
 pub struct CognitoIdentity {
-    #[serde(rename = "CognitoIdentityID", default)]
     pub(crate) cognito_identity_id: Option<String>,
-    #[serde(rename = "CognitoIdentityPoolID", default)]
     pub(crate) cognito_identity_pool_id: Option<String>,
 }
 
-/// The set of metadata that is passed for every Invoke.
-#[derive(Deserialize)]
-pub struct LambdaContext {
-    #[serde(rename = "AwsRequestID")]
+impl CognitoIdentity {
+    pub fn id(&self) -> Option<&str> {
+        self.cognito_identity_id.as_ref().map(|s| s.as_ref())
+    }
+
+    pub fn pool_id(&self) -> Option<&str> {
+        self.cognito_identity_pool_id.as_ref().map(|s| s.as_ref())
+    }
+}
+
+pub(crate) struct LambdaContext {
     pub(crate) aws_request_id: String,
-    #[serde(rename = "InvokedFunctionArn")]
     pub(crate) invoked_function_arn: String,
-    #[serde(rename = "Identity")]
     pub(crate) identity: CognitoIdentity,
-    #[serde(rename = "ClientContext")]
     pub(crate) client_context: Option<ClientContext>,
+}
+
+task_local! {
+    static CTX: RefCell<Option<Context>> = RefCell::new(None)
+}
+
+/// The set of metadata that is passed to the function on invocation.
+#[derive(Clone)]
+pub struct Context {
+    inner: Arc<LambdaContext>,
+}
+
+impl Context {
+    pub fn current() -> Context {
+        CTX.with(|ctx_cell| ctx_cell.borrow().as_ref().unwrap().clone())
+    }
+
+    pub fn aws_request_id(&self) -> &str {
+        &self.inner.aws_request_id
+    }
+
+    pub fn invoked_function_arn(&self) -> &str {
+        &self.inner.invoked_function_arn
+    }
+
+    pub fn identity(&self) -> &CognitoIdentity {
+        &self.inner.identity
+    }
+
+    pub(crate) fn set_current(lctx: LambdaContext) {
+        CTX.with(|ctx_cell| {
+            *ctx_cell.borrow_mut() = Some(Context {
+                inner: Arc::new(lctx),
+            });
+        });
+    }
 }

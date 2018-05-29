@@ -1,7 +1,9 @@
 use std::io::{self, Read, Write};
+use std::rc::Rc;
 use std::thread;
 
 use failure::Error;
+use futures::future::lazy;
 use futures::stream::FuturesUnordered;
 use futures::sync::mpsc;
 use futures::{Async, Future, Poll, Stream};
@@ -11,6 +13,7 @@ use tokio_core::net::TcpListener;
 use tokio_core::reactor::Handle;
 use tokio_service::{NewService, Service};
 
+use super::context::Context;
 use super::proto;
 
 pub struct Server<S: NewService> {
@@ -145,6 +148,7 @@ where
     S::Request: 'static,
     S::Response: 'static,
 {
+    let rc_service = Rc::new(service);
     let fut = receiver
         .map_err(|()| panic!("receiver failed"))
         .for_each(move |req| {
@@ -156,12 +160,17 @@ where
                         .unwrap();
                 }
                 proto::Request::Invoke(seq, deadline, ctx, payload) => {
-                    handle.spawn(service.call(payload).then(move |result| {
-                        cloned_sender
-                            .unbounded_send(proto::Response::Invoke(seq, result))
-                            .unwrap();
-                        Ok(())
-                    }));
+                    let rc_service_clone = rc_service.clone();
+                    let invoke_fut = lazy(move || {
+                        Context::set_current(ctx);
+                        rc_service_clone.call(payload).then(move |result| {
+                            cloned_sender
+                                .unbounded_send(proto::Response::Invoke(seq, result))
+                                .unwrap();
+                            Ok(())
+                        })
+                    });
+                    handle.spawn(invoke_fut);
                 }
             }
             Ok(())
