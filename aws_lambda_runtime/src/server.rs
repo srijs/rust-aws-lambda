@@ -43,6 +43,7 @@ where
     {
         let (req_send, req_recv) = mpsc::unbounded();
         let (res_send, res_recv) = mpsc::unbounded();
+        let res_send_clone = res_send.clone();
 
         let service = self.new_service.new_service()?;
 
@@ -51,7 +52,7 @@ where
             .spawn(|| res_loop(proto::Encoder::new(w), res_recv))?;
         thread::Builder::new()
             .name("lambda-recv".to_owned())
-            .spawn(|| req_loop(proto::Decoder::new(r), req_send))?;
+            .spawn(|| req_loop(proto::Decoder::new(r), req_send, res_send_clone))?;
 
         self.futures
             .push(svc_future(self.handle.clone(), service, req_recv, res_send));
@@ -95,13 +96,28 @@ where
     }
 }
 
-fn req_loop<R, T>(decoder: proto::Decoder<R, T>, sender: mpsc::UnboundedSender<proto::Request<T>>)
-where
+fn req_loop<R, T, U>(
+    decoder: proto::Decoder<R, T>,
+    req_sender: mpsc::UnboundedSender<proto::Request<T>>,
+    res_sender: mpsc::UnboundedSender<proto::Response<U>>,
+) where
     R: Read,
     T: DeserializeOwned,
 {
-    for req in decoder {
-        sender.unbounded_send(req.unwrap()).unwrap();
+    for result in decoder {
+        match result {
+            Ok(req) => {
+                req_sender.unbounded_send(req).unwrap();
+            }
+            Err(proto::DecodeError::User(seq, err)) => {
+                res_sender
+                    .unbounded_send(proto::Response::Invoke(seq, Err(err)))
+                    .unwrap();
+            }
+            Err(proto::DecodeError::Frame(err)) => {
+                panic!("an error occurred during decoding: {}", err)
+            }
+        }
     }
 }
 

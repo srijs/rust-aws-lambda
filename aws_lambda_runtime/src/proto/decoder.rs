@@ -22,6 +22,12 @@ pub enum Request<T> {
     Invoke(u64, Duration, ::context::LambdaContext, T),
 }
 
+#[derive(Debug)]
+pub enum DecodeError {
+    Frame(Error),
+    User(u64, Error),
+}
+
 pub struct Decoder<R, T> {
     stream: StreamDeserializer<R>,
     _phan: PhantomData<T>,
@@ -35,34 +41,44 @@ impl<R, T> Decoder<R, T> {
         }
     }
 
-    fn decode(&mut self) -> Result<Option<Request<T>>, Error>
+    fn decode(&mut self) -> Result<Option<Request<T>>, DecodeError>
     where
         R: Read,
         T: DeserializeOwned,
     {
         let (seq, is_invoke) = {
-            match self.stream.deserialize::<RpcRequest<'_>>()? {
+            match self.stream
+                .deserialize::<RpcRequest<'_>>()
+                .map_err(|err| DecodeError::Frame(err.into()))?
+            {
                 None => {
                     return Ok(None);
                 }
                 Some(req) => match req.service_method {
                     "Function.Ping" => (req.seq, false),
                     "Function.Invoke" => (req.seq, true),
-                    method => bail!("unknown service method: {}", method),
+                    method => {
+                        return Err(DecodeError::Frame(format_err!(
+                            "unknown service method: {}",
+                            method
+                        )));
+                    }
                 },
             }
         };
 
         if !is_invoke {
             self.stream
-                .deserialize::<messages::PingRequest>()?
-                .ok_or_else(|| format_err!("unexpected end of stream"))?;
+                .deserialize::<messages::PingRequest>()
+                .map_err(|err| DecodeError::Frame(err.into()))?
+                .ok_or_else(|| DecodeError::Frame(format_err!("unexpected end of stream")))?;
             return Ok(Some(Request::Ping(seq)));
         }
 
         let message = self.stream
-            .deserialize::<messages::InvokeRequest>()?
-            .ok_or_else(|| format_err!("unexpected end of stream"))?;
+            .deserialize::<messages::InvokeRequest>()
+            .map_err(|err| DecodeError::Frame(err.into()))?
+            .ok_or_else(|| DecodeError::Frame(format_err!("unexpected end of stream")))?;
 
         let identity = context::CognitoIdentity {
             cognito_identity_id: message.cognito_identity_id.map(|s| s.to_owned()),
@@ -78,7 +94,8 @@ impl<R, T> Decoder<R, T> {
 
         let deadline = Duration::new(message.deadline.secs as u64, message.deadline.nanos as u32);
 
-        let payload = ::serde_json::from_slice(message.payload.as_ref())?;
+        let payload = ::serde_json::from_slice(message.payload.as_ref())
+            .map_err(|err| DecodeError::User(seq, err.into()))?;
 
         Ok(Some(Request::Invoke(seq, deadline, ctx, payload)))
     }
@@ -89,9 +106,9 @@ where
     R: Read,
     T: DeserializeOwned,
 {
-    type Item = Result<Request<T>, Error>;
+    type Item = Result<Request<T>, DecodeError>;
 
-    fn next(&mut self) -> Option<Result<Request<T>, Error>> {
+    fn next(&mut self) -> Option<Result<Request<T>, DecodeError>> {
         match self.decode() {
             Err(err) => Some(Err(err)),
             Ok(Some(req)) => Some(Ok(req)),
