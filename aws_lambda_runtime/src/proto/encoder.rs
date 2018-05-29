@@ -1,4 +1,4 @@
-use std::io::Write;
+use std::io::{BufWriter, Write};
 use std::marker::PhantomData;
 
 use failure::Error;
@@ -24,15 +24,21 @@ pub enum Response<T> {
     Invoke(u64, Result<T, Error>),
 }
 
-pub struct Encoder<W, T> {
-    stream: StreamSerializer<W>,
+pub struct Encoder<W, T>
+where
+    W: Write,
+{
+    stream: StreamSerializer<BufWriter<W>>,
     _phan: PhantomData<T>,
 }
 
-impl<W, T> Encoder<W, T> {
+impl<W, T> Encoder<W, T>
+where
+    W: Write,
+{
     pub fn new(w: W) -> Encoder<W, T> {
         Encoder {
-            stream: StreamSerializer::new(w),
+            stream: StreamSerializer::new(BufWriter::new(w)),
             _phan: PhantomData,
         }
     }
@@ -80,6 +86,7 @@ impl<W, T> Encoder<W, T> {
                 }
             }
         }
+        self.stream.get_mut().flush()?;
         Ok(())
     }
 }
