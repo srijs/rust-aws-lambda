@@ -49,10 +49,10 @@ where
 
         thread::Builder::new()
             .name("lambda-send".to_owned())
-            .spawn(|| res_loop(proto::Encoder::new(w), res_recv))?;
+            .spawn(|| res_loop(w, res_recv))?;
         thread::Builder::new()
             .name("lambda-recv".to_owned())
-            .spawn(|| req_loop(proto::Decoder::new(r), req_send, res_send_clone))?;
+            .spawn(|| req_loop(r, req_send, res_send_clone))?;
 
         self.futures
             .push(svc_future(self.handle.clone(), service, req_recv, res_send));
@@ -97,13 +97,14 @@ where
 }
 
 fn req_loop<R, T, U>(
-    decoder: proto::Decoder<R, T>,
+    r: R,
     req_sender: mpsc::UnboundedSender<proto::Request<T>>,
     res_sender: mpsc::UnboundedSender<proto::Response<U>>,
 ) where
     R: Read,
     T: DeserializeOwned,
 {
+    let mut decoder = proto::Decoder::new(r);
     for result in decoder {
         match result {
             Ok(req) => {
@@ -121,13 +122,12 @@ fn req_loop<R, T, U>(
     }
 }
 
-fn res_loop<W, T>(
-    mut encoder: proto::Encoder<W, T>,
-    receiver: mpsc::UnboundedReceiver<proto::Response<T>>,
-) where
+fn res_loop<W, T>(w: W, receiver: mpsc::UnboundedReceiver<proto::Response<T>>)
+where
     W: Write,
     T: Serialize,
 {
+    let mut encoder = proto::Encoder::new(w).unwrap();
     for res in receiver.wait() {
         encoder.encode(res.unwrap()).unwrap();
     }
