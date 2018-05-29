@@ -1,4 +1,5 @@
 extern crate failure;
+extern crate futures;
 extern crate gob;
 extern crate serde;
 extern crate serde_bytes;
@@ -8,6 +9,12 @@ extern crate serde_json;
 extern crate serde_schema;
 #[macro_use]
 extern crate serde_schema_derive;
+extern crate tokio_core;
+extern crate tokio_service;
 
 pub mod context;
 mod proto;
+pub mod runtime;
+mod server;
+
+pub use runtime::start;

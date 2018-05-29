@@ -5,15 +5,8 @@ use failure::Error;
 use gob::StreamSerializer;
 use serde::Serialize;
 use serde_bytes::ByteBuf;
-use serde_schema::SchemaSerialize;
 
 use super::messages;
-
-// A value sent as a placeholder for the server's response value when the server
-// receives an invalid request. It is never decoded by the client since the Response
-// contains an error when it is used.
-#[derive(Serialize, SchemaSerialize)]
-struct InvalidRequest {}
 
 #[derive(Serialize, SchemaSerialize)]
 #[serde(rename = "Response")]
@@ -47,7 +40,7 @@ impl<W, T> Encoder<W, T> {
     pub fn encode(&mut self, res: Response<T>)
     where
         W: Write,
-        T: Serialize + SchemaSerialize,
+        T: Serialize,
     {
         match res {
             Response::Ping(seq) => {
