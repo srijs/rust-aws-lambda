@@ -80,3 +80,9 @@ impl Context {
         });
     }
 }
+
+#[test]
+#[should_panic]
+fn context_current_panics_outside_of_task() {
+    Context::current();
+}
