@@ -52,7 +52,12 @@ pub struct Context {
 
 impl Context {
     pub fn current() -> Context {
-        CTX.with(|ctx_cell| ctx_cell.borrow().as_ref().unwrap().clone())
+        let opt_ctx = CTX.with(|ctx_cell| ctx_cell.borrow().clone());
+        if let Some(ctx) = opt_ctx {
+            return ctx;
+        } else {
+            panic!("Context::current() called outside of a lambda runtime task");
+        }
     }
 
     pub fn aws_request_id(&self) -> &str {

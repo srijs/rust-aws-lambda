@@ -14,8 +14,8 @@ extern crate serde_schema_derive;
 extern crate tokio_core;
 extern crate tokio_service;
 
-use futures::IntoFuture;
 use failure::Error;
+use futures::IntoFuture;
 use serde::{Serialize, de::DeserializeOwned};
 
 pub mod context;
