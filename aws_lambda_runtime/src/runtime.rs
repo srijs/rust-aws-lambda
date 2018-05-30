@@ -58,16 +58,6 @@ impl Runtime {
     }
 }
 
-pub fn start<F, R, S>(f: F)
-where
-    F: Fn(R) -> S + 'static,
-    S: IntoFuture<Error = Error>,
-    S::Item: Serialize + Send + 'static,
-    R: DeserializeOwned + Send + 'static,
-{
-    Runtime::new().unwrap().start(f).unwrap()
-}
-
 struct ServiceFn<F, R> {
     f: Rc<F>,
     _phan: PhantomData<fn() -> R>,

@@ -14,11 +14,24 @@ extern crate serde_schema_derive;
 extern crate tokio_core;
 extern crate tokio_service;
 
+use futures::IntoFuture;
+use failure::Error;
+use serde::{Serialize, de::DeserializeOwned};
+
 pub mod context;
 mod proto;
-pub mod runtime;
+mod runtime;
 mod server;
 
 pub use context::Context;
 pub use runtime::Runtime;
-pub use runtime::start;
+
+pub fn start<F, R, S>(f: F)
+where
+    F: Fn(R) -> S + 'static,
+    S: IntoFuture<Error = Error>,
+    S::Item: Serialize + Send + 'static,
+    R: DeserializeOwned + Send + 'static,
+{
+    Runtime::new().unwrap().start(f).unwrap()
+}
