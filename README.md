@@ -23,7 +23,35 @@ fn main() {
     // start the runtime, and return a greeting every time we are invoked
     lambda::start(|()| Ok("Hello ƛ!"))
 }
+```
 
+To provide input data to your function, you can change the type of the argument that the function accepts. For this to work, the argument type needs to implement the `serde::Deserialize` trait (most types in the standard library do).
+
+```rust
+extern crate aws_lambda_runtime as lambda;
+
+use std::collections::HashMap;
+
+fn main() {
+    lambda::start(|input: HashMap<String, String>| {
+        Ok(format!("the values are {}, {} and {}",
+            input["key1"], input["key2"], input["key3"]))
+    })
+}
+```
+
+While your function is running you can call `Context::current()` to get additional information, such as the ARN of your lambda, the Amazon request id or the Cognito identity of the calling application.
+
+```rust
+extern crate aws_lambda_runtime as lambda;
+
+fn main() {
+    lambda::start(|()| {
+        let ctx = lambda::Context::current();
+
+        Ok(format!("Hello from {}!", ctx.invoked_function_arn()))
+    })
+}
 ```
 
 ### Deploy
