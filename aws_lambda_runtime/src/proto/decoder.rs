@@ -7,6 +7,7 @@ use gob::StreamDeserializer;
 use serde::de::DeserializeOwned;
 
 use super::messages;
+use super::payload::PayloadDeserializer;
 use context;
 
 #[derive(Deserialize)]
@@ -94,7 +95,7 @@ impl<R, T> Decoder<R, T> {
 
         let deadline = Duration::new(message.deadline.secs as u64, message.deadline.nanos as u32);
 
-        let payload = ::serde_json::from_slice(message.payload.as_ref())
+        let payload = T::deserialize(PayloadDeserializer::new(message.payload.as_ref()))
             .map_err(|err| DecodeError::User(seq, err.into()))?;
 
         Ok(Some(Request::Invoke(seq, deadline, ctx, payload)))
