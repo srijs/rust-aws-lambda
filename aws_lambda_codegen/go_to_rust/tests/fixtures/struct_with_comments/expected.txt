@@ -1,0 +1,9 @@
+/// Foo
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct SimpleEmailEvent {
+    /// My cool thing
+    #[serde(rename = "fooBar")]
+    pub records: String,
+    #[serde(rename = "blah")]
+    pub records2: i64,
+}

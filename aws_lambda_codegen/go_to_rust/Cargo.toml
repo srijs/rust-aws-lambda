@@ -1,0 +1,25 @@
+[package]
+name = "go_to_rust"
+version = "0.1.0"
+authors = ["Christian Legnitto <christian@legnitto.com>"]
+build = "build.rs"
+publish = false
+
+[[test]]
+name = "integration"
+harness = false
+
+[dependencies]
+log = "0.4"
+pest = "^1.0"
+pest_derive = "^1.0"
+# Needed to pick up this PR: https://github.com/carllerche/codegen/pull/6
+codegen = { git = "https://github.com/LegNeato/codegen.git", branch = "issue-3-and-4-field-documentation-annotation"}
+failure = "0.1.1"
+heck = "0.3.0"
+#rustfmt-nightly = "0.6.0"
+
+[dev-dependencies]
+rustc-test ="0.3"
+glob = "0.2"
+env_logger = "0.5.9"
