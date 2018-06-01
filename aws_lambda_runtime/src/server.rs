@@ -6,7 +6,7 @@ use failure::Error;
 use futures::future::lazy;
 use futures::stream::FuturesUnordered;
 use futures::sync::mpsc;
-use futures::{Async, Future, Poll, Stream};
+use futures::{Async, Future, Poll, Stream, Sink};
 use serde::Serialize;
 use serde::de::DeserializeOwned;
 use tokio_core::net::TcpListener;
@@ -15,6 +15,8 @@ use tokio_service::{NewService, Service};
 
 use super::context::Context;
 use super::proto;
+
+const REQ_QUEUE_MAX: usize = 128;
 
 pub struct Server<S: NewService> {
     new_service: S,
@@ -44,7 +46,7 @@ where
         R: Read + Send + 'static,
         W: Write + Send + 'static,
     {
-        let (req_send, req_recv) = mpsc::unbounded();
+        let (req_send, req_recv) = mpsc::channel(REQ_QUEUE_MAX);
         let (res_send, res_recv) = mpsc::unbounded();
         let res_send_clone = res_send.clone();
 
@@ -101,17 +103,18 @@ where
 
 fn req_loop<R, T, U>(
     r: R,
-    req_sender: mpsc::UnboundedSender<proto::Request<T>>,
+    req_sender: mpsc::Sender<proto::Request<T>>,
     res_sender: mpsc::UnboundedSender<proto::Response<U>>,
 ) where
     R: Read,
     T: DeserializeOwned,
 {
+    let mut blocking_req_sender = req_sender.wait();
     let mut decoder = proto::Decoder::new(r);
     for result in decoder {
         match result {
             Ok(req) => {
-                req_sender.unbounded_send(req).unwrap();
+                blocking_req_sender.send(req).unwrap();
             }
             Err(proto::DecodeError::User(seq, err)) => {
                 res_sender
@@ -139,7 +142,7 @@ where
 fn svc_future<S>(
     handle: Handle,
     service: S,
-    receiver: mpsc::UnboundedReceiver<proto::Request<S::Request>>,
+    receiver: mpsc::Receiver<proto::Request<S::Request>>,
     sender: mpsc::UnboundedSender<proto::Response<S::Response>>,
 ) -> Box<Future<Item = (), Error = Error>>
 where
