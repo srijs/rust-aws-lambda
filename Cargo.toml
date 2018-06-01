@@ -2,5 +2,6 @@
 members = [
   "aws_lambda_bundle",
   "aws_lambda_codegen",
+  "aws_lambda_events",
   "aws_lambda_runtime",
 ]
