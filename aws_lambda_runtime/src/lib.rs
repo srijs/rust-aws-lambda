@@ -22,6 +22,7 @@ pub mod context;
 mod proto;
 mod runtime;
 mod server;
+mod utils;
 
 pub use context::Context;
 pub use runtime::Runtime;
