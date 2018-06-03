@@ -1,4 +1,3 @@
-use std::io::Read;
 use std::marker::PhantomData;
 use std::time::Duration;
 
@@ -6,6 +5,7 @@ use failure::Error;
 use futures::{Async, Poll, Stream};
 use gob::StreamDeserializer;
 use serde::de::DeserializeOwned;
+use tokio_io::AsyncRead;
 
 use super::messages;
 use super::payload::PayloadDeserializer;
@@ -57,12 +57,17 @@ impl<R, T> Decoder<R, T> {
             _phan: PhantomData,
         }
     }
+}
 
-    fn decode(&mut self) -> Poll<Option<Request<T>>, DecodeError>
-    where
-        R: Read,
-        T: DeserializeOwned,
-    {
+impl<R, T> Stream for Decoder<R, T>
+where
+    R: AsyncRead,
+    T: DeserializeOwned,
+{
+    type Item = Request<T>;
+    type Error = DecodeError;
+
+    fn poll(&mut self) -> Poll<Option<Request<T>>, DecodeError> {
         let (seq, is_invoke) = {
             match try_nb_gob!(self.stream.deserialize::<RpcRequest<'_>>()) {
                 None => {
@@ -113,19 +118,6 @@ impl<R, T> Decoder<R, T> {
             ctx,
             payload,
         ))))
-    }
-}
-
-impl<R, T> Stream for Decoder<R, T>
-where
-    R: Read,
-    T: DeserializeOwned,
-{
-    type Item = Request<T>;
-    type Error = DecodeError;
-
-    fn poll(&mut self) -> Poll<Option<Request<T>>, DecodeError> {
-        self.decode()
     }
 }
 

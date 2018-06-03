@@ -3,7 +3,7 @@ use std::rc::Rc;
 
 use failure::Error;
 use futures::stream::FuturesUnordered;
-use futures::{Async, Future, Poll, Stream};
+use futures::{Async, Future, Poll, Sink, Stream};
 use serde::Serialize;
 use serde::de::DeserializeOwned;
 use tokio_core::net::{TcpListener, TcpStream};
@@ -122,14 +122,15 @@ where
     }
 
     fn poll_encoder(&mut self) -> Poll<(), Error> {
-        Ok(self.encoder.poll_flush()?)
+        Ok(self.encoder.poll_complete()?)
     }
 
     fn poll_futures(&mut self) -> Poll<(), Error> {
         match try_ready!(self.futures.poll()) {
             None => Ok(Async::Ready(())),
             Some((seq, result)) => {
-                self.encoder.encode(proto::Response::Invoke(seq, result))?;
+                self.encoder
+                    .start_send(proto::Response::Invoke(seq, result))?;
                 self.poll()
             }
         }
@@ -139,7 +140,7 @@ where
         match self.decoder.poll() {
             Ok(Async::Ready(Some(request))) => match request {
                 proto::Request::Ping(seq) => {
-                    self.encoder.encode(proto::Response::Ping(seq))?;
+                    self.encoder.start_send(proto::Response::Ping(seq))?;
                     self.poll()
                 }
                 proto::Request::Invoke(seq, deadline, ctx, payload) => {
@@ -152,7 +153,8 @@ where
             Ok(Async::NotReady) => Ok(Async::NotReady),
             Ok(Async::Ready(None)) => Ok(Async::Ready(())),
             Err(proto::DecodeError::User(seq, err)) => {
-                self.encoder.encode(proto::Response::Invoke(seq, Err(err)))?;
+                self.encoder
+                    .start_send(proto::Response::Invoke(seq, Err(err)))?;
                 self.poll()
             }
             Err(proto::DecodeError::Frame(err)) => {

@@ -1,9 +1,9 @@
-use std::io::{self, Cursor, Write};
+use std::io::Cursor;
 use std::marker::PhantomData;
 
 use bytes::Buf;
 use failure::Error;
-use futures::{Async, Poll};
+use futures::{Async, AsyncSink, Poll, Sink, StartSend};
 use gob::{StreamSerializer, ser::TypeId};
 use serde::Serialize;
 use serde_bytes::ByteBuf;
@@ -62,12 +62,17 @@ where
             _phan: PhantomData,
         })
     }
+}
 
-    pub fn encode(&mut self, res: Response<T>) -> Result<(), Error>
-    where
-        W: Write,
-        T: Serialize,
-    {
+impl<W, T> Sink for Encoder<W, T>
+where
+    W: AsyncWrite,
+    T: Serialize,
+{
+    type SinkItem = Response<T>;
+    type SinkError = Error;
+
+    fn start_send(&mut self, res: Response<T>) -> StartSend<Self::SinkItem, Self::SinkError> {
         match res {
             Response::Ping(seq) => {
                 self.stream.serialize_with_type_id(
@@ -121,11 +126,10 @@ where
                 }
             }
         }
-        self.stream.get_mut().flush()?;
-        Ok(())
+        Ok(AsyncSink::Ready)
     }
 
-    pub fn poll_flush(&mut self) -> Poll<(), io::Error> {
+    fn poll_complete(&mut self) -> Poll<(), Self::SinkError> {
         loop {
             if self.flushing.remaining() == 0 {
                 if self.stream.get_ref().len() == 0 {
