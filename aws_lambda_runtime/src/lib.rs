@@ -1,3 +1,4 @@
+extern crate bytes;
 #[macro_use]
 extern crate failure;
 #[macro_use]
@@ -12,7 +13,9 @@ extern crate serde_schema;
 #[macro_use]
 extern crate serde_schema_derive;
 extern crate tokio_core;
+extern crate tokio_io;
 extern crate tokio_service;
+extern crate void;
 
 use failure::Error;
 use futures::IntoFuture;
@@ -22,7 +25,6 @@ pub mod context;
 mod proto;
 mod runtime;
 mod server;
-mod utils;
 
 pub use context::Context;
 pub use runtime::Runtime;

@@ -5,6 +5,7 @@ authors = ["Sam Rijs <srijs@airpost.net>"]
 workspace = ".."
 
 [dependencies]
+bytes = "0.4.8"
 failure = "0.1.1"
 futures = "0.1.21"
 gob = { git = "https://github.com/srijs/rust-gob" }
@@ -15,4 +16,6 @@ serde_json = "1.0.18"
 serde_schema = { git = "https://github.com/srijs/rust-serde-schema", features = ["bytes"] }
 serde_schema_derive = { git = "https://github.com/srijs/rust-serde-schema" }
 tokio-core = "0.1.17"
+tokio-io = "0.1.6"
 tokio-service = "0.1.0"
+void = "1.0.2"

@@ -3,6 +3,7 @@ use std::marker::PhantomData;
 use std::time::Duration;
 
 use failure::Error;
+use futures::{Async, Poll, Stream};
 use gob::StreamDeserializer;
 use serde::de::DeserializeOwned;
 
@@ -29,6 +30,21 @@ pub(crate) enum DecodeError {
     User(u64, Error),
 }
 
+macro_rules! try_nb_gob {
+    ($e:expr) => {
+        match $e {
+            Ok(t) => t,
+            Err(ref e)
+                if e.kind()
+                    == ::gob::error::ErrorKind::Io(::std::io::ErrorKind::WouldBlock) =>
+            {
+                return Ok(Async::NotReady)
+            }
+            Err(e) => return Err(DecodeError::Frame(e.into())),
+        }
+    };
+}
+
 pub(crate) struct Decoder<R, T> {
     stream: StreamDeserializer<R>,
     _phan: PhantomData<T>,
@@ -42,18 +58,15 @@ impl<R, T> Decoder<R, T> {
         }
     }
 
-    fn decode(&mut self) -> Result<Option<Request<T>>, DecodeError>
+    fn decode(&mut self) -> Poll<Option<Request<T>>, DecodeError>
     where
         R: Read,
         T: DeserializeOwned,
     {
         let (seq, is_invoke) = {
-            match self.stream
-                .deserialize::<RpcRequest<'_>>()
-                .map_err(|err| DecodeError::Frame(err.into()))?
-            {
+            match try_nb_gob!(self.stream.deserialize::<RpcRequest<'_>>()) {
                 None => {
-                    return Ok(None);
+                    return Ok(Async::Ready(None));
                 }
                 Some(req) => match req.service_method {
                     "Function.Ping" => (req.seq, false),
@@ -69,16 +82,12 @@ impl<R, T> Decoder<R, T> {
         };
 
         if !is_invoke {
-            self.stream
-                .deserialize::<messages::PingRequest>()
-                .map_err(|err| DecodeError::Frame(err.into()))?
+            try_nb_gob!(self.stream.deserialize::<messages::PingRequest>())
                 .ok_or_else(|| DecodeError::Frame(format_err!("unexpected end of stream")))?;
-            return Ok(Some(Request::Ping(seq)));
+            return Ok(Async::Ready(Some(Request::Ping(seq))));
         }
 
-        let message = self.stream
-            .deserialize::<messages::InvokeRequest>()
-            .map_err(|err| DecodeError::Frame(err.into()))?
+        let message = try_nb_gob!(self.stream.deserialize::<messages::InvokeRequest>())
             .ok_or_else(|| DecodeError::Frame(format_err!("unexpected end of stream")))?;
 
         let identity = context::CognitoIdentity {
@@ -98,29 +107,33 @@ impl<R, T> Decoder<R, T> {
         let payload = T::deserialize(PayloadDeserializer::new(message.payload.as_ref()))
             .map_err(|err| DecodeError::User(seq, err.into()))?;
 
-        Ok(Some(Request::Invoke(seq, deadline, ctx, payload)))
+        Ok(Async::Ready(Some(Request::Invoke(
+            seq,
+            deadline,
+            ctx,
+            payload,
+        ))))
     }
 }
 
-impl<R, T> Iterator for Decoder<R, T>
+impl<R, T> Stream for Decoder<R, T>
 where
     R: Read,
     T: DeserializeOwned,
 {
-    type Item = Result<Request<T>, DecodeError>;
+    type Item = Request<T>;
+    type Error = DecodeError;
 
-    fn next(&mut self) -> Option<Result<Request<T>, DecodeError>> {
-        match self.decode() {
-            Err(err) => Some(Err(err)),
-            Ok(Some(req)) => Some(Ok(req)),
-            Ok(None) => None,
-        }
+    fn poll(&mut self) -> Poll<Option<Request<T>>, DecodeError> {
+        self.decode()
     }
 }
 
 #[cfg(test)]
 mod tests {
     use std::collections::HashMap;
+
+    use futures::Stream;
 
     use super::{Decoder, Request};
 
@@ -159,7 +172,8 @@ mod tests {
             110, 99, 116, 105, 111, 110, 58, 116, 101, 115, 116, 70, 110, 71, 111, 0,
         ];
 
-        let mut decoder = Decoder::<_, HashMap<String, String>>::new(::std::io::Cursor::new(bytes));
+        let mut decoder =
+            Decoder::<_, HashMap<String, String>>::new(::std::io::Cursor::new(bytes)).wait();
 
         let request1 = decoder.next().unwrap().unwrap();
         match request1 {

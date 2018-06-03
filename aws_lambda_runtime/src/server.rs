@@ -1,30 +1,25 @@
-use std::any::Any;
-use std::io::{self, Read, Write};
+use std::io;
 use std::rc::Rc;
-use std::thread;
 
 use failure::Error;
-use futures::future::lazy;
 use futures::stream::FuturesUnordered;
-use futures::sync::mpsc;
-use futures::{Async, Future, Poll, Sink, Stream};
+use futures::{Async, Future, Poll, Stream};
 use serde::Serialize;
 use serde::de::DeserializeOwned;
-use tokio_core::net::TcpListener;
+use tokio_core::net::{TcpListener, TcpStream};
 use tokio_core::reactor::Handle;
+use tokio_io::{AsyncRead, AsyncWrite};
 use tokio_service::{NewService, Service};
+use void::Void;
 
-use super::context::Context;
+use super::context::{self, Context};
 use super::proto;
-use super::utils::{AsyncThread, AsyncThreadExt};
-
-const REQ_QUEUE_MAX: usize = 128;
 
 pub struct Server<S: NewService> {
     new_service: S,
     listener: TcpListener,
     handle: Handle,
-    connections: FuturesUnordered<Connection>,
+    connections: FuturesUnordered<Connection<S::Instance, TcpStream, TcpStream>>,
 }
 
 impl<S> Server<S>
@@ -43,13 +38,9 @@ where
         }
     }
 
-    fn spawn<R, W>(&mut self, r: R, w: W) -> Result<(), Error>
-    where
-        R: Read + Send + 'static,
-        W: Write + Send + 'static,
-    {
+    fn spawn(&mut self, r: TcpStream, w: TcpStream) -> Result<(), Error> {
         let service = self.new_service.new_service()?;
-        let connection = Connection::spawn(service, self.handle.clone(), r, w)?;
+        let connection = Connection::spawn(service, r, w)?;
         self.connections.push(connection);
 
         Ok(())
@@ -70,10 +61,13 @@ where
         let connections_poll = self.connections.poll();
         let accept_result = self.listener.accept_std();
         match accept_result {
-            Ok((mut stream, _)) => {
-                stream.set_nonblocking(false)?;
+            Ok((stream, _)) => {
                 let cloned_stream = stream.try_clone()?;
-                self.spawn(stream, cloned_stream)?;
+                let handle = self.handle.clone();
+                self.spawn(
+                    TcpStream::from_stream(stream, &handle)?,
+                    TcpStream::from_stream(cloned_stream, &handle)?,
+                )?;
                 self.poll()
             }
             Err(err) => {
@@ -95,156 +89,132 @@ where
     }
 }
 
-pub struct Connection {
-    send_thread: AsyncThread<Result<(), Error>>,
-    recv_thread: AsyncThread<Result<(), Error>>,
-    service_future: Box<Future<Item = (), Error = Error>>,
+pub struct Connection<S, R, W>
+where
+    S: Service,
+    R: AsyncRead + Send + 'static,
+    W: AsyncWrite + Send + 'static,
+{
+    service: Rc<S>,
+    decoder: ::futures::stream::Fuse<proto::Decoder<R, S::Request>>,
+    encoder: proto::Encoder<W, S::Response>,
+    futures: FuturesUnordered<Invocation<S>>,
 }
 
-impl Connection {
-    fn spawn<S, R, W>(service: S, handle: Handle, r: R, w: W) -> Result<Connection, Error>
-    where
-        S: Service<Error = Error> + 'static,
-        S::Request: DeserializeOwned + Send + 'static,
-        S::Response: Serialize + Send + 'static,
-        R: Read + Send + 'static,
-        W: Write + Send + 'static,
-    {
-        let (req_send, req_recv) = mpsc::channel(REQ_QUEUE_MAX);
-        let (res_send, res_recv) = mpsc::unbounded();
-        let res_send_clone = res_send.clone();
-
-        let send_thread = thread::Builder::new()
-            .name("lambda-send".to_owned())
-            .spawn_async(|| res_loop(w, res_recv))?;
-        let recv_thread = thread::Builder::new()
-            .name("lambda-recv".to_owned())
-            .spawn_async(|| req_loop(r, req_send, res_send_clone))?;
-        let service_future = svc_future(handle, service, req_recv, res_send);
+impl<S, R, W> Connection<S, R, W>
+where
+    S: Service<Error = Error> + 'static,
+    S::Request: DeserializeOwned + Send + 'static,
+    S::Response: Serialize + Send + 'static,
+    R: AsyncRead + Send + 'static,
+    W: AsyncWrite + Send + 'static,
+{
+    fn spawn(service: S, r: R, w: W) -> Result<Self, Error> {
+        let decoder = proto::Decoder::new(r).fuse();
+        let encoder = proto::Encoder::new(w)?;
 
         Ok(Connection {
-            send_thread,
-            recv_thread,
-            service_future,
+            service: Rc::new(service),
+            decoder,
+            encoder,
+            futures: FuturesUnordered::new(),
         })
     }
-}
 
-fn poll_thread(poll: Poll<Result<(), Error>, Box<Any + Send + 'static>>) -> Poll<(), Error> {
-    match poll {
-        Err(panic) => Err(format_err!("thread panicked")),
-        Ok(Async::Ready(Err(err))) => Err(err),
-        Ok(Async::Ready(Ok(()))) => Ok(Async::Ready(())),
-        Ok(Async::NotReady) => Ok(Async::NotReady),
+    fn poll_encoder(&mut self) -> Poll<(), Error> {
+        Ok(self.encoder.poll_flush()?)
     }
-}
 
-impl Future for Connection {
-    type Item = ();
-    type Error = Error;
-
-    fn poll(&mut self) -> Poll<(), Error> {
-        let recv_ready = poll_thread(self.recv_thread.poll())?.is_ready();
-        let send_ready = poll_thread(self.send_thread.poll())?.is_ready();
-        if recv_ready && send_ready {
-            Ok(Async::Ready(()))
-        } else {
-            self.service_future.poll()
+    fn poll_futures(&mut self) -> Poll<(), Error> {
+        match try_ready!(self.futures.poll()) {
+            None => Ok(Async::Ready(())),
+            Some((seq, result)) => {
+                self.encoder.encode(proto::Response::Invoke(seq, result))?;
+                self.poll()
+            }
         }
     }
-}
 
-fn req_loop<R, T, U>(
-    r: R,
-    req_sender: mpsc::Sender<proto::Request<T>>,
-    res_sender: mpsc::UnboundedSender<proto::Response<U>>,
-) -> Result<(), Error>
-where
-    R: Read,
-    T: DeserializeOwned,
-{
-    let mut blocking_req_sender = req_sender.wait();
-    let mut decoder = proto::Decoder::new(r);
-    for result in decoder {
-        match result {
-            Ok(req) => {
-                if blocking_req_sender.send(req).is_err() {
-                    return Ok(());
+    fn poll_decoder(&mut self) -> Poll<(), Error> {
+        match self.decoder.poll() {
+            Ok(Async::Ready(Some(request))) => match request {
+                proto::Request::Ping(seq) => {
+                    self.encoder.encode(proto::Response::Ping(seq))?;
+                    self.poll()
                 }
-            }
+                proto::Request::Invoke(seq, deadline, ctx, payload) => {
+                    let service = self.service.clone();
+                    let fut = Invocation::Starting(seq, service, payload, ctx);
+                    self.futures.push(fut);
+                    self.poll()
+                }
+            },
+            Ok(Async::NotReady) => Ok(Async::NotReady),
+            Ok(Async::Ready(None)) => Ok(Async::Ready(())),
             Err(proto::DecodeError::User(seq, err)) => {
-                if res_sender
-                    .unbounded_send(proto::Response::Invoke(seq, Err(err)))
-                    .is_err()
-                {
-                    return Ok(());
-                }
+                self.encoder.encode(proto::Response::Invoke(seq, Err(err)))?;
+                self.poll()
             }
             Err(proto::DecodeError::Frame(err)) => {
                 bail!("an error occurred during decoding: {}", err)
             }
         }
     }
-    Ok(())
 }
 
-fn res_loop<W, T>(w: W, receiver: mpsc::UnboundedReceiver<proto::Response<T>>) -> Result<(), Error>
-where
-    W: Write,
-    T: Serialize,
-{
-    let mut encoder = proto::Encoder::new(w)?;
-    for result in receiver.wait() {
-        if let Ok(response) = result {
-            encoder.encode(response)?;
-        } else {
-            return Ok(());
-        }
-    }
-    Ok(())
-}
-
-fn svc_future<S>(
-    handle: Handle,
-    service: S,
-    receiver: mpsc::Receiver<proto::Request<S::Request>>,
-    sender: mpsc::UnboundedSender<proto::Response<S::Response>>,
-) -> Box<Future<Item = (), Error = Error>>
+impl<S, R, W> Future for Connection<S, R, W>
 where
     S: Service<Error = Error> + 'static,
-    S::Future: 'static,
-    S::Request: 'static,
-    S::Response: 'static,
+    S::Request: DeserializeOwned + Send + 'static,
+    S::Response: Serialize + Send + 'static,
+    R: AsyncRead + Send + 'static,
+    W: AsyncWrite + Send + 'static,
 {
-    let rc_service = Rc::new(service);
-    let fut = receiver
-        .then(move |result| {
-            let cloned_sender = sender.clone();
-            match result {
-                Ok(proto::Request::Ping(seq)) => {
-                    // ignore if sending fails
-                    cloned_sender
-                        .unbounded_send(proto::Response::Ping(seq))
-                        .ok();
-                }
-                Ok(proto::Request::Invoke(seq, deadline, ctx, payload)) => {
-                    let rc_service_clone = rc_service.clone();
-                    let invoke_fut = lazy(move || {
-                        Context::set_current(ctx);
-                        rc_service_clone.call(payload).then(move |result| {
-                            // ignore if sending fails
-                            cloned_sender
-                                .unbounded_send(proto::Response::Invoke(seq, result))
-                                .ok();
-                            Ok(())
-                        })
-                    });
-                    handle.spawn(invoke_fut);
-                }
-                Err(_) => {}
+    type Item = ();
+    type Error = Error;
+
+    fn poll(&mut self) -> Poll<(), Error> {
+        let decoder_ready = self.poll_decoder()?.is_ready();
+        let futures_ready = self.poll_futures()?.is_ready();
+        let encoder_ready = self.poll_encoder()?.is_ready();
+
+        if encoder_ready && futures_ready && decoder_ready {
+            Ok(Async::Ready(()))
+        } else {
+            Ok(Async::NotReady)
+        }
+    }
+}
+
+enum Invocation<S: Service> {
+    Starting(u64, Rc<S>, S::Request, context::LambdaContext),
+    Running(u64, S::Future),
+    Swapping,
+}
+
+impl<S> Future for Invocation<S>
+where
+    S: Service,
+{
+    type Item = (u64, Result<S::Response, S::Error>);
+    type Error = Void;
+
+    fn poll(&mut self) -> Poll<Self::Item, Self::Error> {
+        match ::std::mem::replace(self, Invocation::Swapping) {
+            Invocation::Starting(seq, svc, req, ctx) => {
+                Context::set_current(ctx);
+                *self = Invocation::Running(seq, svc.call(req));
+                self.poll()
             }
-            Ok(())
-        })
-        .for_each(|_| Ok(()));
-    Box::new(fut)
+            Invocation::Running(seq, mut future) => match future.poll() {
+                Ok(Async::NotReady) => {
+                    *self = Invocation::Running(seq, future);
+                    Ok(Async::NotReady)
+                }
+                Ok(Async::Ready(res)) => Ok(Async::Ready((seq, Ok(res)))),
+                Err(err) => Ok(Async::Ready((seq, Err(err)))),
+            },
+            Invocation::Swapping => panic!("Invocation polled after ready"),
+        }
+    }
 }

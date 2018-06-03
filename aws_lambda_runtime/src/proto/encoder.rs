@@ -1,11 +1,14 @@
-use std::io::{BufWriter, Write};
+use std::io::{self, Cursor, Write};
 use std::marker::PhantomData;
 
+use bytes::Buf;
 use failure::Error;
+use futures::{Async, Poll};
 use gob::{StreamSerializer, ser::TypeId};
 use serde::Serialize;
 use serde_bytes::ByteBuf;
 use serde_schema::{SchemaSerialize, SchemaSerializer};
+use tokio_io::AsyncWrite;
 
 use super::messages;
 
@@ -27,9 +30,11 @@ pub enum Response<T> {
 
 pub struct Encoder<W, T>
 where
-    W: Write,
+    W: AsyncWrite,
 {
-    stream: StreamSerializer<BufWriter<W>>,
+    write: W,
+    flushing: Cursor<Vec<u8>>,
+    stream: StreamSerializer<Vec<u8>>,
     _phan: PhantomData<T>,
     type_id_response: TypeId,
     type_id_ping_response: TypeId,
@@ -38,16 +43,18 @@ where
 
 impl<W, T> Encoder<W, T>
 where
-    W: Write,
+    W: AsyncWrite,
 {
     pub fn new(w: W) -> Result<Encoder<W, T>, Error> {
-        let mut stream = StreamSerializer::new(BufWriter::new(w));
+        let mut stream = StreamSerializer::new(Vec::new());
         let type_id_response = RpcResponse::schema_register((&mut stream).schema_mut())?;
         let type_id_ping_response =
             messages::PingResponse::schema_register((&mut stream).schema_mut())?;
         let type_id_invoke_response =
             messages::InvokeResponse::schema_register((&mut stream).schema_mut())?;
         Ok(Encoder {
+            write: w,
+            flushing: Cursor::new(Vec::new()),
             stream,
             type_id_response,
             type_id_ping_response,
@@ -117,11 +124,25 @@ where
         self.stream.get_mut().flush()?;
         Ok(())
     }
+
+    pub fn poll_flush(&mut self) -> Poll<(), io::Error> {
+        loop {
+            if self.flushing.remaining() == 0 {
+                if self.stream.get_ref().len() == 0 {
+                    return Ok(Async::Ready(()));
+                } else {
+                    let bytes = ::std::mem::replace(self.stream.get_mut(), Vec::new());
+                    self.flushing = Cursor::new(bytes);
+                }
+            }
+            try_ready!(self.write.write_buf(&mut self.flushing));
+        }
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use std::collections::HashMap;
+    use tokio_io::io::AllowStdIo;
 
     use super::{Encoder, Response};
 
@@ -129,11 +150,13 @@ mod tests {
     fn encode_messages() {
         let mut buffer = Vec::<u8>::new();
         {
-            let mut encoder = Encoder::<_, String>::new(&mut buffer).unwrap();
+            let io = AllowStdIo::new(&mut buffer);
+            let mut encoder = Encoder::<_, String>::new(io).unwrap();
             encoder.encode(Response::Ping(0)).unwrap();
             encoder
                 .encode(Response::Invoke(1, Ok("Hello ƛ!".to_owned())))
                 .unwrap();
+            encoder.poll_flush().unwrap();
         }
 
         assert_eq!(
