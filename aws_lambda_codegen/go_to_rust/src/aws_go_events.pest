@@ -1,0 +1,73 @@
+newline = _{ "\n" | "\r\n" | eoi }
+whitespace = _{ " " | "\t" }
+whitespace_or_newline = _{ whitespace | newline }
+comment_line = @{ whitespace* ~ any_comment ~ whitespace* }
+any_comment = { block_comment | "//" ~ (!newline ~ any)* }
+block_comment = _{ "/*" ~ (block_comment | !"*/" ~ any)* ~ "*/" }
+
+alpha = _{ 'a'..'z' | 'A'..'Z' }
+digit = _{ '0'..'9' }
+non_alpha = _{ "_" | "-" }
+
+ident = { (alpha | digit | non_alpha)+ }
+ident_list = _{ !digit ~ ident ~ (" " ~ ident)+ }
+
+// Built-in types --------------------------------------------------------------
+// Primitives
+boolean = { "bool" }
+byte = { "byte" }
+int = { "int" | "int64" }
+uint = { "uint" | "uint64" }
+float = { "float" | "float" }
+string = { "string" }
+primitive = { boolean | byte | int | uint | float | string }
+
+// Non-primitives
+interface = { "interface" ~ "{" ~ "}"}
+array = { "[]" ~ (interface | primitive | map | ident) }
+
+// Collections. This isn't 100% correct but whatever.
+key_type = { primitive }
+value_type = { interface | primitive | array | ident }
+map = { "map[" ~ key_type ~ "]" ~ value_type }
+
+non_primitive = { map | array | interface }
+
+package_ident = ${ ident ~ ("." ~ ident)+ }
+
+// Structure types -------------------------------------------------------------
+json_name = { (digit | alpha | non_alpha | "." )+ }
+omit_empty = { "," ~ "omitempty" }
+json_meta = _{ json_name ~ omit_empty? }
+json_mapping = { "`json:\"" ~ json_meta ~ "\"`" ~ whitespace* ~ any_comment?  }
+
+struct_field_type = { interface | primitive | array | map | package_ident | ident }
+
+struct_field = ${ ident ~ whitespace+ ~ "*"? ~ struct_field_type ~ whitespace* ~ json_mapping? }
+
+struct_fields = { struct_field ~ (newline+ ~ struct_field)* }
+
+struct_name = { ident }
+struct_preamble = ${ "type" ~ whitespace+ ~ struct_name ~ whitespace+ ~ "struct" }
+
+doc_comment = { any_comment ~ newline }
+struct_def = { doc_comment* ~ struct_preamble ~ "{" ~ whitespace_or_newline* ~ struct_fields? ~ whitespace_or_newline* ~ "}" }
+
+// Package types ---------------------------------------------------------------
+package_kw = _{ "package" }
+package_def = { package_kw ~ ident }
+
+// Import types ----------------------------------------------------------------
+import_kw = _{ "import" }
+package_name = { (alpha | digit | non_alpha | "/")+ }
+import_package = ${ "\"" ~ package_name ~ "\"" }
+import = { import_kw ~ import_package  }
+import_multiple = ${ import_kw ~ whitespace+ ~ "(" ~ (whitespace_or_newline* ~ import_package ~ whitespace_or_newline*)+ ~ ")" }
+
+// Type alias types ------------------------------------------------------------
+type_kw = _{ "type" }
+type_alias = { type_kw ~ ident ~ whitespace+ ~ package_ident }
+
+// Top-level type --------------------------------------------------------------
+all = _{ package_def | import | import_multiple | struct_def | type_alias | any_comment }
+aws_go_events = _{  (newline? ~ newline? ~ all ~ newline)+  }

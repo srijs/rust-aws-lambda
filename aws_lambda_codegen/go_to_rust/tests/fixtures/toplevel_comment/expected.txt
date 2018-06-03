@@ -1,0 +1,3 @@
+/// Doc comment
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct Foo;

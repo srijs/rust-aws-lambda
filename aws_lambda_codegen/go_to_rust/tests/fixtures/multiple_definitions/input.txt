@@ -1,0 +1,11 @@
+package events
+
+import "time"
+
+import (
+  "foo"
+)
+
+type SimpleEmailEvent struct {
+  blah int
+}

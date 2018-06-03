@@ -1,0 +1,2 @@
+// Blah blah MyCoolThing blah blah
+type MyCoolThing struct {}

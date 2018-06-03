@@ -1,0 +1,5 @@
+// Foo
+// Bar
+type Whatever struct {
+  blah int
+}

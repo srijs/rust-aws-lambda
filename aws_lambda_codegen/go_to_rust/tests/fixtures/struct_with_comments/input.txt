@@ -1,0 +1,5 @@
+// Foo
+type SimpleEmailEvent struct {
+  Records string `json:"fooBar"` // My cool thing
+  Records2 int `json:"blah"`
+}

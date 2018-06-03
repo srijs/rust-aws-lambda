@@ -1,0 +1,10 @@
+[package]
+name = "aws_lambda_codegen"
+version = "0.1.0"
+authors = ["Christian Legnitto <christian@legnitto.com>"]
+publish = false
+
+[dependencies]
+quicli = "0.2"
+glob = "0.2"
+go_to_rust = { path = "./go_to_rust" }

@@ -1,0 +1,4 @@
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct SimpleEmailEvent {
+    pub blah: i64,
+}

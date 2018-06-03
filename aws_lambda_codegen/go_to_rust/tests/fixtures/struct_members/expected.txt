@@ -1,0 +1,25 @@
+use bytes::Bytes;
+use chrono::{DateTime, Utc};
+use serde_json::Value;
+use std::collections::HashMap;
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct SimpleEmailMessage {
+    #[serde(rename = "commonHeaders")]
+    pub common_headers: SimpleEmailCommonHeaders,
+    pub source: String,
+    pub timestamp: DateTime<Utc>,
+    #[serde(rename = "rawJson")]
+    pub raw: Value,
+    pub destination: Vec<String>,
+    pub headers: Vec<SimpleEmailHeader>,
+    #[serde(rename = "headersTruncated")]
+    pub headers_truncated: bool,
+    #[serde(rename = "messageId")]
+    pub message_id: String,
+    pub resolutions: Vec<HashMap<String, String>>,
+    pub blah: u64,
+    pub whatever: i64,
+    pub detail: HashMap<String, Bytes>,
+    pub data: Vec<u8>,
+}

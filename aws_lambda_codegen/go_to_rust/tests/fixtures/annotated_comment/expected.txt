@@ -1,0 +1,3 @@
+/// Blah blah `MyCoolThing` blah blah
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct MyCoolThing;

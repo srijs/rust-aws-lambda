@@ -1,0 +1,6 @@
+/// Foo
+/// Bar
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct Whatever {
+    pub blah: i64,
+}

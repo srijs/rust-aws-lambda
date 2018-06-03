@@ -1,0 +1,15 @@
+type SimpleEmailMessage struct {
+	CommonHeaders    SimpleEmailCommonHeaders `json:"commonHeaders"`
+	Source           string                   `json:"source"`
+	Timestamp        time.Time                `json:"timestamp"`
+	Raw              json.RawMessage          `json:"rawJson"`
+	Destination      []string                 `json:"destination"`
+	Headers          []SimpleEmailHeader      `json:"headers"`
+	HeadersTruncated bool                     `json:"headersTruncated"`
+	MessageID        string                   `json:"messageId"`
+	Resolutions      []map[string]string      `json:"resolutions"`
+	blah             uint
+	whatever         int
+	Detail           map[string]interface{}   `json:"detail"`
+	Data             []byte                   `json:"data"`
+}
