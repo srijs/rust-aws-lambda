@@ -146,6 +146,7 @@ where
 
 #[cfg(test)]
 mod tests {
+    use futures::Sink;
     use tokio_io::io::AllowStdIo;
 
     use super::{Encoder, Response};
@@ -156,11 +157,11 @@ mod tests {
         {
             let io = AllowStdIo::new(&mut buffer);
             let mut encoder = Encoder::<_, String>::new(io).unwrap();
-            encoder.encode(Response::Ping(0)).unwrap();
+            encoder.start_send(Response::Ping(0)).unwrap();
             encoder
-                .encode(Response::Invoke(1, Ok("Hello ƛ!".to_owned())))
+                .start_send(Response::Invoke(1, Ok("Hello ƛ!".to_owned())))
                 .unwrap();
-            encoder.poll_flush().unwrap();
+            encoder.poll_complete().unwrap();
         }
 
         assert_eq!(
