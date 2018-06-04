@@ -68,8 +68,8 @@ fn tests(src_dir: &Path) -> Vec<TestDescAndFn> {
 
         tests.push(mk_test(
             &test_name,
-            data[0].clone(),
-            data[1].clone(),
+            data[0].clone().trim().to_string(),
+            data[1].clone().trim().to_string(),
             expected_path.clone(),
         ));
     }
