@@ -27,6 +27,8 @@ fn main() {
 }
 ```
 
+### Input
+
 To provide input data to your function, you can change the type of the argument that the function accepts. For this to work, the argument type needs to implement the `serde::Deserialize` trait (most types in the standard library do).
 
 ```rust
@@ -41,6 +43,35 @@ fn main() {
     })
 }
 ```
+
+Additionally, the `aws_lambda_events` crate provides strongly-typed lambda event types for use with [AWS event sources](https://docs.aws.amazon.com/lambda/latest/dg/use-cases.html). To use these types, first add the following to the `[dependencies]` section in your `Cargo.toml` file.
+
+```toml
+aws_lambda_events = { git = "https://github.com/srijs/rust-aws-lambda" }
+```
+
+Then use the types defined in the crate. For example, this would print out all the `S3Event` record names, assuming your lambda function was subscribed to the [proper S3 events](https://docs.aws.amazon.com/lambda/latest/dg/with-s3-example.html):
+
+```rust
+extern crate aws_lambda_runtime as lambda;
+extern crate aws_lambda_events;
+
+use aws_lambda_events::event::s3::S3Event;
+
+fn main() {
+    lambda::start(|input: S3Event| {
+        let mut names = Vec::new();
+        for record in input.records {
+            names.push(record.event_name);
+        }
+        Ok(format!("Event names:\n{:#?}", names))
+    })
+}
+```
+
+Note that the types in `aws_lambda_events` are automatically generated from the [official Go SDK](https://github.com/aws/aws-lambda-go/tree/master/events) and thus are generally up-to-date.
+
+### Context
 
 While your function is running you can call `Context::current()` to get additional information, such as the ARN of your lambda, the Amazon request id or the Cognito identity of the calling application.
 
