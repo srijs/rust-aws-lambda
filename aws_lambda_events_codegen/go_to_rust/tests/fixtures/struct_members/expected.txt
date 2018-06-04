@@ -20,6 +20,7 @@ pub struct SimpleEmailMessage {
     pub resolutions: Vec<HashMap<String, String>>,
     pub blah: u64,
     pub whatever: i64,
+    pub boo: i64,
     pub detail: HashMap<String, Bytes>,
     pub data: Vec<u8>,
 }
