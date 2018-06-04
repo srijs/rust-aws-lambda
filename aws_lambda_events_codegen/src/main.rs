@@ -55,8 +55,6 @@ fn get_blacklist() -> HashSet<String> {
     blacklist.insert("ses".to_string());
     // https://github.com/aws/aws-lambda-go/blob/master/events/lex.go
     blacklist.insert("lex".to_string());
-    // https://github.com/aws/aws-lambda-go/blob/master/events/s3.go
-    blacklist.insert("s3".to_string());
     // https://github.com/aws/aws-lambda-go/blob/master/events/kinesis.go
     blacklist.insert("kinesis".to_string());
     blacklist
