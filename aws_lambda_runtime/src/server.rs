@@ -126,39 +126,49 @@ where
     }
 
     fn poll_futures(&mut self) -> Poll<(), Error> {
-        match try_ready!(self.futures.poll()) {
-            None => Ok(Async::Ready(())),
-            Some((seq, result)) => {
-                self.encoder
-                    .start_send(proto::Response::Invoke(seq, result))?;
-                self.poll()
+        loop {
+            match try_ready!(self.futures.poll()) {
+                None => {
+                    return Ok(Async::Ready(()));
+                },
+                Some((seq, result)) => {
+                    self.encoder
+                        .start_send(proto::Response::Invoke(seq, result))?;
+                    continue;
+                }
             }
         }
     }
 
     fn poll_decoder(&mut self) -> Poll<(), Error> {
-        match self.decoder.poll() {
-            Ok(Async::Ready(Some(request))) => match request {
-                proto::Request::Ping(seq) => {
-                    self.encoder.start_send(proto::Response::Ping(seq))?;
-                    self.poll()
+        loop {
+            match self.decoder.poll() {
+                Ok(Async::Ready(Some(request))) => match request {
+                    proto::Request::Ping(seq) => {
+                        self.encoder.start_send(proto::Response::Ping(seq))?;
+                        continue;
+                    }
+                    proto::Request::Invoke(seq, deadline, ctx, payload) => {
+                        let service = self.service.clone();
+                        let fut = Invocation::Starting(seq, service, payload, ctx);
+                        self.futures.push(fut);
+                        continue;
+                    }
+                },
+                Ok(Async::NotReady) => {
+                    return Ok(Async::NotReady);
+                },
+                Ok(Async::Ready(None)) => {
+                    return Ok(Async::Ready(()));
+                },
+                Err(proto::DecodeError::User(seq, err)) => {
+                    self.encoder
+                        .start_send(proto::Response::Invoke(seq, Err(err)))?;
+                    continue;
                 }
-                proto::Request::Invoke(seq, deadline, ctx, payload) => {
-                    let service = self.service.clone();
-                    let fut = Invocation::Starting(seq, service, payload, ctx);
-                    self.futures.push(fut);
-                    self.poll()
+                Err(proto::DecodeError::Frame(err)) => {
+                    bail!("an error occurred during decoding: {}", err)
                 }
-            },
-            Ok(Async::NotReady) => Ok(Async::NotReady),
-            Ok(Async::Ready(None)) => Ok(Async::Ready(())),
-            Err(proto::DecodeError::User(seq, err)) => {
-                self.encoder
-                    .start_send(proto::Response::Invoke(seq, Err(err)))?;
-                self.poll()
-            }
-            Err(proto::DecodeError::Frame(err)) => {
-                bail!("an error occurred during decoding: {}", err)
             }
         }
     }
@@ -176,8 +186,11 @@ where
     type Error = Error;
 
     fn poll(&mut self) -> Poll<(), Error> {
+        // poll the decoder first, as it may create work for futures and encoder
         let decoder_ready = self.poll_decoder()?.is_ready();
+        // poll the futures next, as they might create work for the encoder
         let futures_ready = self.poll_futures()?.is_ready();
+        // poll the encoder last, as it will never create other work
         let encoder_ready = self.poll_encoder()?.is_ready();
 
         if encoder_ready && futures_ready && decoder_ready {
