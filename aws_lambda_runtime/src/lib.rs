@@ -7,6 +7,7 @@
 //! This handler function can be async, as the runtime itself is based on
 //! top of `futures` and `tokio`.
 
+#![deny(warnings)]
 #![deny(missing_docs)]
 #![deny(missing_debug_implementations)]
 

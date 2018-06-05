@@ -13,12 +13,29 @@ pub struct ClientApplication {
     pub(crate) app_package_name: String,
 }
 
-/// Information about the client application passed by the calling application.
+/// Client-specific information passed by the calling application.
 #[derive(Debug)]
 pub struct ClientContext {
     pub(crate) client: ClientApplication,
     pub(crate) env: HashMap<String, String>,
     pub(crate) custom: HashMap<String, String>,
+}
+
+impl ClientContext {
+    /// Get the client information provided by the mobile SDK.
+    pub fn client(&self) -> &ClientApplication {
+        &self.client
+    }
+
+    /// Get custom values set by the client application.
+    pub fn get_custom(&self, key: &str) -> Option<&str> {
+        self.custom.get(key).map(|s| s.as_ref())
+    }
+
+    /// Gets environment information provided by mobile SDK.
+    pub fn get_environment(&self, key: &str) -> Option<&str> {
+        self.env.get(key).map(|s| s.as_ref())
+    }
 }
 
 /// Information about the cognito identity used by the calling application.
@@ -73,19 +90,26 @@ impl Context {
         }
     }
 
-    /// AWS Request ID.
+    /// AWS request ID associated with the request.
     pub fn aws_request_id(&self) -> &str {
         &self.inner.aws_request_id
     }
 
-    /// ARN of the invoked function.
+    /// ARN of the function being invoked.
     pub fn invoked_function_arn(&self) -> &str {
         &self.inner.invoked_function_arn
     }
 
-    /// Information about the cognito identity used by the calling application.
+    /// Gets information about the Amazon Cognito identity provider when invoked
+    /// through the AWS Mobile SDK.
     pub fn identity(&self) -> &CognitoIdentity {
         &self.inner.identity
+    }
+
+    /// Information about the client application and device when invoked
+    /// through the AWS Mobile SDK.
+    pub fn client_context(&self) -> Option<&ClientContext> {
+        self.inner.client_context.as_ref()
     }
 
     pub(crate) fn set_current(lctx: LambdaContext) {

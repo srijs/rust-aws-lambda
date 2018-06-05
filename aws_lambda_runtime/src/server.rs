@@ -148,7 +148,8 @@ where
                         self.encoder.start_send(proto::Response::Ping(seq))?;
                         continue;
                     }
-                    proto::Request::Invoke(seq, deadline, ctx, payload) => {
+                    proto::Request::Invoke(seq, _deadline, ctx, payload) => {
+                        // TODO: enforce deadline
                         let service = self.service.clone();
                         let fut = Invocation::Starting(seq, service, payload, ctx);
                         self.futures.push(fut);
