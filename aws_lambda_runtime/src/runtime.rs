@@ -9,25 +9,39 @@ use futures::IntoFuture;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 use tokio_core::net::TcpListener;
-use tokio_core::reactor::{Core, Handle};
+use tokio_core::reactor::{Core, Handle as OldHandle};
+use tokio_reactor::Handle;
 use tokio_service::{NewService, Service};
 
 use super::server::Server;
 
+/// Runtime environment.
+#[derive(Debug)]
 pub struct Runtime {
     core: Core,
 }
 
 impl Runtime {
-    pub fn new() -> Result<Self, Error> {
+    /// Create a new `Runtime`, returning any error that happened during the creation.
+    pub fn new() -> Result<Runtime, Error> {
         let core = Core::new()?;
         Ok(Runtime { core })
     }
 
+    /// Retrieve a `Handle` to the underlying reactor.
     pub fn handle(&self) -> Handle {
+        self.core.handle().new_tokio_handle().clone()
+    }
+
+    /// Retrieve a `Handle` to the underlying reactor which cannot be sent across threads.
+    ///
+    /// This is useful for working with futures that rely on the old `tokio-core`
+    /// crate rather than the new `tokio` or `tokio-reactor` crates.
+    pub fn handle_old(&self) -> OldHandle {
         self.core.handle()
     }
 
+    /// Start the runtime with the given handler function.
     pub fn start<F, R, S>(self, f: F) -> Result<(), Error>
     where
         F: Fn(R) -> S + 'static,
@@ -41,6 +55,7 @@ impl Runtime {
         })
     }
 
+    /// Start the runtime with the given `Service`.
     pub fn start_service<S>(mut self, s: S) -> Result<(), Error>
     where
         S: NewService<Error = Error>,

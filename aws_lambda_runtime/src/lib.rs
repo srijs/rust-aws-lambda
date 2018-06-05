@@ -1,3 +1,15 @@
+//! Runtime environment for AWS Lambda.
+//!
+//! This crate contains a runtime which will listen for messages from
+//! the lambda environment, and call a handler function every time the
+//! lambda is invoked.
+//!
+//! This handler function can be async, as the runtime itself is based on
+//! top of `futures` and `tokio`.
+
+#![deny(missing_docs)]
+#![deny(missing_debug_implementations)]
+
 extern crate bytes;
 #[macro_use]
 extern crate failure;
@@ -16,6 +28,7 @@ extern crate serde_schema;
 extern crate serde_schema_derive;
 extern crate tokio_core;
 extern crate tokio_io;
+extern crate tokio_reactor;
 extern crate tokio_service;
 extern crate void;
 
