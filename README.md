@@ -44,7 +44,7 @@ fn main() {
 }
 ```
 
-Additionally, the `events` module provides strongly-typed lambda event types for use with [AWS event sources](https://docs.aws.amazon.com/lambda/latest/dg/use-cases.html). 
+Additionally, the `event` module provides strongly-typed lambda event types for use with [AWS event sources](https://docs.aws.amazon.com/lambda/latest/dg/use-cases.html). 
 
 For example, this would print out all the `S3Event` record names, assuming your lambda function was subscribed to the [proper S3 events](https://docs.aws.amazon.com/lambda/latest/dg/with-s3-example.html):
 
@@ -64,7 +64,7 @@ fn main() {
 }
 ```
 
-Note that the types in `events` are automatically generated from the [official Go SDK](https://github.com/aws/aws-lambda-go/tree/master/events) and thus are generally up-to-date.
+Note that the types in the `event` module are automatically generated from the [official Go SDK](https://github.com/aws/aws-lambda-go/tree/master/events) and thus are generally up-to-date.
 
 ### Context
 
