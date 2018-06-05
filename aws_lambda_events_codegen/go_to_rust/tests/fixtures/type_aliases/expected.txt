@@ -1,0 +1,5 @@
+use std::collections::HashMap;
+
+pub type Foo = HashMap<String, String>;
+
+pub type Bar = i64;

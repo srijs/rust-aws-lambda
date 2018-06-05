@@ -66,7 +66,10 @@ import_multiple = ${ import_kw ~ whitespace+ ~ "(" ~ (whitespace_or_newline* ~ i
 
 // Type alias types ------------------------------------------------------------
 type_kw = _{ "type" }
-type_alias = { type_kw ~ ident ~ whitespace+ ~ package_ident }
+type_alias_target = { interface | primitive | array | map | ident }
+package_type_alias = { type_kw ~ whitespace+ ~ ident ~ whitespace+ ~ package_ident }
+local_type_alias = { type_kw ~ whitespace+ ~ ident ~ whitespace+ ~ type_alias_target }
+type_alias = ${ local_type_alias | package_type_alias }
 
 // Function types ------------------------------------------------------------
 function_kw = _{ "func" }

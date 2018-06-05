@@ -73,6 +73,19 @@ pub fn parse_go_file(path: &PathBuf) -> Result<(GoCode, RustCode), Error> {
     Ok(parse_go_string(go_code)?)
 }
 
+fn add_sorted_imports(scope: &mut Scope, libraries: &HashSet<String>) {
+    // Stable sort the libraries.
+    let mut ordered_libs: Vec<String> = libraries.iter().cloned().collect();
+    ordered_libs.sort();
+
+    // Import required libraries.
+    for lib in ordered_libs {
+        // Lame.
+        let parts: Vec<&str> = lib.rsplitn(2, "::").collect();
+        scope.import(parts[1], parts[0]);
+    }
+}
+
 pub fn parse_go_string(go_source: String) -> Result<(GoCode, RustCode), Error> {
     let source = go_source.clone();
 
@@ -86,20 +99,22 @@ pub fn parse_go_string(go_source: String) -> Result<(GoCode, RustCode), Error> {
             Rule::struct_def => {
                 let (parsed_struct, required_libraries) = parse_struct(pair.into_inner())?;
                 scope.push_struct(parsed_struct);
-
-                // Stable sort the libraries.
-                let mut ordered_libs: Vec<String> = required_libraries.iter().cloned().collect();
-                ordered_libs.sort();
-
-                // Import required libraries.
-                for lib in ordered_libs {
-                    // Lame.
-                    let parts: Vec<&str> = lib.rsplitn(2, "::").collect();
-                    scope.import(parts[1], parts[0]);
+                add_sorted_imports(&mut scope, &required_libraries);
+            }
+            Rule::type_alias => {
+                let alias = parse_type_alias(pair.into_inner())?;
+                if let Some((name, target)) = alias {
+                    add_sorted_imports(&mut scope, &target.libraries);
+                    // XXX: Add type definition support to `codegen`
+                    scope.raw(&format!("pub type {} = {};", name, target.value));
                 }
             }
             // Skip some things for now.
-            Rule::any_comment | Rule::package_def | Rule::import | Rule::import_multiple | Rule::function => {
+            Rule::any_comment
+            | Rule::package_def
+            | Rule::import
+            | Rule::import_multiple
+            | Rule::function => {
                 debug!("Skipping: {}", pair.clone().into_span().as_str());
                 ()
             }
@@ -135,6 +150,43 @@ struct FieldDef {
 
 fn parse_comment(c: &str) -> String {
     c.replacen("//", "", 1).trim().to_string()
+}
+
+fn parse_type_alias(pairs: Pairs<Rule>) -> Result<Option<(String, RustType)>, Error> {
+    debug!("Parsing type alias");
+    let mut value = None;
+    for pair in pairs {
+        match pair.as_rule() {
+            Rule::local_type_alias => {
+                value = parse_local_type_alias(pair.into_inner())?;
+            }
+            Rule::package_type_alias => (),
+            _ => unreachable!(),
+        }
+    }
+    Ok(value)
+}
+
+fn parse_local_type_alias(pairs: Pairs<Rule>) -> Result<Option<(String, RustType)>, Error> {
+    debug!("Parsing local type alias");
+    let mut name: Option<String> = None;
+    let mut target: Option<GoType> = None;
+
+    for pair in pairs {
+        let span = pair.clone().into_span();
+        match pair.as_rule() {
+            Rule::ident => name = Some(mangle(span.as_str())),
+            Rule::type_alias_target => {
+                target = Some(parse_go_type(pair.into_inner())?);
+            }
+            _ => unreachable!(),
+        }
+    }
+
+    let name = name.expect("parsed name");
+    let target = target.expect("parsed target");
+
+    Ok(Some((name, translate_go_type_to_rust_type(target)?)))
 }
 
 fn parse_struct(pairs: Pairs<Rule>) -> Result<(codegen::Struct, HashSet<String>), Error> {
