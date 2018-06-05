@@ -6,8 +6,8 @@ extern crate rustc_test as test;
 use glob::glob;
 use std::env;
 use std::fs::File;
-use std::io::BufReader;
 use std::io::prelude::*;
+use std::io::BufReader;
 use std::path::Path;
 use std::path::PathBuf;
 use test::{DynTestFn, DynTestName, TestDesc, TestDescAndFn};
@@ -21,7 +21,7 @@ fn mk_test(desc: &str, input: String, expect: String, expected_path: PathBuf) ->
             // Add support for recording fixtures.
             if let Ok(_) = env::var("GO_TO_RUST_FIXTURE_RECORD") {
                 let mut f = File::create(expected_path.clone()).expect("fixture to be opened");
-                f.write_all(output.as_bytes())
+                f.write_all(output.to_string().as_bytes())
                     .expect("fixture to be written");
             }
 
