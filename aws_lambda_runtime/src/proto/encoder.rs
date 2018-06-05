@@ -4,7 +4,7 @@ use std::marker::PhantomData;
 use bytes::Buf;
 use failure::Error;
 use futures::{Async, AsyncSink, Poll, Sink, StartSend};
-use gob::{StreamSerializer, ser::TypeId};
+use gob::{ser::TypeId, StreamSerializer};
 use serde::Serialize;
 use serde_bytes::ByteBuf;
 use serde_schema::SchemaSerialize;

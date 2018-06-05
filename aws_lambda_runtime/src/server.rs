@@ -4,8 +4,8 @@ use std::rc::Rc;
 use failure::Error;
 use futures::stream::FuturesUnordered;
 use futures::{Async, Future, Poll, Sink, Stream};
-use serde::Serialize;
 use serde::de::DeserializeOwned;
+use serde::Serialize;
 use tokio_core::net::{TcpListener, TcpStream};
 use tokio_core::reactor::Handle;
 use tokio_io::{AsyncRead, AsyncWrite};
@@ -130,7 +130,7 @@ where
             match try_ready!(self.futures.poll()) {
                 None => {
                     return Ok(Async::Ready(()));
-                },
+                }
                 Some((seq, result)) => {
                     self.encoder
                         .start_send(proto::Response::Invoke(seq, result))?;
@@ -157,10 +157,10 @@ where
                 },
                 Ok(Async::NotReady) => {
                     return Ok(Async::NotReady);
-                },
+                }
                 Ok(Async::Ready(None)) => {
                     return Ok(Async::Ready(()));
-                },
+                }
                 Err(proto::DecodeError::User(seq, err)) => {
                     self.encoder
                         .start_send(proto::Response::Invoke(seq, Err(err)))?;

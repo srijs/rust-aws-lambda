@@ -19,7 +19,7 @@ extern crate void;
 
 use failure::Error;
 use futures::IntoFuture;
-use serde::{Serialize, de::DeserializeOwned};
+use serde::{de::DeserializeOwned, Serialize};
 
 pub mod context;
 mod proto;

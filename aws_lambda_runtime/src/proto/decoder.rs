@@ -113,10 +113,7 @@ where
             .map_err(|err| DecodeError::User(seq, err.into()))?;
 
         Ok(Async::Ready(Some(Request::Invoke(
-            seq,
-            deadline,
-            ctx,
-            payload,
+            seq, deadline, ctx, payload,
         ))))
     }
 }

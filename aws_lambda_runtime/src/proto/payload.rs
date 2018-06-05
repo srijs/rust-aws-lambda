@@ -1,5 +1,5 @@
-use serde::{Deserializer, de::IgnoredAny, de::Visitor};
-use serde_json::{Deserializer as JsonDeserializer, Error, de::SliceRead};
+use serde::{de::IgnoredAny, de::Visitor, Deserializer};
+use serde_json::{de::SliceRead, Deserializer as JsonDeserializer, Error};
 
 pub struct PayloadDeserializer<'a> {
     inner: JsonDeserializer<SliceRead<'a>>,

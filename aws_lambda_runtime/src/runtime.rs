@@ -6,8 +6,8 @@ use std::rc::Rc;
 
 use failure::Error;
 use futures::IntoFuture;
-use serde::Serialize;
 use serde::de::DeserializeOwned;
+use serde::Serialize;
 use tokio_core::net::TcpListener;
 use tokio_core::reactor::{Core, Handle};
 use tokio_service::{NewService, Service};
