@@ -4,6 +4,7 @@ pub mod cloudwatch_events;
 pub mod codepipeline_job;
 pub mod cognito;
 pub mod config;
+pub mod lex;
 pub mod s3;
 pub mod ses;
 pub mod sns;

@@ -55,8 +55,6 @@ fn get_blacklist() -> HashSet<String> {
     blacklist.insert("epoch_time".to_string());
 
     // The following are very close to working.
-    // https://github.com/aws/aws-lambda-go/blob/master/events/lex.go
-    blacklist.insert("lex".to_string());
     // https://github.com/aws/aws-lambda-go/blob/master/events/kinesis.go
     blacklist.insert("kinesis".to_string());
     blacklist
