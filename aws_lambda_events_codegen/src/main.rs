@@ -97,9 +97,16 @@ fn write_mod_index(
     Ok(())
 }
 
-fn read_example_event(sdk_location: &PathBuf, service_name: &str) -> Result<Option<String>> {
-    let mut test_fixture = sdk_location.clone();
-    test_fixture.push(format!("events/testdata/{}-event.json", service_name));
+fn find_example_event(sdk_location: &PathBuf, service_name: &str) -> Result<Option<String>> {
+    let location = match service_name.as_ref() {
+        "codepipeline_job" => "events/testdata/codepipline-event.json".to_string(),
+        _ => format!("events/testdata/{}-event.json", service_name),
+    };
+    let p = sdk_location.join(location);
+    read_example_event(&p, service_name)
+}
+
+fn read_example_event(test_fixture: &PathBuf, service_name: &str) -> Result<Option<String>> {
     trace!(
         "Looking for example event: {}",
         test_fixture.to_string_lossy()
@@ -196,7 +203,7 @@ main!(|args: Cli, log_level: verbosity| {
             debug!("Rust-----v\n{}", rust);
 
             // Check for an example event in their test data.
-            let example_event = read_example_event(&args.sdk_location, &file_name)?;
+            let example_event = find_example_event(&args.sdk_location, &file_name)?;
 
             parsed_files.push(ParsedEventFile {
                 service_name: file_name.into_owned(),
