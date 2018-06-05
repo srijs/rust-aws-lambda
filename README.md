@@ -11,15 +11,15 @@ This repository contains multiple crates that make it possible to run programs w
 Because this project is still in an early (but functional!) stage, it has not yet been published to the `crates` registry. You will therefore need to depend directly on the Github repository. Add the following to the `[dependencies]` section in your `Cargo.toml` file.
 
 ```toml
-aws_lambda_runtime = { git = "https://github.com/srijs/rust-aws-lambda" }
+aws_lambda = { git = "https://github.com/srijs/rust-aws-lambda" }
 ```
 
 ### Create
 
-The `aws_lamba_runtime` crate provides a runtime environment which will listen for messages from the lambda environment, and call a function every time the lambda is invoked. This function can be async, as the runtime itself is based on top of `futures` and `tokio`.
+The `start` function will launch a runtime which will listen for messages from the lambda environment, and call a handler function every time the lambda is invoked. This handler function can be async, as the runtime itself is based on top of `futures` and `tokio`.
 
-```rust
-extern crate aws_lambda_runtime as lambda;
+```rust,no_run
+extern crate aws_lambda as lambda;
 
 fn main() {
     // start the runtime, and return a greeting every time we are invoked
@@ -29,10 +29,10 @@ fn main() {
 
 ### Input
 
-To provide input data to your function, you can change the type of the argument that the function accepts. For this to work, the argument type needs to implement the `serde::Deserialize` trait (most types in the standard library do).
+To provide input data to your handler function, you can change the type of the argument that the function accepts. For this to work, the argument type needs to implement the `serde::Deserialize` trait (most types in the standard library do).
 
-```rust
-extern crate aws_lambda_runtime as lambda;
+```rust,no_run
+extern crate aws_lambda as lambda;
 
 use std::collections::HashMap;
 
@@ -44,19 +44,14 @@ fn main() {
 }
 ```
 
-Additionally, the `aws_lambda_events` crate provides strongly-typed lambda event types for use with [AWS event sources](https://docs.aws.amazon.com/lambda/latest/dg/use-cases.html). To use these types, first add the following to the `[dependencies]` section in your `Cargo.toml` file.
+Additionally, the `events` module provides strongly-typed lambda event types for use with [AWS event sources](https://docs.aws.amazon.com/lambda/latest/dg/use-cases.html). 
 
-```toml
-aws_lambda_events = { git = "https://github.com/srijs/rust-aws-lambda" }
-```
+For example, this would print out all the `S3Event` record names, assuming your lambda function was subscribed to the [proper S3 events](https://docs.aws.amazon.com/lambda/latest/dg/with-s3-example.html):
 
-Then use the types defined in the crate. For example, this would print out all the `S3Event` record names, assuming your lambda function was subscribed to the [proper S3 events](https://docs.aws.amazon.com/lambda/latest/dg/with-s3-example.html):
+```rust,no_run
+extern crate aws_lambda as lambda;
 
-```rust
-extern crate aws_lambda_runtime as lambda;
-extern crate aws_lambda_events;
-
-use aws_lambda_events::event::s3::S3Event;
+use lambda::event::s3::S3Event;
 
 fn main() {
     lambda::start(|input: S3Event| {
@@ -69,14 +64,14 @@ fn main() {
 }
 ```
 
-Note that the types in `aws_lambda_events` are automatically generated from the [official Go SDK](https://github.com/aws/aws-lambda-go/tree/master/events) and thus are generally up-to-date.
+Note that the types in `events` are automatically generated from the [official Go SDK](https://github.com/aws/aws-lambda-go/tree/master/events) and thus are generally up-to-date.
 
 ### Context
 
 While your function is running you can call `Context::current()` to get additional information, such as the ARN of your lambda, the Amazon request id or the Cognito identity of the calling application.
 
-```rust
-extern crate aws_lambda_runtime as lambda;
+```rust,no_run
+extern crate aws_lambda as lambda;
 
 fn main() {
     lambda::start(|()| {

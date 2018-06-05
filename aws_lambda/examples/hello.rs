@@ -1,4 +1,4 @@
-extern crate aws_lambda_runtime as lambda;
+extern crate aws_lambda as lambda;
 extern crate env_logger;
 
 fn main() {
