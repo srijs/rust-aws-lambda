@@ -7,7 +7,7 @@ use futures::{Async, AsyncSink, Poll, Sink, StartSend};
 use gob::{StreamSerializer, ser::TypeId};
 use serde::Serialize;
 use serde_bytes::ByteBuf;
-use serde_schema::{SchemaSerialize, SchemaSerializer};
+use serde_schema::SchemaSerialize;
 use tokio_io::AsyncWrite;
 
 use super::messages;
@@ -47,11 +47,10 @@ where
 {
     pub fn new(w: W) -> Result<Encoder<W, T>, Error> {
         let mut stream = StreamSerializer::new(Vec::new());
-        let type_id_response = RpcResponse::schema_register((&mut stream).schema_mut())?;
-        let type_id_ping_response =
-            messages::PingResponse::schema_register((&mut stream).schema_mut())?;
+        let type_id_response = RpcResponse::schema_register(stream.schema_mut())?;
+        let type_id_ping_response = messages::PingResponse::schema_register(stream.schema_mut())?;
         let type_id_invoke_response =
-            messages::InvokeResponse::schema_register((&mut stream).schema_mut())?;
+            messages::InvokeResponse::schema_register(stream.schema_mut())?;
         Ok(Encoder {
             write: w,
             flushing: Cursor::new(Vec::new()),
