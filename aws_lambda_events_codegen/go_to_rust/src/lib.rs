@@ -15,8 +15,8 @@ extern crate heck;
 use codegen::{Field, Scope, Struct};
 use failure::Error;
 use heck::SnakeCase;
-use pest::Parser;
 use pest::iterators::Pairs;
+use pest::Parser;
 use std::boxed::Box;
 use std::collections::HashSet;
 use std::fmt;
@@ -35,19 +35,28 @@ impl fmt::Display for GoCode {
         write!(f, "{}", self.0)
     }
 }
-#[derive(Debug, Clone, PartialEq)]
-pub struct RustCode(String);
+#[derive(Debug, Clone)]
+pub struct RustCode(Scope);
 impl RustCode {
     pub fn new(text: String) -> Self {
-        RustCode(text)
+        RustCode(Scope::new().raw(&text).clone())
     }
-    pub fn as_bytes(&self) -> &[u8] {
-        self.0.as_bytes()
+    pub fn scope(&self) -> codegen::Scope {
+        self.0.clone()
+    }
+    pub fn push_module(&mut self, m: codegen::Module) -> &mut Self {
+        self.0.push_module(m);
+        self
     }
 }
 impl fmt::Display for RustCode {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.0)
+        write!(f, "{}", self.0.to_string())
+    }
+}
+impl PartialEq for RustCode {
+    fn eq(&self, other: &RustCode) -> bool {
+        self.0.to_string() == other.to_string()
     }
 }
 
@@ -112,7 +121,7 @@ pub fn parse_go_string(go_source: String) -> Result<(GoCode, RustCode), Error> {
             .expect("formatted code");
     */
 
-    Ok((GoCode(go_source), RustCode(scope.to_string())))
+    Ok((GoCode(go_source), RustCode(scope)))
 }
 
 #[derive(Debug, Clone)]

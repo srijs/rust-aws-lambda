@@ -1,18 +1,22 @@
 extern crate go_to_rust;
 #[macro_use]
 extern crate quicli;
+extern crate codegen;
 
 use quicli::prelude::*;
 use std::collections::HashSet;
 use std::fs::File;
+use std::io::prelude::*;
 use std::io::Write;
 use std::path::PathBuf;
 
 #[derive(Debug)]
-struct ParsedFile {
+struct ParsedEventFile {
+    service_name: String,
     path: PathBuf,
     go: go_to_rust::GoCode,
     rust: go_to_rust::RustCode,
+    example_event: Option<String>,
 }
 
 /// Generate rust code for AWS lambda events sourced from `aws-go-sdk`
@@ -71,7 +75,7 @@ fn overwrite_warning(path: &PathBuf, overwrite: bool) -> Option<()> {
 
 fn write_mod_index(
     mod_path: &PathBuf,
-    parsed_files: &Vec<ParsedFile>,
+    parsed_files: &Vec<ParsedEventFile>,
     overwrite: bool,
 ) -> Result<()> {
     if overwrite_warning(&mod_path, overwrite).is_none() {
@@ -93,8 +97,84 @@ fn write_mod_index(
     Ok(())
 }
 
+fn read_example_event(sdk_location: &PathBuf, service_name: &str) -> Result<Option<String>> {
+    let mut test_fixture = sdk_location.clone();
+    test_fixture.push(format!("events/testdata/{}-event.json", service_name));
+    trace!(
+        "Looking for example event: {}",
+        test_fixture.to_string_lossy()
+    );
+    if !test_fixture.exists() {
+        info!("No example event for service: {}", service_name);
+        return Ok(None);
+    }
+    info!("Found example event for service: {}", service_name);
+    let mut f = File::open(test_fixture).expect("fixture not found");
+    let mut contents = String::new();
+    f.read_to_string(&mut contents)
+        .expect("something went wrong reading the fixture");
+    debug!("Example event content: {}", contents);
+    Ok(Some(contents))
+}
+
+fn write_fixture(
+    service_name: &str,
+    example_event: &String,
+    out_dir: &PathBuf,
+    overwrite: &bool,
+) -> Result<PathBuf> {
+    let relative = PathBuf::from(format!("fixtures/example-{}-event.json", service_name));
+    // Write the example event to the output location.
+    let full = out_dir.join(relative.clone());
+    {
+        let parent = full.parent().expect("parent directory");
+        if !parent.exists() {
+            trace!("Creating fixture directory: {:?}", parent);
+            create_dir(&parent)?;
+        }
+    }
+    if overwrite_warning(&full, *overwrite).is_none() {
+        let mut f = File::create(full)?;
+        f.write_all(example_event.as_bytes())?;
+        f.write_all("\n".as_bytes())?;
+    }
+    Ok(relative)
+}
+
+fn generate_test_module(scope: &codegen::Scope, relative: &PathBuf) -> Result<codegen::Module> {
+    let mut toplevel_type = None;
+    for item in scope.items() {
+        match item {
+            codegen::Item::Struct(s) => {
+                if s.ty().name().ends_with("Event") {
+                    toplevel_type = Some(s.ty().name());
+                    break;
+                }
+            }
+            _ => continue,
+        }
+    }
+    let mut test_function = codegen::Function::new("deserializes_event");
+    test_function.annotation(vec!["test"]);
+    test_function.line(format!(
+        r#"let data = include_bytes!("{}");"#,
+        relative.to_string_lossy(),
+    ));
+    test_function.line(format!(
+        r#"let _: {} = serde_json::from_slice(data).unwrap();"#,
+        toplevel_type.expect("top-level type defined"),
+    ));
+
+    let mut test_module = codegen::Module::new("test");
+    test_module.annotation(vec!["cfg(test)"]);
+    test_module.import("super", "*");
+    test_module.scope().raw("extern crate serde_json;");
+    test_module.scope().push_fn(test_function);
+    Ok(test_module)
+}
+
 main!(|args: Cli, log_level: verbosity| {
-    let mut parsed_files: Vec<ParsedFile> = Vec::new();
+    let mut parsed_files: Vec<ParsedEventFile> = Vec::new();
 
     // The glob pattern we are going to use to find the go files with event defs.
     let pattern = format!("{}/events/*.go", args.sdk_location.to_string_lossy());
@@ -109,12 +189,22 @@ main!(|args: Cli, log_level: verbosity| {
 
         // Filter out tests and blacklisted files.
         if !file_name.contains("_test") && !blacklist.contains(&*file_name) {
+            // Parse the code.
             info!("Parsing: {}", x.to_string_lossy());
             let (go, rust) = go_to_rust::parse_go_file(&path)?;
             debug!("Go ------v\n{}", go);
             debug!("Rust-----v\n{}", rust);
 
-            parsed_files.push(ParsedFile { path, go, rust });
+            // Check for an example event in their test data.
+            let example_event = read_example_event(&args.sdk_location, &file_name)?;
+
+            parsed_files.push(ParsedEventFile {
+                service_name: file_name.into_owned(),
+                path,
+                go,
+                rust,
+                example_event,
+            });
         }
     }
 
@@ -125,7 +215,7 @@ main!(|args: Cli, log_level: verbosity| {
     }
 
     // Write the files.
-    for parsed in &parsed_files {
+    for parsed in &mut parsed_files {
         let out_dir = args.output_location.clone();
         let output_path = out_dir.join(
             parsed
@@ -134,9 +224,27 @@ main!(|args: Cli, log_level: verbosity| {
                 .file_name()
                 .expect("a file name exists"),
         );
+
+        if let Some(ref example_event) = parsed.example_event {
+            // Write the example event to a test fixture.
+            trace!("Writing fixure for: {:?}", parsed.service_name);
+            let relative = write_fixture(
+                &parsed.service_name,
+                &example_event,
+                &out_dir,
+                &args.overwrite,
+            )?;
+
+            // Generate a test module with a test that deserializes the example
+            // event.
+            trace!("Generating test module for: {:?}", parsed.service_name);
+            let test_module = generate_test_module(&parsed.rust.scope(), &relative)?;
+            parsed.rust.push_module(test_module);
+        }
+
         if overwrite_warning(&output_path, args.overwrite).is_none() {
             let mut f = File::create(output_path)?;
-            f.write_all(parsed.rust.as_bytes())?;
+            f.write_all(parsed.rust.to_string().as_bytes())?;
             f.write_all("\n".as_bytes())?;
         }
     }
