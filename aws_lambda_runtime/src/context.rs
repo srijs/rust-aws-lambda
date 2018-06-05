@@ -4,26 +4,48 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::sync::Arc;
 
-/// Information about the calling application.
+/// Information about the client application that invoked the lambda function.
 #[derive(Debug)]
-pub struct ClientApplication {
+pub struct Client {
     pub(crate) installation_id: String,
     pub(crate) app_title: String,
     pub(crate) app_version_code: String,
     pub(crate) app_package_name: String,
 }
 
+impl Client {
+    /// Installation id of the application.
+    pub fn installation_id(&self) -> &str {
+        &self.installation_id
+    }
+
+    /// Title of the application.
+    pub fn app_title(&self) -> &str {
+        &self.app_title
+    }
+
+    /// Version of the application.
+    pub fn app_version_code(&self) -> &str {
+        &self.app_version_code
+    }
+
+    /// Package name of the application.
+    pub fn app_package_name(&self) -> &str {
+        &self.app_package_name
+    }
+}
+
 /// Client-specific information passed by the calling application.
 #[derive(Debug)]
 pub struct ClientContext {
-    pub(crate) client: ClientApplication,
+    pub(crate) client: Client,
     pub(crate) env: HashMap<String, String>,
     pub(crate) custom: HashMap<String, String>,
 }
 
 impl ClientContext {
-    /// Get the client information provided by the mobile SDK.
-    pub fn client(&self) -> &ClientApplication {
+    /// Client information provided by the mobile SDK.
+    pub fn client(&self) -> &Client {
         &self.client
     }
 
@@ -32,7 +54,7 @@ impl ClientContext {
         self.custom.get(key).map(|s| s.as_ref())
     }
 
-    /// Gets environment information provided by mobile SDK.
+    /// Get environment information provided by mobile SDK.
     pub fn get_environment(&self, key: &str) -> Option<&str> {
         self.env.get(key).map(|s| s.as_ref())
     }
