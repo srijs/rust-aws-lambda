@@ -1,5 +1,5 @@
-use bytes::Bytes;
 use chrono::{DateTime, Utc};
+use serde_json::Value;
 use std::collections::HashMap;
 
 /// `AutoScalingEvent` struct is used to parse the json for auto scaling event types //
@@ -23,5 +23,5 @@ pub struct AutoScalingEvent {
     pub region: String,
     /// Information about resources impacted by event
     pub resources: Vec<String>,
-    pub detail: HashMap<String, Bytes>,
+    pub detail: HashMap<String, Value>,
 }

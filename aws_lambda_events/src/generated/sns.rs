@@ -1,5 +1,5 @@
-use bytes::Bytes;
 use chrono::{DateTime, Utc};
+use serde_json::Value;
 use std::collections::HashMap;
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -31,7 +31,7 @@ pub struct SNSEntity {
     #[serde(rename = "TopicArn")]
     pub topic_arn: String,
     #[serde(rename = "MessageAttributes")]
-    pub message_attributes: HashMap<String, Bytes>,
+    pub message_attributes: HashMap<String, Value>,
     #[serde(rename = "SignatureVersion")]
     pub signature_version: String,
     #[serde(rename = "Timestamp")]

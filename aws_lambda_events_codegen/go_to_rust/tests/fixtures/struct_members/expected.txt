@@ -1,4 +1,3 @@
-use bytes::Bytes;
 use chrono::{DateTime, Utc};
 use serde_json::Value;
 use std::collections::HashMap;
@@ -21,6 +20,6 @@ pub struct SimpleEmailMessage {
     pub blah: u64,
     pub whatever: i64,
     pub boo: i64,
-    pub detail: HashMap<String, Bytes>,
+    pub detail: HashMap<String, Value>,
     pub data: Vec<u8>,
 }
