@@ -9,6 +9,7 @@ bytes = "0.4.8"
 failure = "0.1.1"
 futures = "0.1.21"
 gob = { git = "https://github.com/srijs/rust-gob" }
+log = "0.4.1"
 serde = "1.0.39"
 serde_bytes = "0.10.4"
 serde_derive = "1.0.42"
@@ -19,3 +20,6 @@ tokio-core = "0.1.17"
 tokio-io = "0.1.6"
 tokio-service = "0.1.0"
 void = "1.0.2"
+
+[dev-dependencies]
+env_logger = "0.5.10"

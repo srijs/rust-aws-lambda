@@ -4,6 +4,8 @@ extern crate failure;
 #[macro_use]
 extern crate futures;
 extern crate gob;
+#[macro_use]
+extern crate log;
 extern crate serde;
 extern crate serde_bytes;
 #[macro_use]
@@ -19,7 +21,7 @@ extern crate void;
 
 use failure::Error;
 use futures::IntoFuture;
-use serde::{de::DeserializeOwned, Serialize};
+use serde::{Serialize, de::DeserializeOwned};
 
 pub mod context;
 mod proto;

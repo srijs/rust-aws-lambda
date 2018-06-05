@@ -76,8 +76,8 @@ where
                         Ok(Async::Ready(None)) => Ok(Async::NotReady),
                         Ok(Async::Ready(Some(_))) => self.poll(),
                         Ok(Async::NotReady) => Ok(Async::NotReady),
-                        Err(_err) => {
-                            // TODO: log connection error
+                        Err(err) => {
+                            error!("connection error: {}", err);
                             self.poll()
                         }
                     }
