@@ -1,5 +1,5 @@
-use bytes::Bytes;
 use std::collections::HashMap;
+use serde_json::Value;
 
 /// `APIGatewayProxyRequest` contains data coming from the API Gateway proxy
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -49,7 +49,7 @@ pub struct APIGatewayProxyRequestContext {
     pub identity: APIGatewayRequestIdentity,
     #[serde(rename = "resourcePath")]
     pub resource_path: String,
-    pub authorizer: HashMap<String, Bytes>,
+    pub authorizer: HashMap<String, Value>,
     #[serde(rename = "httpMethod")]
     pub http_method: String,
     /// The API Gateway rest API Id
@@ -165,7 +165,7 @@ pub struct APIGatewayCustomAuthorizerResponse {
     pub principal_id: String,
     #[serde(rename = "policyDocument")]
     pub policy_document: APIGatewayCustomAuthorizerPolicy,
-    pub context: Option<HashMap<String, Bytes>>,
+    pub context: Option<HashMap<String, Value>>,
     #[serde(rename = "usageIdentifierKey")]
     pub usage_identifier_key: Option<String>,
 }

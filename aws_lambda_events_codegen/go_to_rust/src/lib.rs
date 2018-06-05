@@ -468,12 +468,13 @@ fn translate_go_type_to_rust_type(go_type: GoType) -> Result<RustType, Error> {
                 libraries,
             }
         }
-        // For now we treat interfaces as a bag of bytes.
+        // For now we treat interfaces as a generic JSON value and make callers
+        // deal with it.
         GoType::InterfaceType => {
             let mut libraries = HashSet::new();
-            libraries.insert("bytes::Bytes".to_string());
+            libraries.insert("serde_json::Value".to_string());
             RustType {
-                value: "Bytes".to_string(),
+                value: "Value".to_string(),
                 libraries,
             }
         }
