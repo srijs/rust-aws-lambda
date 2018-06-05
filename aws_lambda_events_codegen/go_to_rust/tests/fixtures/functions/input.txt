@@ -1,0 +1,22 @@
+func (h *LexEvent) Clear() {
+	h.Bot = nil
+	h.CurrentIntent = nil
+	h.DialogAction = nil
+}
+
+func foo() {
+}
+
+func bar(x int) {
+}
+
+func baz(x int) int {
+}
+
+func hmmm(x int, y int) int {
+}
+
+func (a *Whatever) blah(x int, y bool) MyType {
+}
+
+type ParsedStruct struct {}

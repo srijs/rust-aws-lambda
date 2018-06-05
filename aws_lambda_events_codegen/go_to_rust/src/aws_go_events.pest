@@ -4,6 +4,7 @@ whitespace_or_newline = _{ whitespace | newline }
 comment_line = @{ whitespace* ~ any_comment ~ whitespace* }
 any_comment = { block_comment | "//" ~ (!newline ~ any)* }
 block_comment = _{ "/*" ~ (block_comment | !"*/" ~ any)* ~ "*/" }
+pointer = { "*" }
 
 alpha = _{ 'a'..'z' | 'A'..'Z' }
 digit = _{ '0'..'9' }
@@ -42,7 +43,6 @@ json_meta = _{ json_name ~ omit_empty? }
 json_mapping = { "`json:\"" ~ json_meta ~ "\"`" ~ whitespace* ~ any_comment?  }
 
 struct_field_type = { interface | primitive | array | map | package_ident | ident }
-pointer = { "*" }
 struct_field = ${ ident ~ whitespace+ ~ pointer? ~ struct_field_type ~ whitespace* ~ json_mapping? }
 
 struct_fields = { struct_field ~ (newline+ ~ struct_field)* }
@@ -68,6 +68,32 @@ import_multiple = ${ import_kw ~ whitespace+ ~ "(" ~ (whitespace_or_newline* ~ i
 type_kw = _{ "type" }
 type_alias = { type_kw ~ ident ~ whitespace+ ~ package_ident }
 
+// Function types ------------------------------------------------------------
+function_kw = _{ "func" }
+function_body = _{ (!"}" ~ any)* } // XXX: This isn't right.
+
+single_return = { primitive | non_primitive | ident }
+multiple_return = ${ "(" ~ single_return ~ ("," ~ single_return)* ~ ")" }
+named_return = ${ "(" ~ whitespace* ~ ident ~ whitespace+ ~ ident ~ whitespace* ~ ")" }
+function_return = { single_return | multiple_return | named_return }
+
+function_arg_type = { primitive | non_primitive | ident }
+function_arg = ${ ident ~ (whitespace+ ~ function_arg_type)? }
+function_args = _{ function_arg ~ ("," ~ whitespace* ~ function_arg)* }
+
+pointer_receiver = ${ "(" ~ whitespace* ~ ident ~ whitespace+ ~ pointer? ~ whitespace* ~ ident ~ whitespace* ~ ")" }
+
+function = ${
+  function_kw ~ whitespace+ ~
+  pointer_receiver? ~ whitespace* ~
+  ident ~ whitespace* ~
+  "(" ~ whitespace* ~ function_args? ~ whitespace* ~ ")" ~ whitespace* ~
+  function_return? ~ whitespace* ~
+  "{" ~ whitespace_or_newline* ~
+  function_body? ~ whitespace_or_newline* ~
+  "}"
+}
+
 // Top-level type --------------------------------------------------------------
-all = _{ package_def | import | import_multiple | struct_def | type_alias | any_comment }
+all = _{ function | package_def | import | import_multiple | struct_def | type_alias | any_comment }
 aws_go_events = _{  (newline? ~ newline? ~ all ~ newline)+  }

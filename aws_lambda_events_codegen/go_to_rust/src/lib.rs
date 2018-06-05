@@ -99,7 +99,7 @@ pub fn parse_go_string(go_source: String) -> Result<(GoCode, RustCode), Error> {
                 }
             }
             // Skip some things for now.
-            Rule::any_comment | Rule::package_def | Rule::import | Rule::import_multiple => {
+            Rule::any_comment | Rule::package_def | Rule::import | Rule::import_multiple | Rule::function => {
                 debug!("Skipping: {}", pair.clone().into_span().as_str());
                 ()
             }
