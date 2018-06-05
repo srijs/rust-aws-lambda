@@ -48,7 +48,7 @@ pub struct CodePipelineConfiguration {
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct CodePipelineInputArtifact {
     pub location: CodePipelineInputLocation,
-    pub revision: String,
+    pub revision: Option<String>,
     pub name: String,
 }
 
@@ -74,7 +74,7 @@ pub struct CodePipelineS3Location {
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct CodePipelineOutputArtifact {
     pub location: CodePipelineInputLocation,
-    pub revision: String,
+    pub revision: Option<String>,
     pub name: String,
 }
 

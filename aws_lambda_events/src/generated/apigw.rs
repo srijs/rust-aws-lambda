@@ -96,7 +96,7 @@ pub struct APIGatewayCustomAuthorizerRequestTypeRequestIdentity {
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct APIGatewayCustomAuthorizerContext {
     #[serde(rename = "principalId")]
-    pub principal_id: String,
+    pub principal_id: Option<String>,
     #[serde(rename = "stringKey")]
     pub string_key: Option<String>,
     #[serde(rename = "numKey")]
