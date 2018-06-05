@@ -45,3 +45,16 @@ pub struct SNSEntity {
     #[serde(rename = "Subject")]
     pub subject: String,
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    extern crate serde_json;
+
+    #[test]
+    fn deserializes_event() {
+        let data = include_bytes!("fixtures/example-sns-event.json");
+        let _: SNSEvent = serde_json::from_slice(data).unwrap();
+    }
+}
