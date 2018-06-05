@@ -254,6 +254,7 @@ fn parse_struct_field(pairs: Pairs<Rule>) -> Result<FieldDef, Error> {
     let mut name: Option<String> = None;
     let mut json: Option<JsonMapping> = None;
     let mut go_type: Option<GoType> = None;
+    let mut is_pointer = false;
 
     for pair in pairs {
         debug!("{:?}", pair);
@@ -261,6 +262,7 @@ fn parse_struct_field(pairs: Pairs<Rule>) -> Result<FieldDef, Error> {
         match pair.as_rule() {
             Rule::ident => name = Some(mangle(span.as_str())),
             Rule::json_mapping => json = Some(parse_json_mapping(pair.into_inner())?),
+            Rule::pointer => is_pointer = true,
             Rule::struct_field_type => go_type = Some(parse_go_type(pair.into_inner())?),
             _ => unimplemented!(),
         }
@@ -272,11 +274,18 @@ fn parse_struct_field(pairs: Pairs<Rule>) -> Result<FieldDef, Error> {
         None
     };
 
-    let omit_empty = if let Some(j) = json.clone() {
+    let mut omit_empty = if let Some(j) = json.clone() {
+        // We omit empty (aka use an Option) if the JSON says so.
         j.omit_empty
     } else {
+        // By default we don't omit empty.
         false
     };
+
+    if is_pointer {
+        // If given a pointer, it can be `nil` and essentially empty.
+        omit_empty = true
+    }
 
     let comment =
         if let Some(j) = json { j.comment } else { None };
@@ -703,6 +712,7 @@ mod tests {
                 tokens: [
                     struct_field(0, 18, [
                         ident(0, 12),
+                        pointer(13, 14),
                         struct_field_type(14, 18, [
                             primitive(14, 18, [
                                 boolean(14, 18),
