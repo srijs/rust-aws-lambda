@@ -28,3 +28,16 @@ pub struct ConfigEvent {
     pub rule_parameters: String,
     pub version: String,
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    extern crate serde_json;
+
+    #[test]
+    fn deserializes_event() {
+        let data = include_bytes!("fixtures/example-config-event.json");
+        let _: ConfigEvent = serde_json::from_slice(data).unwrap();
+    }
+}

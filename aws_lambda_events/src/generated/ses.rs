@@ -85,3 +85,16 @@ pub struct SimpleEmailReceiptAction {
 pub struct SimpleEmailVerdict {
     pub status: String,
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    extern crate serde_json;
+
+    #[test]
+    fn deserializes_event() {
+        let data = include_bytes!("fixtures/example-ses-event.json");
+        let _: SimpleEmailEvent = serde_json::from_slice(data).unwrap();
+    }
+}

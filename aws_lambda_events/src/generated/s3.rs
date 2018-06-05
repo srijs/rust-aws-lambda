@@ -70,3 +70,16 @@ pub struct S3Object {
     pub e_tag: String,
     pub sequencer: String,
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    extern crate serde_json;
+
+    #[test]
+    fn deserializes_event() {
+        let data = include_bytes!("fixtures/example-s3-event.json");
+        let _: S3Event = serde_json::from_slice(data).unwrap();
+    }
+}
