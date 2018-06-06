@@ -11,7 +11,7 @@ pub struct LexEvent {
     #[serde(rename = "inputTranscript")]
     pub input_transcript: Option<String>,
     #[serde(rename = "sessionAttributes")]
-    pub session_attributes: HashMap<String, String>,
+    pub session_attributes: Option<HashMap<String, String>>,
     #[serde(rename = "requestAttributes")]
     pub request_attributes: Option<HashMap<String, String>>,
     pub bot: Option<LexBot>,
@@ -25,65 +25,65 @@ pub struct LexEvent {
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct LexBot {
-    pub name: String,
-    pub alias: String,
-    pub version: String,
+    pub name: Option<String>,
+    pub alias: Option<String>,
+    pub version: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct LexCurrentIntent {
-    pub name: String,
-    pub slots: Slots,
+    pub name: Option<String>,
+    pub slots: Option<Slots>,
     #[serde(rename = "slotDetails")]
-    pub slot_details: HashMap<String, SlotDetail>,
+    pub slot_details: Option<HashMap<String, SlotDetail>>,
     #[serde(rename = "confirmationStatus")]
-    pub confirmation_status: String,
+    pub confirmation_status: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct SlotDetail {
-    pub resolutions: Vec<HashMap<String, String>>,
+    pub resolutions: Option<Vec<HashMap<String, String>>>,
     #[serde(rename = "originalValue")]
-    pub original_value: String,
+    pub original_value: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct LexDialogAction {
     #[serde(rename = "type")]
-    pub type_: String,
+    pub type_: Option<String>,
     #[serde(rename = "fulfillmentState")]
-    pub fulfillment_state: String,
-    pub message: HashMap<String, String>,
+    pub fulfillment_state: Option<String>,
+    pub message: Option<HashMap<String, String>>,
     #[serde(rename = "intentName")]
-    pub intent_name: String,
-    pub slots: Slots,
+    pub intent_name: Option<String>,
+    pub slots: Option<Slots>,
     #[serde(rename = "slotToElicit")]
-    pub slot_to_elicit: String,
+    pub slot_to_elicit: Option<String>,
     #[serde(rename = "responseCard")]
-    pub response_card: LexResponseCard,
+    pub response_card: Option<LexResponseCard>,
 }
 
 pub type Slots = HashMap<String, String>;
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct LexResponseCard {
-    pub version: i64,
+    pub version: Option<i64>,
     #[serde(rename = "contentType")]
-    pub content_type: String,
+    pub content_type: Option<String>,
     #[serde(rename = "genericAttachments")]
-    pub generic_attachments: Vec<Attachment>,
+    pub generic_attachments: Option<Vec<Attachment>>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Attachment {
-    pub title: String,
+    pub title: Option<String>,
     #[serde(rename = "subTitle")]
-    pub sub_title: String,
+    pub sub_title: Option<String>,
     #[serde(rename = "imageUrl")]
-    pub image_url: String,
+    pub image_url: Option<String>,
     #[serde(rename = "attachmentLinkUrl")]
-    pub attachment_link_url: String,
-    pub buttons: Vec<HashMap<String, String>>,
+    pub attachment_link_url: Option<String>,
+    pub buttons: Option<Vec<HashMap<String, String>>>,
 }
 
 #[cfg(test)]
