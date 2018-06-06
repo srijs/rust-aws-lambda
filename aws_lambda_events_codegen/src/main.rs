@@ -49,8 +49,6 @@ fn get_blacklist() -> HashSet<String> {
     blacklist.insert("dynamodb".to_string());
     // https://github.com/aws/aws-lambda-go/blob/master/events/epoch_time.go
     blacklist.insert("epoch_time".to_string());
-    // https://github.com/aws/aws-lambda-go/blob/master/events/epoch_time.go
-    blacklist.insert("epoch_time".to_string());
     blacklist
 }
 
