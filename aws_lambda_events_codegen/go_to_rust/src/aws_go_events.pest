@@ -97,6 +97,10 @@ function = ${
   "}"
 }
 
+// Constant type ---------------------------------------------------------------
+constant_kw = _{ "const" }
+constant_def = ${ constant_kw ~ whitespace+ ~ ident ~ whitespace* ~ "=" ~ whitespace* ~ (!newline ~ any)+ ~ newline  }
+
 // Top-level type --------------------------------------------------------------
-all = _{ function | package_def | import | import_multiple | struct_def | type_alias | any_comment }
+all = _{ constant_def | function | package_def | import | import_multiple | struct_def | type_alias | any_comment }
 aws_go_events = _{  (newline? ~ newline? ~ all ~ newline)+  }

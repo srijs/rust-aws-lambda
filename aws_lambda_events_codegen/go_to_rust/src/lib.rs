@@ -114,6 +114,7 @@ pub fn parse_go_string(go_source: String) -> Result<(GoCode, RustCode), Error> {
             }
             // Skip some things for now.
             Rule::any_comment
+            | Rule::constant_def
             | Rule::package_def
             | Rule::import
             | Rule::import_multiple
