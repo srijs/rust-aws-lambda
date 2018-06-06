@@ -11,6 +11,8 @@ type SimpleEmailMessage struct {
 	blah             uint
 	whatever         int
 	boo              int64
+	secs             SecondsEpochTime
+	millisecs        MilliSecondsEpochTime
 	Detail           map[string]interface{}   `json:"detail"`
 	Data             []byte                   `json:"data"`
 }

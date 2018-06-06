@@ -1,6 +1,7 @@
 use chrono::{DateTime, Utc};
 use serde_json::Value;
 use std::collections::HashMap;
+use super::super::deserializers::*;
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct SimpleEmailMessage {
@@ -20,6 +21,11 @@ pub struct SimpleEmailMessage {
     pub blah: u64,
     pub whatever: i64,
     pub boo: i64,
+    #[serde(deserialize_with = "deserialize_seconds")]
+    pub secs: DateTime<Utc>,
+    #[serde(deserialize_with = "deserialize_milliseconds")]
+    pub millisecs: DateTime<Utc>,
     pub detail: HashMap<String, Value>,
+    #[serde(deserialize_with = "deserialize_base64")]
     pub data: Vec<u8>,
 }

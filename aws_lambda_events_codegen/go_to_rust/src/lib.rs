@@ -106,6 +106,9 @@ pub fn parse_go_string(go_source: String) -> Result<(GoCode, RustCode), Error> {
                 if let Some((name, target)) = alias {
                     add_sorted_imports(&mut scope, &target.libraries);
                     // XXX: Add type definition support to `codegen`
+                    for a in target.annotations {
+                        scope.raw(&format!("#[{}]", a));
+                    }
                     scope.raw(&format!("pub type {} = {};", name, target.value));
                 }
             }
@@ -239,7 +242,7 @@ fn parse_struct(pairs: Pairs<Rule>) -> Result<(codegen::Struct, HashSet<String>)
         let member_name = mangle(&f.name.to_snake_case());
 
         // Extract the code and the libraries from the result.
-        let rust_data = translate_go_type_to_rust_type(f.go_type)?;
+        let mut rust_data = translate_go_type_to_rust_type(f.go_type)?;
         for lib in rust_data.libraries.iter() {
             libraries.insert(lib.clone());
         }
@@ -258,11 +261,19 @@ fn parse_struct(pairs: Pairs<Rule>) -> Result<(codegen::Struct, HashSet<String>)
         if let Some(c) = f.comment {
             field.doc(&c);
         }
+
         if let Some(rename) = f.json_name {
             if rename != member_name {
-                field.annotation(vec![&format!("#[serde(rename = \"{}\")]", rename)]);
+                rust_data
+                    .annotations
+                    .push(format!("#[serde(rename = \"{}\")]", rename));
             }
         }
+
+        if !rust_data.annotations.is_empty() {
+            field.annotation(rust_data.annotations.iter().map(String::as_str).collect());
+        }
+
         rust_struct.push_field(field);
     }
 
@@ -395,10 +406,13 @@ enum GoType {
     MapType(Box<GoType>, Box<GoType>),
     InterfaceType,
     TimeType,
+    TimestampMillisecondsType,
+    TimestampSecondsType,
     JsonRawType,
 }
 
 struct RustType {
+    annotations: Vec<String>,
     libraries: HashSet<String>,
     value: String,
 }
@@ -413,7 +427,7 @@ fn parse_go_type(pairs: Pairs<Rule>) -> Result<GoType, Error> {
         go_type = match pair.as_rule() {
             Rule::array => Some(parse_go_type_array(pair.into_inner())?),
             Rule::primitive => Some(parse_go_type_primitive(value)?),
-            Rule::ident => Some(GoType::UserDefined(value.to_string())),
+            Rule::ident => Some(parse_go_ident(value)?),
             Rule::package_ident => Some(parse_go_package_ident(value)?),
             Rule::map => Some(parse_go_type_map(pair.into_inner())?),
             Rule::interface => Some(parse_go_type_interface(value)?),
@@ -484,6 +498,14 @@ fn parse_go_type_primitive(t: &str) -> Result<GoType, Error> {
     }
 }
 
+fn parse_go_ident(t: &str) -> Result<GoType, Error> {
+    match t {
+        "MilliSecondsEpochTime" => Ok(GoType::TimestampMillisecondsType),
+        "SecondsEpochTime" => Ok(GoType::TimestampSecondsType),
+        _ => Ok(GoType::UserDefined(t.to_string())),
+    }
+}
+
 fn parse_go_package_ident(t: &str) -> Result<GoType, Error> {
     match t {
         "time.Time" => Ok(GoType::TimeType),
@@ -502,6 +524,7 @@ fn mangle(s: &str) -> String {
 
 fn make_rust_type_with_no_libraries(value: &str) -> RustType {
     RustType {
+        annotations: vec![],
         value: value.to_string(),
         libraries: HashSet::new(),
     }
@@ -517,10 +540,23 @@ fn translate_go_type_to_rust_type(go_type: GoType) -> Result<RustType, Error> {
         GoType::FloatType => make_rust_type_with_no_libraries("f64"),
         GoType::UserDefined(x) => make_rust_type_with_no_libraries(x),
         GoType::ArrayType(x) => {
-            let i = translate_go_type_to_rust_type(*x.clone())?;
-            RustType {
-                value: format!("Vec<{}>", i.value),
-                libraries: i.libraries,
+            let mut i = translate_go_type_to_rust_type(*x.clone())?;
+            if i.value == "u8" {
+                // Handle []u8 special, as it is base64 encoded.
+                i.libraries.insert("super::super::deserializers::*".to_string());
+                RustType {
+                    annotations: vec![
+                        "#[serde(deserialize_with = \"deserialize_base64\")]".to_string(),
+                    ],
+                    value: format!("Vec<{}>", i.value),
+                    libraries: i.libraries,
+                }
+            } else {
+                RustType {
+                    annotations: vec![],
+                    value: format!("Vec<{}>", i.value),
+                    libraries: i.libraries,
+                }
             }
         }
         GoType::MapType(k, v) => {
@@ -534,6 +570,7 @@ fn translate_go_type_to_rust_type(go_type: GoType) -> Result<RustType, Error> {
             libraries.insert("std::collections::HashMap".to_string());
 
             RustType {
+                annotations: vec![],
                 value: format!("HashMap<{}, {}>", key_data.value, value_data.value),
                 libraries,
             }
@@ -544,6 +581,7 @@ fn translate_go_type_to_rust_type(go_type: GoType) -> Result<RustType, Error> {
             let mut libraries = HashSet::new();
             libraries.insert("serde_json::Value".to_string());
             RustType {
+                annotations: vec![],
                 value: "Value".to_string(),
                 libraries,
             }
@@ -552,16 +590,47 @@ fn translate_go_type_to_rust_type(go_type: GoType) -> Result<RustType, Error> {
             let mut libraries = HashSet::new();
             libraries.insert("serde_json::Value".to_string());
             RustType {
+                annotations: vec![],
                 value: "Value".to_string(),
                 libraries,
             }
         }
+        GoType::TimestampSecondsType => {
+            let mut libraries = HashSet::new();
+            libraries.insert("chrono::DateTime".to_string());
+            libraries.insert("chrono::Utc".to_string());
+            libraries.insert("super::super::deserializers::*".to_string());
+            RustType {
+                annotations: vec![
+                    "#[serde(deserialize_with = \"deserialize_seconds\")]".to_string(),
+                ],
+                value: "DateTime<Utc>".to_string(),
+                libraries,
+            }
+        }
+        GoType::TimestampMillisecondsType => {
+            let mut libraries = HashSet::new();
+            libraries.insert("chrono::DateTime".to_string());
+            libraries.insert("chrono::Utc".to_string());
+            libraries.insert("super::super::deserializers::*".to_string());
+
+            RustType {
+                annotations: vec![
+                    "#[serde(deserialize_with = \"deserialize_milliseconds\")]".to_string(),
+                ],
+                value: "DateTime<Utc>".to_string(),
+                libraries,
+            }
+        }
         GoType::TimeType => {
+            // No need for custom deserialization as Go's time.Time type
+            // deserializes to chrono's default format. Neat.
             let mut libraries = HashSet::new();
             libraries.insert("chrono::DateTime".to_string());
             libraries.insert("chrono::Utc".to_string());
 
             RustType {
+                annotations: vec![],
                 value: "DateTime<Utc>".to_string(),
                 libraries,
             }
