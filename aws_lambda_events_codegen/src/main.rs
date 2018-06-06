@@ -41,8 +41,6 @@ fn get_blacklist() -> HashSet<String> {
     let mut blacklist = HashSet::new();
     // https://github.com/aws/aws-lambda-go/blob/master/events/attributevalue.go
     blacklist.insert("attributevalue".to_string());
-    // https://github.com/aws/aws-lambda-go/blob/master/events/firehose.go
-    blacklist.insert("firehose".to_string());
     // https://github.com/aws/aws-lambda-go/blob/master/events/cloudwatch_logs.go
     blacklist.insert("cloudwatch_logs".to_string());
     // https://github.com/aws/aws-lambda-go/blob/master/events/code_commit.go
@@ -98,6 +96,7 @@ fn write_mod_index(
 fn find_example_event(sdk_location: &PathBuf, service_name: &str) -> Result<Option<String>> {
     let location = match service_name.as_ref() {
         "codepipeline_job" => "events/testdata/codepipline-event.json".to_string(),
+        "firehose" => "events/testdata/kinesis-firehose-event.json".to_string(),
         _ => format!("events/testdata/{}-event.json", service_name),
     };
     let p = sdk_location.join(location);
