@@ -3,13 +3,13 @@ use serde_json::Value;
 use std::collections::HashMap;
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
-pub struct SNSEvent {
+pub struct SnsEvent {
     #[serde(rename = "Records")]
-    pub records: Vec<SNSEventRecord>,
+    pub records: Vec<SnsEventRecord>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
-pub struct SNSEventRecord {
+pub struct SnsEventRecord {
     #[serde(rename = "EventVersion")]
     pub event_version: String,
     #[serde(rename = "EventSubscriptionArn")]
@@ -17,11 +17,11 @@ pub struct SNSEventRecord {
     #[serde(rename = "EventSource")]
     pub event_source: String,
     #[serde(rename = "Sns")]
-    pub sns: SNSEntity,
+    pub sns: SnsEntity,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
-pub struct SNSEntity {
+pub struct SnsEntity {
     #[serde(rename = "Signature")]
     pub signature: String,
     #[serde(rename = "MessageId")]
@@ -55,6 +55,6 @@ mod test {
     #[test]
     fn deserializes_event() {
         let data = include_bytes!("fixtures/example-sns-event.json");
-        let _: SNSEvent = serde_json::from_slice(data).unwrap();
+        let _: SnsEvent = serde_json::from_slice(data).unwrap();
     }
 }

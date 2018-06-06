@@ -14,7 +14,7 @@ extern crate heck;
 
 use codegen::{Field, Scope, Struct};
 use failure::Error;
-use heck::SnakeCase;
+use heck::{SnakeCase, CamelCase};
 use pest::iterators::Pairs;
 use pest::Parser;
 use std::boxed::Box;
@@ -216,7 +216,7 @@ fn parse_struct(pairs: Pairs<Rule>) -> Result<(codegen::Struct, HashSet<String>)
 
     let struct_name = name.expect("parsed name");
 
-    let mut rust_struct = Struct::new(&struct_name);
+    let mut rust_struct = Struct::new(&struct_name.to_camel_case());
 
     // Make it public.
     rust_struct.vis("pub");
@@ -538,12 +538,13 @@ fn translate_go_type_to_rust_type(go_type: GoType) -> Result<RustType, Error> {
         GoType::IntType => make_rust_type_with_no_libraries("i64"),
         GoType::UnsignedIntType => make_rust_type_with_no_libraries("u64"),
         GoType::FloatType => make_rust_type_with_no_libraries("f64"),
-        GoType::UserDefined(x) => make_rust_type_with_no_libraries(x),
+        GoType::UserDefined(x) => make_rust_type_with_no_libraries(&x.to_camel_case()),
         GoType::ArrayType(x) => {
             let mut i = translate_go_type_to_rust_type(*x.clone())?;
             if i.value == "u8" {
                 // Handle []u8 special, as it is base64 encoded.
-                i.libraries.insert("super::super::deserializers::*".to_string());
+                i.libraries
+                    .insert("super::super::deserializers::*".to_string());
                 RustType {
                     annotations: vec![
                         "#[serde(deserialize_with = \"deserialize_base64\")]".to_string(),
