@@ -1,2 +1,6 @@
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct SnsThing;
+
+/// An `AwsThing` is a thing.
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct AwsThing;

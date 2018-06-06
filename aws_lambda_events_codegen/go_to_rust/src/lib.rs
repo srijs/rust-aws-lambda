@@ -230,7 +230,7 @@ fn parse_struct(pairs: Pairs<Rule>) -> Result<(codegen::Struct, HashSet<String>)
     if !comments.is_empty() {
         let annotated_comments: Vec<String> = comments
             .iter_mut()
-            .map(|x| x.replace(&struct_name, &format!("`{}`", &struct_name)))
+            .map(|x| x.replace(&struct_name, &format!("`{}`", &struct_name.to_camel_case())))
             .collect();
         rust_struct.doc(&annotated_comments.join("\n"));
     }

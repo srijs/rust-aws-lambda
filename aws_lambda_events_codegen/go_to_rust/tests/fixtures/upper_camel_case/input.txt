@@ -1,1 +1,4 @@
 type SNSThing struct { }
+
+// An AWSThing is a thing.
+type AWSThing struct { }
