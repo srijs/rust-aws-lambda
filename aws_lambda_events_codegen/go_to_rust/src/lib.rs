@@ -14,7 +14,7 @@ extern crate heck;
 
 use codegen::{Field, Scope, Struct};
 use failure::Error;
-use heck::{SnakeCase, CamelCase};
+use heck::{CamelCase, SnakeCase};
 use pest::iterators::Pairs;
 use pest::Parser;
 use std::boxed::Box;
@@ -164,7 +164,9 @@ fn parse_type_alias(pairs: Pairs<Rule>) -> Result<Option<(String, RustType)>, Er
             Rule::local_type_alias => {
                 value = parse_local_type_alias(pair.into_inner())?;
             }
-            Rule::package_type_alias => (),
+            Rule::package_type_alias => {
+                value = parse_package_type_alias(pair.into_inner())?;
+            }
             _ => unreachable!(),
         }
     }
@@ -182,6 +184,29 @@ fn parse_local_type_alias(pairs: Pairs<Rule>) -> Result<Option<(String, RustType
             Rule::ident => name = Some(mangle(span.as_str())),
             Rule::type_alias_target => {
                 target = Some(parse_go_type(pair.into_inner())?);
+            }
+            _ => unreachable!(),
+        }
+    }
+
+    let name = name.expect("parsed name");
+    let target = target.expect("parsed target");
+
+    Ok(Some((name, translate_go_type_to_rust_type(target)?)))
+}
+
+fn parse_package_type_alias(pairs: Pairs<Rule>) -> Result<Option<(String, RustType)>, Error> {
+    debug!("Parsing package type alias");
+    let mut name: Option<String> = None;
+    let mut target: Option<GoType> = None;
+
+    for pair in pairs {
+        let span = pair.clone().into_span();
+        let value = span.as_str();
+        match pair.as_rule() {
+            Rule::ident => name = Some(mangle(span.as_str())),
+            Rule::package_ident => {
+                target = Some(parse_go_package_ident(value)?);
             }
             _ => unreachable!(),
         }
