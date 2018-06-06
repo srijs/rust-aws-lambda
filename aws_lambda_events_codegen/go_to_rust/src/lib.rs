@@ -517,6 +517,7 @@ fn parse_go_package_ident(t: &str) -> Result<GoType, Error> {
 fn mangle(s: &str) -> String {
     // TODO: Add more keywords.
     match s {
+        "ref" => "ref_".to_string(),
         "type" => "type_".to_string(),
         _ => s.to_string(),
     }
