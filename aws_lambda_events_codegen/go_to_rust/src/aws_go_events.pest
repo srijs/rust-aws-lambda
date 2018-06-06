@@ -71,12 +71,21 @@ package_type_alias = { type_kw ~ whitespace+ ~ ident ~ whitespace+ ~ package_ide
 local_type_alias = { type_kw ~ whitespace+ ~ ident ~ whitespace+ ~ type_alias_target }
 type_alias = ${ package_type_alias | local_type_alias }
 
-// Function types ------------------------------------------------------------
+// Function types --------------------------------------------------------------
 function_kw = _{ "func" }
-function_body = _{ (!"}" ~ any)* } // XXX: This isn't right.
-
+// XXX: This is ugggggly and barely works.
+string_literal = ${ "\"" ~ (!("\"" | newline) ~ any)* ~ "\"" }
+op = { "==" | "!=" | "<" | ">" | "<=" | ">=" }
+conditional = ${ ident ~ whitespace* ~ op ~ whitespace* ~ ident}
+if_stmt = ${ "if" ~ whitespace+ ~ conditional ~ whitespace+ ~ block }
+content_with_brackets = ${ string_literal | if_stmt }
+content_without_brackets = { !("{" | "}" | newline) ~ any }
+content = {  content_with_brackets | content_without_brackets }
+stmt = ${ (!newline ~ content)* ~ newline }
+expression = { block | stmt }
+block = ${ "{" ~ whitespace_or_newline* ~ expression* ~ whitespace_or_newline* ~ "}" }
 single_return = { primitive | non_primitive | ident }
-multiple_return = ${ "(" ~ single_return ~ ("," ~ single_return)* ~ ")" }
+multiple_return = ${ "(" ~ single_return ~ ("," ~ whitespace* ~ single_return)* ~ ")" }
 named_return = ${ "(" ~ whitespace* ~ ident ~ whitespace+ ~ ident ~ whitespace* ~ ")" }
 function_return = { single_return | multiple_return | named_return }
 
@@ -85,16 +94,13 @@ function_arg = ${ ident ~ (whitespace+ ~ function_arg_type)? }
 function_args = _{ function_arg ~ ("," ~ whitespace* ~ function_arg)* }
 
 pointer_receiver = ${ "(" ~ whitespace* ~ ident ~ whitespace+ ~ pointer? ~ whitespace* ~ ident ~ whitespace* ~ ")" }
-
 function = ${
   function_kw ~ whitespace+ ~
   pointer_receiver? ~ whitespace* ~
   ident ~ whitespace* ~
   "(" ~ whitespace* ~ function_args? ~ whitespace* ~ ")" ~ whitespace* ~
   function_return? ~ whitespace* ~
-  "{" ~ whitespace_or_newline* ~
-  function_body? ~ whitespace_or_newline* ~
-  "}"
+  block
 }
 
 // Constant type ---------------------------------------------------------------
