@@ -5,6 +5,7 @@ pub mod codepipeline_job;
 pub mod cognito;
 pub mod config;
 pub mod firehose;
+pub mod kinesis;
 pub mod lex;
 pub mod s3;
 pub mod ses;
