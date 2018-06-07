@@ -87,6 +87,7 @@ fn find_example_event(sdk_location: &PathBuf, service_name: &str) -> Result<Opti
     let location = match service_name.as_ref() {
         "code_commit" => "events/testdata/code-commit-event.json".to_string(),
         "codepipeline_job" => "events/testdata/codepipline-event.json".to_string(),
+        "cloudwatch_logs" => "events/testdata/cloudwatch-logs-event.json".to_string(),
         "firehose" => "events/testdata/kinesis-firehose-event.json".to_string(),
         _ => format!("events/testdata/{}-event.json", service_name),
     };

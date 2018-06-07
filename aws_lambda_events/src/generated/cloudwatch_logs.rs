@@ -35,3 +35,16 @@ pub struct CloudwatchLogsLogEvent {
     pub timestamp: i64,
     pub message: String,
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    extern crate serde_json;
+
+    #[test]
+    fn deserializes_event() {
+        let data = include_bytes!("fixtures/example-cloudwatch_logs-event.json");
+        let _: CloudwatchLogsEvent = serde_json::from_slice(data).unwrap();
+    }
+}
