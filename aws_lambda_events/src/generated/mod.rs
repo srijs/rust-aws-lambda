@@ -1,6 +1,7 @@
 pub mod apigw;
 pub mod autoscaling;
 pub mod cloudwatch_events;
+pub mod cloudwatch_logs;
 pub mod code_commit;
 pub mod codepipeline_job;
 pub mod cognito;
