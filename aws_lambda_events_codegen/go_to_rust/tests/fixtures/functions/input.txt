@@ -44,4 +44,8 @@ func (t *CodeCommitEventTime) UnmarshalJSON(data []byte) error {
 	return err
 }
 
+func (c CloudwatchLogsRawData) Parse() (d CloudwatchLogsData, err error) {
+
+}
+
 type ParsedStruct struct {}

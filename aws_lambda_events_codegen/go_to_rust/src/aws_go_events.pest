@@ -85,9 +85,10 @@ stmt = ${ (!newline ~ content)* ~ newline }
 expression = { block | stmt }
 block = ${ "{" ~ whitespace_or_newline* ~ expression* ~ whitespace_or_newline* ~ "}" }
 single_return = { primitive | non_primitive | ident }
-multiple_return = ${ "(" ~ single_return ~ ("," ~ whitespace* ~ single_return)* ~ ")" }
-named_return = ${ "(" ~ whitespace* ~ ident ~ whitespace+ ~ ident ~ whitespace* ~ ")" }
-function_return = { single_return | multiple_return | named_return }
+multiple_return = ${ "(" ~ single_return ~ ("," ~ whitespace* ~ single_return)+ ~ ")" }
+named_return = ${ ident ~ whitespace+ ~ ident }
+multiple_named_return = ${ "(" ~ named_return ~ ("," ~ whitespace* ~ named_return)+ ~ ")" }
+function_return = { single_return | multiple_return | named_return | multiple_named_return }
 
 function_arg_type = { primitive | non_primitive | ident }
 function_arg = ${ ident ~ (whitespace+ ~ function_arg_type)? }
