@@ -45,7 +45,7 @@ func (t *CodeCommitEventTime) UnmarshalJSON(data []byte) error {
 }
 
 func (c CloudwatchLogsRawData) Parse() (d CloudwatchLogsData, err error) {
-
+	buf := &bytes.Buffer{}
 }
 
 type ParsedStruct struct {}

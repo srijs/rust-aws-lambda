@@ -78,8 +78,12 @@ string_literal = ${ "\"" ~ (!("\"" | newline) ~ any)* ~ "\"" }
 op = { "==" | "!=" | "<" | ">" | "<=" | ">=" }
 conditional = ${ ident ~ whitespace* ~ op ~ whitespace* ~ ident}
 if_stmt = ${ "if" ~ whitespace+ ~ conditional ~ whitespace+ ~ block }
-content_with_brackets = ${ string_literal | if_stmt }
+indexed_ident = ${ ident ~ ("." ~ ident)* }
+assignment = ${ ident ~ whitespace* ~ ":=" ~ whitespace* ~ "&"? ~ indexed_ident ~ "{}" }
+
+content_with_brackets = ${ string_literal | if_stmt | assignment }
 content_without_brackets = { !("{" | "}" | newline) ~ any }
+
 content = {  content_with_brackets | content_without_brackets }
 stmt = ${ (!newline ~ content)* ~ newline }
 expression = { block | stmt }
