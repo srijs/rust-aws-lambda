@@ -46,14 +46,17 @@ where
     W: AsyncWrite,
 {
     pub fn new(w: W) -> Result<Encoder<W, T>, Error> {
-        let mut stream = StreamSerializer::new(Vec::new());
+        let stream_buf = Vec::with_capacity(4096);
+        let flush_buf = Vec::with_capacity(4096);
+
+        let mut stream = StreamSerializer::new(stream_buf);
         let type_id_response = RpcResponse::schema_register(stream.schema_mut())?;
         let type_id_ping_response = messages::PingResponse::schema_register(stream.schema_mut())?;
         let type_id_invoke_response =
             messages::InvokeResponse::schema_register(stream.schema_mut())?;
         Ok(Encoder {
             write: w,
-            flushing: Cursor::new(Vec::new()),
+            flushing: Cursor::new(flush_buf),
             stream,
             type_id_response,
             type_id_ping_response,
@@ -134,8 +137,10 @@ where
                 if self.stream.get_ref().len() == 0 {
                     return Ok(Async::Ready(()));
                 } else {
-                    let bytes = ::std::mem::replace(self.stream.get_mut(), Vec::new());
-                    self.flushing = Cursor::new(bytes);
+                    // Reset flush buffer, then swap with stream buffer.
+                    self.flushing.set_position(0);
+                    self.flushing.get_mut().truncate(0); 
+                    ::std::mem::swap(self.stream.get_mut(), self.flushing.get_mut());
                 }
             }
             try_ready!(self.write.write_buf(&mut self.flushing));
@@ -157,6 +162,7 @@ mod tests {
             let io = AllowStdIo::new(&mut buffer);
             let mut encoder = Encoder::<_, String>::new(io).unwrap();
             encoder.start_send(Response::Ping(0)).unwrap();
+            encoder.poll_complete().unwrap();
             encoder
                 .start_send(Response::Invoke(1, Ok("Hello ƛ!".to_owned())))
                 .unwrap();
