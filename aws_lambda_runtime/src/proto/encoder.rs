@@ -139,7 +139,7 @@ where
                 } else {
                     // Reset flush buffer, then swap with stream buffer.
                     self.flushing.set_position(0);
-                    self.flushing.get_mut().truncate(0); 
+                    self.flushing.get_mut().truncate(0);
                     ::std::mem::swap(self.stream.get_mut(), self.flushing.get_mut());
                 }
             }

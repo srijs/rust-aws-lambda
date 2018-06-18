@@ -19,18 +19,18 @@ pub(crate) struct InvokeRequestTimestamp {
 pub(crate) struct InvokeRequest<'a> {
     #[serde(rename = "Payload", borrow)]
     pub payload: Bytes<'a>,
-    #[serde(rename = "RequestId", borrow)]
-    pub request_id: &'a str,
+    #[serde(rename = "RequestId")]
+    pub request_id: String,
     #[serde(rename = "XAmznTraceId", borrow)]
     pub x_amzn_trace_id: &'a str,
     #[serde(rename = "Deadline")]
     pub deadline: InvokeRequestTimestamp,
-    #[serde(rename = "InvokedFunctionArn", borrow)]
-    pub invoked_function_arn: &'a str,
-    #[serde(rename = "CognitoIdentityId", borrow, default)]
-    pub cognito_identity_id: Option<&'a str>,
-    #[serde(rename = "CognitoIdentityPoolId", borrow, default)]
-    pub cognito_identity_pool_id: Option<&'a str>,
+    #[serde(rename = "InvokedFunctionArn")]
+    pub invoked_function_arn: String,
+    #[serde(rename = "CognitoIdentityId", default)]
+    pub cognito_identity_id: Option<String>,
+    #[serde(rename = "CognitoIdentityPoolId", default)]
+    pub cognito_identity_pool_id: Option<String>,
     #[serde(rename = "ClientContext", borrow, default)]
     pub client_context: Option<Bytes<'a>>,
 }

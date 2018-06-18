@@ -96,13 +96,13 @@ where
             .ok_or_else(|| DecodeError::Frame(format_err!("unexpected end of stream")))?;
 
         let identity = context::CognitoIdentity {
-            cognito_identity_id: message.cognito_identity_id.map(|s| s.to_owned()),
-            cognito_identity_pool_id: message.cognito_identity_pool_id.map(|s| s.to_owned()),
+            cognito_identity_id: message.cognito_identity_id,
+            cognito_identity_pool_id: message.cognito_identity_pool_id,
         };
 
         let ctx = context::LambdaContext {
-            aws_request_id: message.request_id.to_owned(),
-            invoked_function_arn: message.invoked_function_arn.to_owned(),
+            aws_request_id: message.request_id,
+            invoked_function_arn: message.invoked_function_arn,
             identity: identity,
             client_context: None,
         };
