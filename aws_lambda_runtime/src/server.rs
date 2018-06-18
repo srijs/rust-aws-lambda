@@ -7,8 +7,7 @@ use futures::{Async, Future, Poll, Sink, Stream};
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 use tokio_core::net::{TcpListener, TcpStream};
-use tokio_core::reactor::Handle;
-use tokio_io::{AsyncRead, AsyncWrite};
+use tokio_io::{io::ReadHalf, io::WriteHalf, AsyncRead, AsyncWrite};
 use tokio_service::{NewService, Service};
 use void::Void;
 
@@ -18,8 +17,7 @@ use super::proto;
 pub struct Server<S: NewService> {
     new_service: S,
     listener: TcpListener,
-    handle: Handle,
-    connections: FuturesUnordered<Connection<S::Instance, TcpStream, TcpStream>>,
+    connections: FuturesUnordered<Connection<S::Instance, TcpStream>>,
 }
 
 impl<S> Server<S>
@@ -29,18 +27,17 @@ where
     S::Request: DeserializeOwned + Send + 'static,
     S::Response: Serialize + Send + 'static,
 {
-    pub fn new(new_service: S, handle: Handle, listener: TcpListener) -> Server<S> {
+    pub fn new(new_service: S, listener: TcpListener) -> Server<S> {
         Server {
             new_service,
             listener,
-            handle,
             connections: FuturesUnordered::new(),
         }
     }
 
-    fn spawn(&mut self, r: TcpStream, w: TcpStream) -> Result<(), Error> {
+    fn spawn(&mut self, stream: TcpStream) -> Result<(), Error> {
         let service = self.new_service.new_service()?;
-        let connection = Connection::spawn(service, r, w)?;
+        let connection = Connection::spawn(service, stream)?;
         self.connections.push(connection);
 
         Ok(())
@@ -59,15 +56,10 @@ where
 
     fn poll(&mut self) -> Poll<(), Error> {
         let connections_poll = self.connections.poll();
-        let accept_result = self.listener.accept_std();
+        let accept_result = self.listener.accept();
         match accept_result {
             Ok((stream, _)) => {
-                let cloned_stream = stream.try_clone()?;
-                let handle = self.handle.clone();
-                self.spawn(
-                    TcpStream::from_stream(stream, &handle)?,
-                    TcpStream::from_stream(cloned_stream, &handle)?,
-                )?;
+                self.spawn(stream)?;
                 self.poll()
             }
             Err(err) => {
@@ -89,27 +81,26 @@ where
     }
 }
 
-pub struct Connection<S, R, W>
+pub struct Connection<S, Io>
 where
     S: Service,
-    R: AsyncRead + Send + 'static,
-    W: AsyncWrite + Send + 'static,
+    Io: AsyncRead + AsyncWrite + Send + 'static,
 {
     service: Rc<S>,
-    decoder: ::futures::stream::Fuse<proto::Decoder<R, S::Request>>,
-    encoder: proto::Encoder<W, S::Response>,
+    decoder: ::futures::stream::Fuse<proto::Decoder<ReadHalf<Io>, S::Request>>,
+    encoder: proto::Encoder<WriteHalf<Io>, S::Response>,
     futures: FuturesUnordered<Invocation<S>>,
 }
 
-impl<S, R, W> Connection<S, R, W>
+impl<S, Io> Connection<S, Io>
 where
     S: Service<Error = Error> + 'static,
     S::Request: DeserializeOwned + Send + 'static,
     S::Response: Serialize + Send + 'static,
-    R: AsyncRead + Send + 'static,
-    W: AsyncWrite + Send + 'static,
+    Io: AsyncRead + AsyncWrite + Send + 'static,
 {
-    fn spawn(service: S, r: R, w: W) -> Result<Self, Error> {
+    fn spawn(service: S, io: Io) -> Result<Self, Error> {
+        let (r, w) = io.split();
         let decoder = proto::Decoder::new(r).fuse();
         let encoder = proto::Encoder::new(w)?;
 
@@ -175,13 +166,12 @@ where
     }
 }
 
-impl<S, R, W> Future for Connection<S, R, W>
+impl<S, Io> Future for Connection<S, Io>
 where
     S: Service<Error = Error> + 'static,
     S::Request: DeserializeOwned + Send + 'static,
     S::Response: Serialize + Send + 'static,
-    R: AsyncRead + Send + 'static,
-    W: AsyncWrite + Send + 'static,
+    Io: AsyncRead + AsyncWrite + Send + 'static,
 {
     type Item = ();
     type Error = Error;
