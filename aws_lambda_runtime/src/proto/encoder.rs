@@ -6,7 +6,7 @@ use failure::Error;
 use futures::{Async, AsyncSink, Poll, Sink, StartSend};
 use gob::{ser::TypeId, StreamSerializer};
 use serde::Serialize;
-use serde_bytes::ByteBuf;
+use serde_bytes::Bytes;
 use serde_schema::SchemaSerialize;
 use tokio_io::AsyncWrite;
 
@@ -34,6 +34,7 @@ where
 {
     write: W,
     flushing: Cursor<Vec<u8>>,
+    payload_buf: Vec<u8>,
     stream: StreamSerializer<Vec<u8>>,
     _phan: PhantomData<T>,
     type_id_response: TypeId,
@@ -48,6 +49,7 @@ where
     pub fn new(w: W) -> Result<Encoder<W, T>, Error> {
         let stream_buf = Vec::with_capacity(4096);
         let flush_buf = Vec::with_capacity(4096);
+        let payload_buf = Vec::with_capacity(4096);
 
         let mut stream = StreamSerializer::new(stream_buf);
         let type_id_response = RpcResponse::schema_register(stream.schema_mut())?;
@@ -57,6 +59,7 @@ where
         Ok(Encoder {
             write: w,
             flushing: Cursor::new(flush_buf),
+            payload_buf,
             stream,
             type_id_response,
             type_id_ping_response,
@@ -101,11 +104,12 @@ where
                 )?;
                 match result {
                     Ok(payload) => {
-                        let payload_bytes = ::serde_json::to_vec(&payload)?;
+                        self.payload_buf.truncate(0);
+                        ::serde_json::to_writer(&mut self.payload_buf, &payload)?;
                         self.stream.serialize_with_type_id(
                             self.type_id_invoke_response,
                             &messages::InvokeResponse {
-                                payload: ByteBuf::from(payload_bytes),
+                                payload: Bytes::new(&self.payload_buf),
                                 error: None,
                             },
                         )?;
@@ -120,7 +124,7 @@ where
                         self.stream.serialize_with_type_id(
                             self.type_id_invoke_response,
                             &messages::InvokeResponse {
-                                payload: ByteBuf::new(),
+                                payload: Bytes::new(&[]),
                                 error: Some(invoke_error),
                             },
                         )?;

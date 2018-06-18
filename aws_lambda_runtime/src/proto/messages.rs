@@ -1,4 +1,4 @@
-use serde_bytes::{ByteBuf, Bytes};
+use serde_bytes::Bytes;
 
 #[derive(Clone, Debug, Deserialize)]
 pub(crate) struct PingRequest {}
@@ -36,9 +36,9 @@ pub(crate) struct InvokeRequest<'a> {
 }
 
 #[derive(Clone, Debug, Serialize, SchemaSerialize)]
-pub(crate) struct InvokeResponse {
+pub(crate) struct InvokeResponse<'a> {
     #[serde(rename = "Payload")]
-    pub payload: ByteBuf,
+    pub payload: Bytes<'a>,
     #[serde(rename = "Error", skip_serializing_if = "Option::is_none")]
     pub error: Option<InvokeResponseError>,
 }
