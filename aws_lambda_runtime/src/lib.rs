@@ -11,6 +11,12 @@
 #![deny(missing_docs)]
 #![deny(missing_debug_implementations)]
 
+#[cfg(test)]
+extern crate partial_io;
+#[cfg(test)]
+#[macro_use]
+extern crate quickcheck;
+
 extern crate bytes;
 #[macro_use]
 extern crate failure;

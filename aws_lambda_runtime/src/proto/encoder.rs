@@ -3,7 +3,7 @@ use std::marker::PhantomData;
 
 use bytes::Buf;
 use failure::Error;
-use futures::{Async, AsyncSink, Poll, Sink, StartSend};
+use futures::{AsyncSink, Poll, Sink, StartSend};
 use gob::{ser::TypeId, StreamSerializer};
 use serde::Serialize;
 use serde_bytes::Bytes;
@@ -137,9 +137,9 @@ where
 
     fn poll_complete(&mut self) -> Poll<(), Self::SinkError> {
         loop {
-            if self.flushing.remaining() == 0 {
+            if !self.flushing.has_remaining() {
                 if self.stream.get_ref().len() == 0 {
-                    return Ok(Async::Ready(()));
+                    return Ok(self.write.poll_flush()?);
                 } else {
                     // Reset flush buffer, then swap with stream buffer.
                     self.flushing.set_position(0);
@@ -155,27 +155,25 @@ where
 #[cfg(test)]
 mod tests {
     use futures::Sink;
-    use tokio_io::io::AllowStdIo;
+    use partial_io::{GenWouldBlock, PartialAsyncWrite, PartialWithErrors};
 
     use super::{Encoder, Response};
 
-    #[test]
-    fn encode_messages() {
-        let mut buffer = Vec::<u8>::new();
-        {
-            let io = AllowStdIo::new(&mut buffer);
-            let mut encoder = Encoder::<_, String>::new(io).unwrap();
-            encoder.start_send(Response::Ping(0)).unwrap();
-            encoder.poll_complete().unwrap();
-            encoder
-                .start_send(Response::Invoke(1, Ok("Hello ƛ!".to_owned())))
-                .unwrap();
-            encoder.poll_complete().unwrap();
-        }
+    quickcheck! {
+        fn encode_messages(seq: PartialWithErrors<GenWouldBlock>) -> bool {
+            let mut write = ::std::io::Cursor::new(Vec::<u8>::new());
+            {
+                let pwrite = PartialAsyncWrite::new(&mut write, seq);
+                let mut encoder = Encoder::<_, String>::new(pwrite).unwrap().wait();
+                encoder.send(Response::Ping(0)).unwrap();
+                encoder.flush().unwrap();
+                encoder
+                    .send(Response::Invoke(1, Ok("Hello ƛ!".to_owned())))
+                    .unwrap();
+                encoder.flush().unwrap();
+            }
 
-        assert_eq!(
-            buffer,
-            vec![
+            write.into_inner() == vec![
                 58, 255, 129, 3, 1, 1, 8, 82, 101, 115, 112, 111, 110, 115, 101, 1, 255, 130, 0, 1,
                 3, 1, 13, 83, 101, 114, 118, 105, 99, 101, 77, 101, 116, 104, 111, 100, 1, 12, 0,
                 1, 3, 83, 101, 113, 1, 6, 0, 1, 5, 69, 114, 114, 111, 114, 1, 12, 0, 0, 0, 24, 255,
@@ -197,6 +195,6 @@ mod tests {
                 101, 1, 1, 0, 16, 255, 140, 1, 11, 34, 72, 101, 108, 108, 111, 32, 198, 155, 33,
                 34, 0,
             ]
-        )
+        }
     }
 }

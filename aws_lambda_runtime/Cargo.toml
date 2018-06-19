@@ -24,3 +24,7 @@ tokio-io = "0.1.6"
 tokio-reactor = "0.1.1"
 tokio-service = "0.1.0"
 void = "1.0.2"
+
+[dev-dependencies]
+partial-io = { version = "0.3.0", features = ["tokio", "quickcheck"] }
+quickcheck = "0.6.2"
