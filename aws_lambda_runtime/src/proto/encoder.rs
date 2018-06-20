@@ -19,7 +19,7 @@ struct RpcResponse {
     service_method: &'static str,
     #[serde(rename = "Seq")]
     seq: u64,
-    #[serde(rename = "Error")]
+    #[serde(rename = "Error", skip_serializing_if = "Option::is_none")]
     error: Option<String>,
 }
 
@@ -147,7 +147,8 @@ where
                     ::std::mem::swap(self.stream.get_mut(), self.flushing.get_mut());
                 }
             }
-            try_ready!(self.write.write_buf(&mut self.flushing));
+            let n = try_ready!(self.write.poll_write(self.flushing.bytes()));
+            self.flushing.advance(n);
         }
     }
 }
