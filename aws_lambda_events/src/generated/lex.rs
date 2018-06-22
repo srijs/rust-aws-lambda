@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct LexEvent {
     #[serde(rename = "messageVersion")]
     pub message_version: Option<String>,
@@ -23,14 +23,14 @@ pub struct LexEvent {
     pub dialog_action: Option<LexDialogAction>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct LexBot {
     pub name: Option<String>,
     pub alias: Option<String>,
     pub version: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct LexCurrentIntent {
     pub name: Option<String>,
     pub slots: Option<Slots>,
@@ -40,14 +40,14 @@ pub struct LexCurrentIntent {
     pub confirmation_status: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct SlotDetail {
     pub resolutions: Option<Vec<HashMap<String, String>>>,
     #[serde(rename = "originalValue")]
     pub original_value: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct LexDialogAction {
     #[serde(rename = "type")]
     pub type_: Option<String>,
@@ -65,7 +65,7 @@ pub struct LexDialogAction {
 
 pub type Slots = HashMap<String, String>;
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct LexResponseCard {
     pub version: Option<i64>,
     #[serde(rename = "contentType")]
@@ -74,7 +74,7 @@ pub struct LexResponseCard {
     pub generic_attachments: Option<Vec<Attachment>>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct Attachment {
     pub title: Option<String>,
     #[serde(rename = "subTitle")]

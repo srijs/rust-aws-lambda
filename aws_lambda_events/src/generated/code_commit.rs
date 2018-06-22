@@ -1,7 +1,7 @@
 use chrono::{DateTime, Utc};
 
 /// `CodeCommitEvent` represents a CodeCommit event
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct CodeCommitEvent {
     #[serde(rename = "Records")]
     pub records: Vec<CodeCommitRecord>,
@@ -10,7 +10,7 @@ pub struct CodeCommitEvent {
 pub type CodeCommitEventTime = DateTime<Utc>;
 
 /// represents a CodeCommit record
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct CodeCommitRecord {
     #[serde(rename = "eventId")]
     pub event_id: String,
@@ -41,13 +41,13 @@ pub struct CodeCommitRecord {
 }
 
 /// `CodeCommitCodeCommit` represents a CodeCommit object in a record
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct CodeCommitCodeCommit {
     pub references: Vec<CodeCommitReference>,
 }
 
 /// `CodeCommitReference` represents a Reference object in a CodeCommit object
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct CodeCommitReference {
     pub commit: String,
     #[serde(rename = "ref")]

@@ -250,6 +250,7 @@ fn parse_struct(pairs: Pairs<Rule>) -> Result<(codegen::Struct, HashSet<String>)
     // Add some derives.
     rust_struct.derive("Debug");
     rust_struct.derive("Clone");
+    rust_struct.derive("PartialEq");
     rust_struct.derive("Deserialize");
     rust_struct.derive("Serialize");
 

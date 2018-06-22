@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use serde_json::Value;
 
 /// `ApiGatewayProxyRequest` contains data coming from the API Gateway proxy
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct ApiGatewayProxyRequest {
     /// The resource path defined in API Gateway
     pub resource: String,
@@ -25,7 +25,7 @@ pub struct ApiGatewayProxyRequest {
 }
 
 /// `ApiGatewayProxyResponse` configures the response to be returned by API Gateway for the request
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct ApiGatewayProxyResponse {
     #[serde(rename = "statusCode")]
     pub status_code: i64,
@@ -37,7 +37,7 @@ pub struct ApiGatewayProxyResponse {
 
 /// `ApiGatewayProxyRequestContext` contains the information to identify the AWS account and resources invoking the
 /// Lambda function. It also includes Cognito identity information for the caller.
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct ApiGatewayProxyRequestContext {
     #[serde(rename = "accountId")]
     pub account_id: String,
@@ -58,7 +58,7 @@ pub struct ApiGatewayProxyRequestContext {
 }
 
 /// `ApiGatewayRequestIdentity` contains identity information for the request caller.
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct ApiGatewayRequestIdentity {
     #[serde(rename = "cognitoIdentityPoolId")]
     pub cognito_identity_pool_id: String,
@@ -83,7 +83,7 @@ pub struct ApiGatewayRequestIdentity {
 }
 
 /// `ApiGatewayCustomAuthorizerRequestTypeRequestIdentity` contains identity information for the request caller.
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct ApiGatewayCustomAuthorizerRequestTypeRequestIdentity {
     #[serde(rename = "apiKey")]
     pub api_key: String,
@@ -93,7 +93,7 @@ pub struct ApiGatewayCustomAuthorizerRequestTypeRequestIdentity {
 
 /// `ApiGatewayCustomAuthorizerContext` represents the expected format of an API Gateway custom authorizer response.
 /// Deprecated. Code should be updated to use the Authorizer map from APIGatewayRequestIdentity. Ex: Authorizer["principalId"]
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct ApiGatewayCustomAuthorizerContext {
     #[serde(rename = "principalId")]
     pub principal_id: Option<String>,
@@ -106,7 +106,7 @@ pub struct ApiGatewayCustomAuthorizerContext {
 }
 
 /// `ApiGatewayCustomAuthorizerRequestTypeRequestContext` represents the expected format of an API Gateway custom authorizer response.
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct ApiGatewayCustomAuthorizerRequestTypeRequestContext {
     pub path: String,
     #[serde(rename = "accountId")]
@@ -126,7 +126,7 @@ pub struct ApiGatewayCustomAuthorizerRequestTypeRequestContext {
 }
 
 /// `ApiGatewayCustomAuthorizerRequest` contains data coming in to a custom API Gateway authorizer function.
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct ApiGatewayCustomAuthorizerRequest {
     #[serde(rename = "type")]
     pub type_: String,
@@ -137,7 +137,7 @@ pub struct ApiGatewayCustomAuthorizerRequest {
 }
 
 /// `ApiGatewayCustomAuthorizerRequestTypeRequest` contains data coming in to a custom API Gateway authorizer function.
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct ApiGatewayCustomAuthorizerRequestTypeRequest {
     #[serde(rename = "type")]
     pub type_: String,
@@ -159,7 +159,7 @@ pub struct ApiGatewayCustomAuthorizerRequestTypeRequest {
 }
 
 /// `ApiGatewayCustomAuthorizerResponse` represents the expected format of an API Gateway authorization response.
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct ApiGatewayCustomAuthorizerResponse {
     #[serde(rename = "principalId")]
     pub principal_id: String,
@@ -171,13 +171,13 @@ pub struct ApiGatewayCustomAuthorizerResponse {
 }
 
 /// `ApiGatewayCustomAuthorizerPolicy` represents an IAM policy
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct ApiGatewayCustomAuthorizerPolicy {
     pub version: String,
     pub statement: Vec<IamPolicyStatement>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct IamPolicyStatement {
     pub action: Vec<String>,
     pub effect: String,

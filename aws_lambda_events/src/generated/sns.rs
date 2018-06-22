@@ -2,13 +2,13 @@ use chrono::{DateTime, Utc};
 use serde_json::Value;
 use std::collections::HashMap;
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct SnsEvent {
     #[serde(rename = "Records")]
     pub records: Vec<SnsEventRecord>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct SnsEventRecord {
     #[serde(rename = "EventVersion")]
     pub event_version: String,
@@ -20,7 +20,7 @@ pub struct SnsEventRecord {
     pub sns: SnsEntity,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct SnsEntity {
     #[serde(rename = "Signature")]
     pub signature: String,

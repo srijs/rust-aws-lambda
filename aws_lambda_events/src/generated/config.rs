@@ -1,5 +1,5 @@
 /// `ConfigEvent` contains data from an event sent from AWS Config
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct ConfigEvent {
     /// The ID of the AWS account that owns the rule
     #[serde(rename = "accountId")]

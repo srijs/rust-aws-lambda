@@ -3,7 +3,7 @@ use serde_json::Value;
 
 /// `CloudWatchEvent` is the outer structure of an event sent via CloudWatch Events.
 /// For examples of events that come via CloudWatch Events, see https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/EventTypes.html
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct CloudWatchEvent {
     pub version: String,
     pub id: String,

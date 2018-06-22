@@ -2,7 +2,7 @@ use chrono::{DateTime, Utc};
 use super::super::deserializers::*;
 
 /// `KinesisFirehoseEvent` represents the input event from Amazon Kinesis Firehose. It is used as the input parameter.
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct KinesisFirehoseEvent {
     #[serde(rename = "invocationId")]
     pub invocation_id: String,
@@ -12,7 +12,7 @@ pub struct KinesisFirehoseEvent {
     pub records: Vec<KinesisFirehoseEventRecord>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct KinesisFirehoseEventRecord {
     #[serde(rename = "recordId")]
     pub record_id: String,

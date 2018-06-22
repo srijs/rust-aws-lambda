@@ -1,13 +1,13 @@
 use chrono::{DateTime, Utc};
 
 /// `SimpleEmailEvent` is the outer structure of an event sent via SES.
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct SimpleEmailEvent {
     #[serde(rename = "Records")]
     pub records: Vec<SimpleEmailRecord>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct SimpleEmailRecord {
     #[serde(rename = "eventVersion")]
     pub event_version: String,
@@ -16,13 +16,13 @@ pub struct SimpleEmailRecord {
     pub ses: SimpleEmailService,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct SimpleEmailService {
     pub mail: SimpleEmailMessage,
     pub receipt: SimpleEmailReceipt,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct SimpleEmailMessage {
     #[serde(rename = "commonHeaders")]
     pub common_headers: SimpleEmailCommonHeaders,
@@ -36,7 +36,7 @@ pub struct SimpleEmailMessage {
     pub message_id: String,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct SimpleEmailReceipt {
     pub recipients: Vec<String>,
     pub timestamp: DateTime<Utc>,
@@ -53,13 +53,13 @@ pub struct SimpleEmailReceipt {
     pub processing_time_millis: i64,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct SimpleEmailHeader {
     pub name: String,
     pub value: String,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct SimpleEmailCommonHeaders {
     pub from: Vec<String>,
     pub to: Vec<String>,
@@ -71,7 +71,7 @@ pub struct SimpleEmailCommonHeaders {
     pub subject: String,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct SimpleEmailReceiptAction {
     #[serde(rename = "type")]
     pub type_: String,
@@ -81,7 +81,7 @@ pub struct SimpleEmailReceiptAction {
     pub function_arn: String,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct SimpleEmailVerdict {
     pub status: String,
 }

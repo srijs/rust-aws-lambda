@@ -1,13 +1,13 @@
 use chrono::{DateTime, Utc};
 use std::collections::HashMap;
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct S3Event {
     #[serde(rename = "Records")]
     pub records: Vec<S3EventRecord>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct S3EventRecord {
     #[serde(rename = "eventVersion")]
     pub event_version: String,
@@ -28,19 +28,19 @@ pub struct S3EventRecord {
     pub s3: S3Entity,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct S3UserIdentity {
     #[serde(rename = "principalId")]
     pub principal_id: String,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct S3RequestParameters {
     #[serde(rename = "sourceIPAddress")]
     pub source_ip_address: String,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct S3Entity {
     #[serde(rename = "s3SchemaVersion")]
     pub schema_version: String,
@@ -50,7 +50,7 @@ pub struct S3Entity {
     pub object: S3Object,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct S3Bucket {
     pub name: String,
     #[serde(rename = "ownerIdentity")]
@@ -58,7 +58,7 @@ pub struct S3Bucket {
     pub arn: String,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct S3Object {
     pub key: String,
     pub size: i64,

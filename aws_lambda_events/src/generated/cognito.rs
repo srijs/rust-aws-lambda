@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 /// `CognitoEvent` contains data from an event sent from AWS Cognito Sync
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct CognitoEvent {
     #[serde(rename = "datasetName")]
     pub dataset_name: String,
@@ -18,7 +18,7 @@ pub struct CognitoEvent {
 }
 
 /// `CognitoDatasetRecord` represents a record from an AWS Cognito Sync event
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct CognitoDatasetRecord {
     #[serde(rename = "newValue")]
     pub new_value: String,

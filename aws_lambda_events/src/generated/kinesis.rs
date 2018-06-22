@@ -1,13 +1,13 @@
 use chrono::{DateTime, Utc};
 use super::super::deserializers::*;
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct KinesisEvent {
     #[serde(rename = "Records")]
     pub records: Vec<KinesisEventRecord>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct KinesisEventRecord {
     #[serde(rename = "awsRegion")]
     pub aws_region: String,
@@ -26,7 +26,7 @@ pub struct KinesisEventRecord {
     pub kinesis: KinesisRecord,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct KinesisRecord {
     #[serde(deserialize_with = "deserialize_seconds")]
     #[serde(rename = "approximateArrivalTimestamp")]
