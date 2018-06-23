@@ -1,10 +1,9 @@
-use std::io::Cursor;
 use std::marker::PhantomData;
 
 use bytes::Buf;
 use failure::Error;
 use futures::{AsyncSink, Poll, Sink, StartSend};
-use gob::{ser::TypeId, StreamSerializer};
+use gob::{ser::TypeId, StreamSerializer, ser::OutputBuffer};
 use serde::Serialize;
 use serde_bytes::Bytes;
 use serde_schema::SchemaSerialize;
@@ -33,9 +32,8 @@ where
     W: AsyncWrite,
 {
     write: W,
-    flushing: Cursor<Vec<u8>>,
     payload_buf: Vec<u8>,
-    stream: StreamSerializer<Vec<u8>>,
+    stream: StreamSerializer<OutputBuffer>,
     _phan: PhantomData<T>,
     type_id_response: TypeId,
     type_id_ping_response: TypeId,
@@ -47,18 +45,15 @@ where
     W: AsyncWrite,
 {
     pub fn new(w: W) -> Result<Encoder<W, T>, Error> {
-        let stream_buf = Vec::with_capacity(4096);
-        let flush_buf = Vec::with_capacity(4096);
         let payload_buf = Vec::with_capacity(4096);
 
-        let mut stream = StreamSerializer::new(stream_buf);
+        let mut stream = StreamSerializer::new_with_buffer();
         let type_id_response = RpcResponse::schema_register(stream.schema_mut())?;
         let type_id_ping_response = messages::PingResponse::schema_register(stream.schema_mut())?;
         let type_id_invoke_response =
             messages::InvokeResponse::schema_register(stream.schema_mut())?;
         Ok(Encoder {
             write: w,
-            flushing: Cursor::new(flush_buf),
             payload_buf,
             stream,
             type_id_response,
@@ -137,18 +132,10 @@ where
 
     fn poll_complete(&mut self) -> Poll<(), Self::SinkError> {
         loop {
-            if !self.flushing.has_remaining() {
-                if self.stream.get_ref().len() == 0 {
-                    return Ok(self.write.poll_flush()?);
-                } else {
-                    // Reset flush buffer, then swap with stream buffer.
-                    self.flushing.set_position(0);
-                    self.flushing.get_mut().truncate(0);
-                    ::std::mem::swap(self.stream.get_mut(), self.flushing.get_mut());
-                }
+            if !self.stream.get_ref().has_remaining() {
+                return Ok(self.write.poll_flush()?);
             }
-            let n = try_ready!(self.write.poll_write(self.flushing.bytes()));
-            self.flushing.advance(n);
+            try_ready!(self.write.write_buf(self.stream.get_mut()));
         }
     }
 }
