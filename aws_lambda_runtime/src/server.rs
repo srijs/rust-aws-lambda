@@ -206,21 +206,21 @@ where
     type Error = Void;
 
     fn poll(&mut self) -> Poll<Self::Item, Self::Error> {
-        match ::std::mem::replace(self, Invocation::Swapping) {
-            Invocation::Starting(seq, svc, req, ctx) => {
-                Context::set_current(ctx);
-                *self = Invocation::Running(seq, svc.call(req));
-                self.poll()
+        if let Invocation::Running(ref seq, ref mut future) = self {
+            match future.poll() {
+                Ok(Async::NotReady) => Ok(Async::NotReady),
+                Ok(Async::Ready(res)) => Ok(Async::Ready((*seq, Ok(res)))),
+                Err(err) => Ok(Async::Ready((*seq, Err(err)))),
             }
-            Invocation::Running(seq, mut future) => match future.poll() {
-                Ok(Async::NotReady) => {
-                    *self = Invocation::Running(seq, future);
-                    Ok(Async::NotReady)
+        } else {
+            match ::std::mem::replace(self, Invocation::Swapping) {
+                Invocation::Starting(seq, svc, req, ctx) => {
+                    Context::set_current(ctx);
+                    *self = Invocation::Running(seq, svc.call(req));
+                    self.poll()
                 }
-                Ok(Async::Ready(res)) => Ok(Async::Ready((seq, Ok(res)))),
-                Err(err) => Ok(Async::Ready((seq, Err(err)))),
-            },
-            Invocation::Swapping => panic!("Invocation polled after ready"),
+                _ => unreachable!(),
+            }
         }
     }
 }
