@@ -1,11 +1,11 @@
 use std::io;
+use std::net::SocketAddr;
 
 use failure::Error;
 use futures::stream::FuturesUnordered;
 use futures::{Async, Future, Poll, Sink, Stream};
 use serde::de::DeserializeOwned;
 use serde::Serialize;
-use tokio_core::net::{TcpListener, TcpStream};
 use tokio_core::reactor::Handle;
 use tokio_io::{io::ReadHalf, io::WriteHalf, AsyncRead, AsyncWrite};
 use tokio_service::{NewService, Service};
@@ -14,28 +14,30 @@ use void::Void;
 use super::context::Context;
 use super::proto;
 
-pub struct Server<S: NewService> {
+pub struct Server<S, I> {
     new_service: S,
-    listener: TcpListener,
+    incoming: I,
     handle: Handle,
 }
 
-impl<S> Server<S>
+impl<S, I, Io> Server<S, I>
 where
     S: NewService<Error = Error>,
     S::Instance: 'static,
     S::Request: DeserializeOwned + Send + 'static,
     S::Response: Serialize + Send + 'static,
+    I: Stream<Item = (Io, SocketAddr), Error = io::Error>,
+    Io: AsyncRead + AsyncWrite + Send + 'static,
 {
-    pub fn new(new_service: S, listener: TcpListener, handle: Handle) -> Server<S> {
+    pub fn new(new_service: S, incoming: I, handle: Handle) -> Server<S, I> {
         Server {
             new_service,
-            listener,
+            incoming,
             handle,
         }
     }
 
-    fn spawn(&mut self, stream: TcpStream) -> Result<(), Error> {
+    fn spawn(&mut self, stream: Io) -> Result<(), Error> {
         let service = self.new_service.new_service()?;
         let connection = Connection::spawn(service, stream)?;
         self.handle.spawn(connection.then(|res| {
@@ -49,29 +51,24 @@ where
     }
 }
 
-impl<S> Future for Server<S>
+impl<S, I, Io> Future for Server<S, I>
 where
     S: NewService<Error = Error>,
     S::Instance: 'static,
     S::Request: DeserializeOwned + Send + 'static,
     S::Response: Serialize + Send + 'static,
+    I: Stream<Item = (Io, SocketAddr), Error = io::Error>,
+    Io: AsyncRead + AsyncWrite + Send + 'static,
 {
     type Item = ();
     type Error = Error;
 
     fn poll(&mut self) -> Poll<(), Error> {
-        let accept_result = self.listener.accept();
-        match accept_result {
-            Ok((stream, _)) => {
+        loop {
+            if let Some((stream, _)) = try_ready!(self.incoming.poll()) {
                 self.spawn(stream)?;
-                self.poll()
-            }
-            Err(err) => {
-                if err.kind() == io::ErrorKind::WouldBlock {
-                    Ok(Async::NotReady)
-                } else {
-                    Err(err.into())
-                }
+            } else {
+                return Ok(Async::Ready(()));
             }
         }
     }
