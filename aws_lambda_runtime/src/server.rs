@@ -1,5 +1,4 @@
 use std::io;
-use std::rc::Rc;
 
 use failure::Error;
 use futures::stream::FuturesUnordered;
@@ -83,7 +82,7 @@ where
     S: Service,
     Io: AsyncRead + AsyncWrite + Send + 'static,
 {
-    service: Rc<S>,
+    service: S,
     decoder: proto::Decoder<ReadHalf<Io>, S::Request>,
     encoder: proto::Encoder<WriteHalf<Io>, S::Response>,
     futures: FuturesUnordered<Invocation<S>>,
@@ -102,7 +101,7 @@ where
         let encoder = proto::Encoder::new(w)?;
 
         Ok(Connection {
-            service: Rc::new(service),
+            service,
             decoder,
             encoder,
             futures: FuturesUnordered::new(),
@@ -138,9 +137,8 @@ where
                     }
                     proto::Request::Invoke(seq, _deadline, ctx, payload) => {
                         // TODO: enforce deadline
-                        let service = self.service.clone();
-                        let fut = Invocation::Starting(seq, service, payload, ctx);
-                        self.futures.push(fut);
+                        let future = ctx.with(|| self.service.call(payload));
+                        self.futures.push(Invocation { seq, future, ctx });
                         continue;
                     }
                 },
@@ -189,10 +187,10 @@ where
     }
 }
 
-enum Invocation<S: Service> {
-    Starting(u64, Rc<S>, S::Request, Context),
-    Running(u64, S::Future, Context),
-    Swapping,
+struct Invocation<S: Service> {
+    seq: u64,
+    future: S::Future,
+    ctx: Context,
 }
 
 impl<S> Future for Invocation<S>
@@ -203,21 +201,12 @@ where
     type Error = Void;
 
     fn poll(&mut self) -> Poll<Self::Item, Self::Error> {
-        if let Invocation::Running(ref seq, ref mut future, ref ctx) = self {
-            ctx.with(|| match future.poll() {
-                Ok(Async::NotReady) => Ok(Async::NotReady),
-                Ok(Async::Ready(res)) => Ok(Async::Ready((*seq, Ok(res)))),
-                Err(err) => Ok(Async::Ready((*seq, Err(err)))),
-            })
-        } else {
-            match ::std::mem::replace(self, Invocation::Swapping) {
-                Invocation::Starting(seq, svc, req, ctx) => {
-                    let future = ctx.with(|| svc.call(req));
-                    *self = Invocation::Running(seq, future, ctx);
-                    self.poll()
-                }
-                _ => unreachable!(),
-            }
-        }
+        let seq = self.seq;
+        let future = &mut self.future;
+        self.ctx.with(|| match future.poll() {
+            Ok(Async::NotReady) => Ok(Async::NotReady),
+            Ok(Async::Ready(res)) => Ok(Async::Ready((seq, Ok(res)))),
+            Err(err) => Ok(Async::Ready((seq, Err(err)))),
+        })
     }
 }
