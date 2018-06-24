@@ -78,8 +78,8 @@ where
                 self.stream.serialize_with_type_id(
                     self.type_id_response,
                     &RpcResponse {
-                        service_method: "Function.Ping",
-                        seq: seq,
+                        service_method: messages::SERVICE_METHOD_PING,
+                        seq,
                         error: None,
                     },
                 )?;
@@ -92,8 +92,8 @@ where
                 self.stream.serialize_with_type_id(
                     self.type_id_response,
                     &RpcResponse {
-                        service_method: "Function.Invoke",
-                        seq: seq,
+                        service_method: messages::SERVICE_METHOD_INVOKE,
+                        seq,
                         error: None,
                     },
                 )?;

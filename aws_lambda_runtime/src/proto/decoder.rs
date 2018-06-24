@@ -85,10 +85,10 @@ where
                         return Ok(Async::Ready(None));
                     }
                     Some(req) => match req.service_method {
-                        "Function.Ping" => {
+                        messages::SERVICE_METHOD_PING => {
                             self.state = DecoderState::ReadingPingRequest(req.seq);
                         }
-                        "Function.Invoke" => {
+                        messages::SERVICE_METHOD_INVOKE => {
                             self.state = DecoderState::ReadingInvokeRequest(req.seq);
                         }
                         method => {

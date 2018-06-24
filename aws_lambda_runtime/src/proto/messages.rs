@@ -1,5 +1,8 @@
 use serde_bytes::Bytes;
 
+pub(crate) const SERVICE_METHOD_PING: &str = "Function.Ping";
+pub(crate) const SERVICE_METHOD_INVOKE: &str = "Function.Invoke";
+
 #[derive(Clone, Debug, Deserialize)]
 pub(crate) struct PingRequest {}
 
