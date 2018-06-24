@@ -1,6 +1,5 @@
 //! Types that contain invocation metadata.
 
-use std::cell::RefCell;
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -87,9 +86,7 @@ pub(crate) struct LambdaContext {
     pub(crate) client_context: Option<ClientContext>,
 }
 
-task_local! {
-    static CTX: RefCell<Option<Context>> = RefCell::new(None)
-}
+scoped_thread_local!(static CTX: Context);
 
 /// Metadata that is passed to the function on invocation.
 #[derive(Clone, Debug)]
@@ -104,9 +101,8 @@ impl Context {
     ///
     /// This function will panic when called outside of a lambda runtime task.
     pub fn current() -> Context {
-        let opt_ctx = CTX.with(|ctx_cell| ctx_cell.borrow().clone());
-        if let Some(ctx) = opt_ctx {
-            return ctx;
+        if CTX.is_set() {
+            CTX.with(|ctx| ctx.clone())
         } else {
             panic!("Context::current() called outside of a lambda runtime task");
         }
@@ -134,12 +130,17 @@ impl Context {
         self.inner.client_context.as_ref()
     }
 
-    pub(crate) fn set_current(lctx: LambdaContext) {
-        CTX.with(|ctx_cell| {
-            *ctx_cell.borrow_mut() = Some(Context {
-                inner: Arc::new(lctx),
-            });
-        });
+    pub(crate) fn new(lctx: LambdaContext) -> Context {
+        Context {
+            inner: Arc::new(lctx),
+        }
+    }
+
+    pub(crate) fn with<F, R>(&self, f: F) -> R
+    where
+        F: FnOnce() -> R,
+    {
+        CTX.set(self, f)
     }
 }
 

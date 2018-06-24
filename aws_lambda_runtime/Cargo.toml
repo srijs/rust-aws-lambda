@@ -13,6 +13,7 @@ failure = "0.1.1"
 futures = "0.1.21"
 gob = { git = "https://github.com/srijs/rust-gob" }
 log = "0.4.1"
+scoped-tls = "0.1"
 serde = "1.0.39"
 serde_bytes = "0.10.4"
 serde_derive = "1.0.42"

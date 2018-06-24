@@ -21,7 +21,7 @@ struct RpcRequest<'a> {
 
 pub(crate) enum Request<T> {
     Ping(u64),
-    Invoke(u64, Duration, ::context::LambdaContext, T),
+    Invoke(u64, Duration, ::context::Context, T),
 }
 
 #[derive(Debug)]
@@ -117,12 +117,12 @@ where
                     cognito_identity_pool_id: message.cognito_identity_pool_id,
                 };
 
-                let ctx = context::LambdaContext {
+                let ctx = context::Context::new(context::LambdaContext {
                     aws_request_id: message.request_id,
                     invoked_function_arn: message.invoked_function_arn,
                     identity: identity,
                     client_context: None,
-                };
+                });
 
                 let deadline =
                     Duration::new(message.deadline.secs as u64, message.deadline.nanos as u32);
@@ -200,7 +200,7 @@ mod tests {
             match request2 {
                 Request::Invoke(seq, deadline, ctx, payload) => {
                     assert_eq!(1, seq);
-                    assert_eq!("2ed80e4e-6196-11e8-876a-4f41bd893c42", ctx.aws_request_id);
+                    assert_eq!("2ed80e4e-6196-11e8-876a-4f41bd893c42", ctx.aws_request_id());
                     assert_eq!(1527415833, deadline.as_secs());
                     assert_eq!(32849522, deadline.subsec_nanos());
                     assert_eq!(3, payload.len());

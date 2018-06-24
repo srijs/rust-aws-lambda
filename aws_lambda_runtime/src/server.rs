@@ -12,7 +12,7 @@ use tokio_io::{io::ReadHalf, io::WriteHalf, AsyncRead, AsyncWrite};
 use tokio_service::{NewService, Service};
 use void::Void;
 
-use super::context::{self, Context};
+use super::context::Context;
 use super::proto;
 
 pub struct Server<S: NewService> {
@@ -190,8 +190,8 @@ where
 }
 
 enum Invocation<S: Service> {
-    Starting(u64, Rc<S>, S::Request, context::LambdaContext),
-    Running(u64, S::Future),
+    Starting(u64, Rc<S>, S::Request, Context),
+    Running(u64, S::Future, Context),
     Swapping,
 }
 
@@ -203,17 +203,17 @@ where
     type Error = Void;
 
     fn poll(&mut self) -> Poll<Self::Item, Self::Error> {
-        if let Invocation::Running(ref seq, ref mut future) = self {
-            match future.poll() {
+        if let Invocation::Running(ref seq, ref mut future, ref ctx) = self {
+            ctx.with(|| match future.poll() {
                 Ok(Async::NotReady) => Ok(Async::NotReady),
                 Ok(Async::Ready(res)) => Ok(Async::Ready((*seq, Ok(res)))),
                 Err(err) => Ok(Async::Ready((*seq, Err(err)))),
-            }
+            })
         } else {
             match ::std::mem::replace(self, Invocation::Swapping) {
                 Invocation::Starting(seq, svc, req, ctx) => {
-                    Context::set_current(ctx);
-                    *self = Invocation::Running(seq, svc.call(req));
+                    let future = ctx.with(|| svc.call(req));
+                    *self = Invocation::Running(seq, future, ctx);
                     self.poll()
                 }
                 _ => unreachable!(),

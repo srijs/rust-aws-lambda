@@ -25,6 +25,8 @@ extern crate futures;
 extern crate gob;
 #[macro_use]
 extern crate log;
+#[macro_use]
+extern crate scoped_tls;
 extern crate serde;
 extern crate serde_bytes;
 #[macro_use]
