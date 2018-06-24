@@ -7,6 +7,7 @@ use futures::{Async, Future, Poll, Sink, Stream};
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 use tokio_core::net::{TcpListener, TcpStream};
+use tokio_core::reactor::Handle;
 use tokio_io::{io::ReadHalf, io::WriteHalf, AsyncRead, AsyncWrite};
 use tokio_service::{NewService, Service};
 use void::Void;
@@ -17,7 +18,7 @@ use super::proto;
 pub struct Server<S: NewService> {
     new_service: S,
     listener: TcpListener,
-    connections: FuturesUnordered<Connection<S::Instance, TcpStream>>,
+    handle: Handle,
 }
 
 impl<S> Server<S>
@@ -27,18 +28,23 @@ where
     S::Request: DeserializeOwned + Send + 'static,
     S::Response: Serialize + Send + 'static,
 {
-    pub fn new(new_service: S, listener: TcpListener) -> Server<S> {
+    pub fn new(new_service: S, listener: TcpListener, handle: Handle) -> Server<S> {
         Server {
             new_service,
             listener,
-            connections: FuturesUnordered::new(),
+            handle,
         }
     }
 
     fn spawn(&mut self, stream: TcpStream) -> Result<(), Error> {
         let service = self.new_service.new_service()?;
         let connection = Connection::spawn(service, stream)?;
-        self.connections.push(connection);
+        self.handle.spawn(connection.then(|res| {
+            if let Err(err) = res {
+                error!("connection error: {}", err);
+            }
+            Ok(())
+        }));
 
         Ok(())
     }
@@ -55,7 +61,6 @@ where
     type Error = Error;
 
     fn poll(&mut self) -> Poll<(), Error> {
-        let connections_poll = self.connections.poll();
         let accept_result = self.listener.accept();
         match accept_result {
             Ok((stream, _)) => {
@@ -64,15 +69,7 @@ where
             }
             Err(err) => {
                 if err.kind() == io::ErrorKind::WouldBlock {
-                    match connections_poll {
-                        Ok(Async::Ready(None)) => Ok(Async::NotReady),
-                        Ok(Async::Ready(Some(_))) => self.poll(),
-                        Ok(Async::NotReady) => Ok(Async::NotReady),
-                        Err(err) => {
-                            error!("connection error: {}", err);
-                            self.poll()
-                        }
-                    }
+                    Ok(Async::NotReady)
                 } else {
                     Err(err.into())
                 }
