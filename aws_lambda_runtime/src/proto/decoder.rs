@@ -49,6 +49,7 @@ enum DecoderState {
     PendingRequest,
     ReadingPingRequest(u64),
     ReadingInvokeRequest(u64),
+    End,
 }
 
 pub(crate) struct Decoder<R, T> {
@@ -80,6 +81,7 @@ where
             DecoderState::PendingRequest => {
                 match try_nb_gob!(self.stream.deserialize::<RpcRequest<'_>>()) {
                     None => {
+                        self.state = DecoderState::End;
                         return Ok(Async::Ready(None));
                     }
                     Some(req) => match req.service_method {
@@ -133,6 +135,7 @@ where
                     seq, deadline, ctx, payload,
                 ))))
             }
+            DecoderState::End => Ok(Async::Ready(None)),
         }
     }
 }

@@ -84,7 +84,7 @@ where
     Io: AsyncRead + AsyncWrite + Send + 'static,
 {
     service: Rc<S>,
-    decoder: ::futures::stream::Fuse<proto::Decoder<ReadHalf<Io>, S::Request>>,
+    decoder: proto::Decoder<ReadHalf<Io>, S::Request>,
     encoder: proto::Encoder<WriteHalf<Io>, S::Response>,
     futures: FuturesUnordered<Invocation<S>>,
 }
@@ -98,7 +98,7 @@ where
 {
     fn spawn(service: S, io: Io) -> Result<Self, Error> {
         let (r, w) = io.split();
-        let decoder = proto::Decoder::new(r).fuse();
+        let decoder = proto::Decoder::new(r);
         let encoder = proto::Encoder::new(w)?;
 
         Ok(Connection {
