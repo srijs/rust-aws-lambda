@@ -111,15 +111,11 @@ where
 
     fn poll_futures(&mut self) -> Poll<(), Error> {
         loop {
-            match try_ready!(self.futures.poll()) {
-                None => {
-                    return Ok(Async::Ready(()));
-                }
-                Some((seq, result)) => {
-                    self.encoder
-                        .start_send(proto::Response::Invoke(seq, result))?;
-                    continue;
-                }
+            if let Some((seq, result)) = try_ready!(self.futures.poll()) {
+                self.encoder
+                    .start_send(proto::Response::Invoke(seq, result))?;
+            } else {
+                return Ok(Async::Ready(()));
             }
         }
     }
