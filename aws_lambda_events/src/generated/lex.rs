@@ -93,8 +93,11 @@ mod test {
     extern crate serde_json;
 
     #[test]
-    fn deserializes_event() {
+    fn example_event() {
         let data = include_bytes!("fixtures/example-lex-event.json");
-        let _: LexEvent = serde_json::from_slice(data).unwrap();
+        let parsed: LexEvent = serde_json::from_slice(data).unwrap();
+        let output: String = serde_json::to_string(&parsed).unwrap();
+        let reparsed: LexEvent = serde_json::from_slice(output.as_bytes()).unwrap();
+        assert_eq!(parsed, reparsed);
     }
 }

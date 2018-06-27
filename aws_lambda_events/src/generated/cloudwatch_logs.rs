@@ -43,8 +43,11 @@ mod test {
     extern crate serde_json;
 
     #[test]
-    fn deserializes_event() {
+    fn example_event() {
         let data = include_bytes!("fixtures/example-cloudwatch_logs-event.json");
-        let _: CloudwatchLogsEvent = serde_json::from_slice(data).unwrap();
+        let parsed: CloudwatchLogsEvent = serde_json::from_slice(data).unwrap();
+        let output: String = serde_json::to_string(&parsed).unwrap();
+        let reparsed: CloudwatchLogsEvent = serde_json::from_slice(output.as_bytes()).unwrap();
+        assert_eq!(parsed, reparsed);
     }
 }

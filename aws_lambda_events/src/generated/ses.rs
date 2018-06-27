@@ -93,8 +93,11 @@ mod test {
     extern crate serde_json;
 
     #[test]
-    fn deserializes_event() {
+    fn example_event() {
         let data = include_bytes!("fixtures/example-ses-event.json");
-        let _: SimpleEmailEvent = serde_json::from_slice(data).unwrap();
+        let parsed: SimpleEmailEvent = serde_json::from_slice(data).unwrap();
+        let output: String = serde_json::to_string(&parsed).unwrap();
+        let reparsed: SimpleEmailEvent = serde_json::from_slice(output.as_bytes()).unwrap();
+        assert_eq!(parsed, reparsed);
     }
 }

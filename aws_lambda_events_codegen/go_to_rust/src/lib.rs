@@ -572,10 +572,11 @@ fn translate_go_type_to_rust_type(go_type: GoType) -> Result<RustType, Error> {
             if i.value == "u8" {
                 // Handle []u8 special, as it is base64 encoded.
                 i.libraries
-                    .insert("super::super::deserializers::*".to_string());
+                    .insert("super::super::custom_serde::*".to_string());
                 RustType {
                     annotations: vec![
                         "#[serde(deserialize_with = \"deserialize_base64\")]".to_string(),
+                        "#[serde(serialize_with = \"serialize_base64\")]".to_string(),
                     ],
                     value: format!("Vec<{}>", i.value),
                     libraries: i.libraries,
@@ -628,10 +629,11 @@ fn translate_go_type_to_rust_type(go_type: GoType) -> Result<RustType, Error> {
             let mut libraries = HashSet::new();
             libraries.insert("chrono::DateTime".to_string());
             libraries.insert("chrono::Utc".to_string());
-            libraries.insert("super::super::deserializers::*".to_string());
+            libraries.insert("super::super::custom_serde::*".to_string());
             RustType {
                 annotations: vec![
                     "#[serde(deserialize_with = \"deserialize_seconds\")]".to_string(),
+                    "#[serde(serialize_with = \"serialize_seconds\")]".to_string(),
                 ],
                 value: "DateTime<Utc>".to_string(),
                 libraries,
@@ -641,11 +643,12 @@ fn translate_go_type_to_rust_type(go_type: GoType) -> Result<RustType, Error> {
             let mut libraries = HashSet::new();
             libraries.insert("chrono::DateTime".to_string());
             libraries.insert("chrono::Utc".to_string());
-            libraries.insert("super::super::deserializers::*".to_string());
+            libraries.insert("super::super::custom_serde::*".to_string());
 
             RustType {
                 annotations: vec![
                     "#[serde(deserialize_with = \"deserialize_milliseconds\")]".to_string(),
+                    "#[serde(serialize_with = \"serialize_milliseconds\")]".to_string(),
                 ],
                 value: "DateTime<Utc>".to_string(),
                 libraries,

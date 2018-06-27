@@ -1,5 +1,5 @@
 use chrono::{DateTime, Utc};
-use super::super::deserializers::*;
+use super::super::custom_serde::*;
 
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct KinesisEvent {
@@ -29,9 +29,11 @@ pub struct KinesisEventRecord {
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct KinesisRecord {
     #[serde(deserialize_with = "deserialize_seconds")]
+    #[serde(serialize_with = "serialize_seconds")]
     #[serde(rename = "approximateArrivalTimestamp")]
     pub approximate_arrival_timestamp: DateTime<Utc>,
     #[serde(deserialize_with = "deserialize_base64")]
+    #[serde(serialize_with = "serialize_base64")]
     pub data: Vec<u8>,
     #[serde(rename = "encryptionType")]
     pub encryption_type: Option<String>,
@@ -50,8 +52,11 @@ mod test {
     extern crate serde_json;
 
     #[test]
-    fn deserializes_event() {
+    fn example_event() {
         let data = include_bytes!("fixtures/example-kinesis-event.json");
-        let _: KinesisEvent = serde_json::from_slice(data).unwrap();
+        let parsed: KinesisEvent = serde_json::from_slice(data).unwrap();
+        let output: String = serde_json::to_string(&parsed).unwrap();
+        let reparsed: KinesisEvent = serde_json::from_slice(output.as_bytes()).unwrap();
+        assert_eq!(parsed, reparsed);
     }
 }

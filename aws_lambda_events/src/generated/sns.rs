@@ -53,8 +53,11 @@ mod test {
     extern crate serde_json;
 
     #[test]
-    fn deserializes_event() {
+    fn example_event() {
         let data = include_bytes!("fixtures/example-sns-event.json");
-        let _: SnsEvent = serde_json::from_slice(data).unwrap();
+        let parsed: SnsEvent = serde_json::from_slice(data).unwrap();
+        let output: String = serde_json::to_string(&parsed).unwrap();
+        let reparsed: SnsEvent = serde_json::from_slice(output.as_bytes()).unwrap();
+        assert_eq!(parsed, reparsed);
     }
 }

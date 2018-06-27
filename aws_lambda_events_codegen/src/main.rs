@@ -150,16 +150,29 @@ fn generate_test_module(scope: &codegen::Scope, relative: &PathBuf) -> Result<co
             _ => continue,
         }
     }
-    let mut test_function = codegen::Function::new("deserializes_event");
+    let mut test_function = codegen::Function::new("example_event");
     test_function.annotation(vec!["test"]);
+    // Include the fixture content.
     test_function.line(format!(
         r#"let data = include_bytes!("{}");"#,
         relative.to_string_lossy(),
     ));
+    // Deserialize.
     test_function.line(format!(
-        r#"let _: {} = serde_json::from_slice(data).unwrap();"#,
+        r#"let parsed: {} = serde_json::from_slice(data).unwrap();"#,
         toplevel_type.expect("top-level type defined"),
     ));
+    // Serialize.
+    test_function.line(String::from(
+        r#"let output: String = serde_json::to_string(&parsed).unwrap();"#,
+    ));
+    // Deserialize.
+    test_function.line(format!(
+        r#"let reparsed: {} = serde_json::from_slice(output.as_bytes()).unwrap();"#,
+        toplevel_type.expect("top-level type defined"),
+    ));
+    // Compare.
+    test_function.line(String::from(r#"assert_eq!(parsed, reparsed);"#));
 
     let mut test_module = codegen::Module::new("test");
     test_module.annotation(vec!["cfg(test)"]);
