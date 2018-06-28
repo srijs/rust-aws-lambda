@@ -480,6 +480,9 @@ fn parse_go_type_array(pairs: Pairs<Rule>) -> Result<GoType, Error> {
             Rule::map => Some(GoType::ArrayType(Box::new(parse_go_type_map(
                 pair.into_inner(),
             )?))),
+            Rule::array => Some(GoType::ArrayType(Box::new(parse_go_type_array(
+                pair.into_inner(),
+            )?))),
             _ => unimplemented!(),
         };
     }

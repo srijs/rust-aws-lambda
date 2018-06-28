@@ -25,7 +25,7 @@ primitive = { boolean | byte | int | uint | float | string }
 
 // Non-primitives
 interface = { "interface" ~ "{" ~ "}"}
-array = { "[]" ~ (interface | primitive | map | ident) }
+array = { "[]" ~ (interface | primitive | map | array | ident) }
 
 // Collections. This isn't 100% correct but whatever.
 key_type = { primitive }
