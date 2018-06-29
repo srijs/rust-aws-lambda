@@ -572,17 +572,14 @@ fn translate_go_type_to_rust_type(go_type: GoType) -> Result<RustType, Error> {
         GoType::UserDefined(x) => make_rust_type_with_no_libraries(&x.to_camel_case()),
         GoType::ArrayType(x) => {
             let mut i = translate_go_type_to_rust_type(*x.clone())?;
+            let mut libraries = HashSet::new();
+            libraries.insert("super::super::custom_serde::Base64Data".to_string());
             if i.value == "u8" {
                 // Handle []u8 special, as it is base64 encoded.
-                i.libraries
-                    .insert("super::super::custom_serde::*".to_string());
                 RustType {
-                    annotations: vec![
-                        "#[serde(deserialize_with = \"deserialize_base64\")]".to_string(),
-                        "#[serde(serialize_with = \"serialize_base64\")]".to_string(),
-                    ],
-                    value: format!("Vec<{}>", i.value),
-                    libraries: i.libraries,
+                    annotations: vec![],
+                    value: "Base64Data".to_string(),
+                    libraries: libraries,
                 }
             } else {
                 RustType {
@@ -630,30 +627,20 @@ fn translate_go_type_to_rust_type(go_type: GoType) -> Result<RustType, Error> {
         }
         GoType::TimestampSecondsType => {
             let mut libraries = HashSet::new();
-            libraries.insert("chrono::DateTime".to_string());
-            libraries.insert("chrono::Utc".to_string());
-            libraries.insert("super::super::custom_serde::*".to_string());
+            libraries.insert("super::super::custom_serde::SecondTimestamp".to_string());
             RustType {
-                annotations: vec![
-                    "#[serde(deserialize_with = \"deserialize_seconds\")]".to_string(),
-                    "#[serde(serialize_with = \"serialize_seconds\")]".to_string(),
-                ],
-                value: "DateTime<Utc>".to_string(),
+                annotations: vec![],
+                value: "SecondTimestamp".to_string(),
                 libraries,
             }
         }
         GoType::TimestampMillisecondsType => {
             let mut libraries = HashSet::new();
-            libraries.insert("chrono::DateTime".to_string());
-            libraries.insert("chrono::Utc".to_string());
-            libraries.insert("super::super::custom_serde::*".to_string());
+            libraries.insert("super::super::custom_serde::MillisecondTimestamp".to_string());
 
             RustType {
-                annotations: vec![
-                    "#[serde(deserialize_with = \"deserialize_milliseconds\")]".to_string(),
-                    "#[serde(serialize_with = \"serialize_milliseconds\")]".to_string(),
-                ],
-                value: "DateTime<Utc>".to_string(),
+                annotations: vec![],
+                value: "MillisecondTimestamp".to_string(),
                 libraries,
             }
         }

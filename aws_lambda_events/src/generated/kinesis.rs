@@ -1,5 +1,4 @@
-use chrono::{DateTime, Utc};
-use super::super::custom_serde::*;
+use super::super::custom_serde::{Base64Data, SecondTimestamp};
 
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct KinesisEvent {
@@ -28,13 +27,9 @@ pub struct KinesisEventRecord {
 
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct KinesisRecord {
-    #[serde(deserialize_with = "deserialize_seconds")]
-    #[serde(serialize_with = "serialize_seconds")]
     #[serde(rename = "approximateArrivalTimestamp")]
-    pub approximate_arrival_timestamp: DateTime<Utc>,
-    #[serde(deserialize_with = "deserialize_base64")]
-    #[serde(serialize_with = "serialize_base64")]
-    pub data: Vec<u8>,
+    pub approximate_arrival_timestamp: SecondTimestamp,
+    pub data: Base64Data,
     #[serde(rename = "encryptionType")]
     pub encryption_type: Option<String>,
     #[serde(rename = "partitionKey")]
