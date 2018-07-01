@@ -83,6 +83,33 @@ fn write_mod_index(
     Ok(())
 }
 
+fn write_readme(readme_path: &PathBuf, git_hash: &str, overwrite: bool) -> Result<()> {
+    if overwrite_warning(&readme_path, overwrite).is_none() {
+        let version_text = format!(
+            "Generated from commit [{}](https://github.com/aws/aws-lambda-go/commit/{}).",
+            git_hash, git_hash,
+        );
+        let mut content: Vec<&str> = Vec::new();
+        content.push("AWS lambda event types.");
+        content.push("");
+        content.push("These types are automatically generated from the");
+        content.push("[official Go SDK](https://github.com/aws/aws-lambda-go/tree/master/events).");
+        content.push("");
+        content.push(&version_text);
+        let mut f = File::create(readme_path)?;
+        f.write_all(
+            content
+                .iter()
+                .map(|x| format!("//! {}", x).trim().to_string())
+                .collect::<Vec<String>>()
+                .join("\n")
+                .as_bytes(),
+        )?;
+        f.write_all("\n".as_bytes())?;
+    }
+    Ok(())
+}
+
 fn find_example_event(sdk_location: &PathBuf, service_name: &str) -> Result<Option<String>> {
     let location = match service_name.as_ref() {
         "code_commit" => "events/testdata/code-commit-event.json".to_string(),
@@ -261,4 +288,11 @@ main!(|args: Cli, log_level: verbosity| {
     // Write the crate index.
     let mod_path = args.output_location.clone().join("mod.rs");
     write_mod_index(&mod_path, &parsed_files, args.overwrite)?;
+
+    // Write the crate readme.
+    let mut f = File::open(args.sdk_location.join(".git/ORIG_HEAD"))?;
+    let mut git_hash = String::new();
+    f.read_to_string(&mut git_hash)?;
+    let readme_path = args.output_location.clone().join("README.md");
+    write_readme(&readme_path, git_hash.trim(), args.overwrite)?;
 });
