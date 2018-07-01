@@ -1,4 +1,4 @@
-use super::super::custom_serde::{Base64Data, MillisecondTimestamp};
+use super::super::encodings::{Base64Data, MillisecondTimestamp};
 
 /// `KinesisFirehoseEvent` represents the input event from Amazon Kinesis Firehose. It is used as the input parameter.
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]

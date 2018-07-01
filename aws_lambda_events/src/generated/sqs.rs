@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use super::super::custom_serde::Base64Data;
+use super::super::encodings::Base64Data;
 
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct SqsEvent {

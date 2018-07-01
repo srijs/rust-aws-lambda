@@ -1,4 +1,4 @@
-use super::super::custom_serde::{Base64Data, SecondTimestamp};
+use super::super::encodings::{Base64Data, SecondTimestamp};
 
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct KinesisEvent {

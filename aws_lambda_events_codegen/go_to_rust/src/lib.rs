@@ -573,7 +573,7 @@ fn translate_go_type_to_rust_type(go_type: GoType) -> Result<RustType, Error> {
         GoType::ArrayType(x) => {
             let mut i = translate_go_type_to_rust_type(*x.clone())?;
             let mut libraries = HashSet::new();
-            libraries.insert("super::super::custom_serde::Base64Data".to_string());
+            libraries.insert("super::super::encodings::Base64Data".to_string());
             if i.value == "u8" {
                 // Handle []u8 special, as it is base64 encoded.
                 RustType {
@@ -627,7 +627,7 @@ fn translate_go_type_to_rust_type(go_type: GoType) -> Result<RustType, Error> {
         }
         GoType::TimestampSecondsType => {
             let mut libraries = HashSet::new();
-            libraries.insert("super::super::custom_serde::SecondTimestamp".to_string());
+            libraries.insert("super::super::encodings::SecondTimestamp".to_string());
             RustType {
                 annotations: vec![],
                 value: "SecondTimestamp".to_string(),
@@ -636,7 +636,7 @@ fn translate_go_type_to_rust_type(go_type: GoType) -> Result<RustType, Error> {
         }
         GoType::TimestampMillisecondsType => {
             let mut libraries = HashSet::new();
-            libraries.insert("super::super::custom_serde::MillisecondTimestamp".to_string());
+            libraries.insert("super::super::encodings::MillisecondTimestamp".to_string());
 
             RustType {
                 annotations: vec![],

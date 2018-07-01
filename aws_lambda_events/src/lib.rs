@@ -14,5 +14,6 @@ extern crate serde_json;
 extern crate serde_json;
 
 mod custom_serde;
+pub mod encodings;
 pub mod event;
 mod generated;
