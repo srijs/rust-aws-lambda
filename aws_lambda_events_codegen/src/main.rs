@@ -90,7 +90,7 @@ fn write_readme(readme_path: &PathBuf, git_hash: &str, overwrite: bool) -> Resul
             git_hash, git_hash,
         );
         let mut content: Vec<&str> = Vec::new();
-        content.push("AWS lambda event types.");
+        content.push("# AWS lambda event types.");
         content.push("");
         content.push("These types are automatically generated from the");
         content.push("[official Go SDK](https://github.com/aws/aws-lambda-go/tree/master/events).");
@@ -99,9 +99,6 @@ fn write_readme(readme_path: &PathBuf, git_hash: &str, overwrite: bool) -> Resul
         let mut f = File::create(readme_path)?;
         f.write_all(
             content
-                .iter()
-                .map(|x| format!("//! {}", x).trim().to_string())
-                .collect::<Vec<String>>()
                 .join("\n")
                 .as_bytes(),
         )?;
