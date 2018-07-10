@@ -1,5 +1,6 @@
 extern crate failure;
 extern crate futures;
+extern crate log;
 extern crate serde;
 
 use failure::Error;
@@ -13,6 +14,8 @@ pub use aws_lambda_runtime::{Context, Runtime};
 
 pub use aws_lambda_events::event;
 pub use aws_lambda_runtime::context;
+
+pub mod logger;
 
 /// Start the lambda runtime using the provided handler function.
 ///

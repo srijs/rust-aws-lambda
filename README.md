@@ -104,6 +104,28 @@ fn main() {
 }
 ```
 
+### Logging
+
+The `aws_runtime` crate bundles its own logger, which can be used through the
+[`log`](https://crates.io/crates/log) facade.
+
+To initialize the logging system, you can call `logger::init()`.
+
+```rust,no_run
+extern crate aws_lambda as lambda;
+#[macro_use] extern crate log;
+
+fn main() {
+    lambda::logger::init();
+
+    lambda::start(|()| {
+        info!("running lambda function...");
+
+        Ok("Hello ƛ!")
+    })
+}
+```
+
 ### Deploy
 
 TBD

@@ -1,8 +1,13 @@
 extern crate aws_lambda as lambda;
-extern crate env_logger;
+#[macro_use]
+extern crate log;
 
 fn main() {
-    env_logger::init();
+    lambda::logger::init();
 
-    lambda::start(|()| Ok("Hello ƛ!"))
+    lambda::start(|()| {
+        info!("running lambda!");
+
+        Ok("Hello ƛ!")
+    })
 }
