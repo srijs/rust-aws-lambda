@@ -66,7 +66,7 @@ fn main() {
 
 The types in the `event` module are automatically generated from the [official Go SDK](https://github.com/aws/aws-lambda-go/tree/master/events) and thus are generally up-to-date.
 
-### Dealing with `null` and empty strings in lambda input
+#### Dealing with `null` and empty strings in lambda input
 
 The official Lambda Go SDK sometimes marks a field as required when the underlying lambda event json could actually be `null` or an empty string. Normally, this would cause a panic as Rust is much more strict.
 
