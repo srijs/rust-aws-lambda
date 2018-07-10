@@ -109,8 +109,12 @@ where
 {
     match Option::deserialize(deserializer)? {
         Some(s) => {
-            if s == "" { Ok(None) } else { Ok(Some(s)) }
-        },
+            if s == "" {
+                Ok(None)
+            } else {
+                Ok(Some(s))
+            }
+        }
         None => Ok(None),
     }
 }

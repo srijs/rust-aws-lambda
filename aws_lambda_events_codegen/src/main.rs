@@ -97,11 +97,7 @@ fn write_readme(readme_path: &PathBuf, git_hash: &str, overwrite: bool) -> Resul
         content.push("");
         content.push(&version_text);
         let mut f = File::create(readme_path)?;
-        f.write_all(
-            content
-                .join("\n")
-                .as_bytes(),
-        )?;
+        f.write_all(content.join("\n").as_bytes())?;
         f.write_all("\n".as_bytes())?;
     }
     Ok(())
