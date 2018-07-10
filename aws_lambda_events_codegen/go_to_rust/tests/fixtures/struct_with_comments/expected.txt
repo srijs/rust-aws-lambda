@@ -1,7 +1,18 @@
+use custom_serde::*;
+
 /// Foo
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct SimpleEmailEvent {
     /// My cool thing
+    #[cfg(feature = "string-null-none")]
+    #[serde(deserialize_with = "deserialize_lambda_string")]
+    #[serde(default)]
+    #[serde(rename = "fooBar")]
+    pub records: Option<String>,
+    /// My cool thing
+    #[cfg(feature = "string-null-empty")]
+    #[serde(deserialize_with = "deserialize_lambda_string")]
+    #[serde(default)]
     #[serde(rename = "fooBar")]
     pub records: String,
     #[serde(rename = "blah")]

@@ -1,5 +1,7 @@
 language: rust
-script: cargo test --all
+script:
+  - cargo test --all
+  - cargo test --no-default-features --features "string-null-empty" 
 rust:
   - stable
   - beta

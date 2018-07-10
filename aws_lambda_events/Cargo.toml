@@ -6,6 +6,13 @@ authors = [
   "Sam Rijs <srijs@airpost.net>"
 ]
 
+[features]
+default = ["string-null-none"]
+# Handle JSON `null` as an empty value in `String`.
+string-null-empty = []
+# Handle JSON `null` as `None` in an `Option<String>`.
+string-null-none = []
+
 [dependencies]
 base64 = "0.9.2"
 serde = "1.0"

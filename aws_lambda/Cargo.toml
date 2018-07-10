@@ -7,6 +7,12 @@ authors = [
 ]
 build = "build.rs"
 
+[features]
+# Re-export from events crate.
+default = ["string-null-none"]
+string-null-empty = ["aws_lambda_events/string-null-empty"]
+string-null-none = ["aws_lambda_events/string-null-none"]
+
 [dependencies]
 aws_lambda_runtime = { path = "../aws_lambda_runtime" }
 aws_lambda_events = { path = "../aws_lambda_events" }

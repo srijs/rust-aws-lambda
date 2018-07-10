@@ -280,16 +280,7 @@ fn parse_struct(pairs: Pairs<Rule>) -> Result<(codegen::Struct, HashSet<String>)
             rust_type = format!("Option<{}>", rust_type);
         }
 
-        let mut field = Field::new(&member_name, &rust_type);
-
-        // Fields are public.
-        field.vis("pub");
-
-        if let Some(c) = f.comment {
-            field.doc(&c);
-        }
-
-        if let Some(rename) = f.json_name {
+        if let Some(rename) = f.json_name.clone() {
             if rename != member_name {
                 rust_data
                     .annotations
@@ -297,11 +288,49 @@ fn parse_struct(pairs: Pairs<Rule>) -> Result<(codegen::Struct, HashSet<String>)
             }
         }
 
-        if !rust_data.annotations.is_empty() {
-            field.annotation(rust_data.annotations.iter().map(String::as_str).collect());
+        let mut field_defs = vec![];
+
+        // Go converts null strings to "". Let consumers choose how they want
+        // to handle that.
+        if rust_type == "String" {
+            libraries.insert("custom_serde::*".to_string());
+
+            let mut string_as_option = Field::new(&member_name, "Option<String>");
+            string_as_option.annotation(vec![
+                "#[cfg(feature = \"string-null-none\")]",
+                "#[serde(deserialize_with = \"deserialize_lambda_string\")]",
+                "#[serde(default)]",
+            ]);
+            field_defs.push(string_as_option);
+
+            let mut string_as_empty = Field::new(&member_name, &rust_type);
+            string_as_empty.annotation(vec![
+                "#[cfg(feature = \"string-null-empty\")]",
+                "#[serde(deserialize_with = \"deserialize_lambda_string\")]",
+                "#[serde(default)]",
+            ]);
+            field_defs.push(string_as_empty);
+        } else {
+            field_defs = vec![Field::new(&member_name, &rust_type)];
         }
 
-        rust_struct.push_field(field);
+        for mut field in field_defs {
+            // Fields are public.
+            field.vis("pub");
+
+            if let Some(c) = f.comment.clone() {
+                field.doc(&c);
+            }
+
+            if !rust_data.annotations.is_empty() {
+                let mut all_annotations: Vec<String> = field.get_annotation();
+                let mut new_annotations: Vec<String> = rust_data.annotations.clone();
+                all_annotations.append(&mut new_annotations);
+                field.annotation(all_annotations.iter().map(String::as_str).collect());
+            }
+
+            rust_struct.push_field(field);
+        }
     }
 
     Ok((rust_struct, libraries))

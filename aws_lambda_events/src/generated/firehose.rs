@@ -1,18 +1,50 @@
+use custom_serde::*;
 use super::super::encodings::{Base64Data, MillisecondTimestamp};
 
 /// `KinesisFirehoseEvent` represents the input event from Amazon Kinesis Firehose. It is used as the input parameter.
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct KinesisFirehoseEvent {
+    #[cfg(feature = "string-null-none")]
+    #[serde(deserialize_with = "deserialize_lambda_string")]
+    #[serde(default)]
+    #[serde(rename = "invocationId")]
+    pub invocation_id: Option<String>,
+    #[cfg(feature = "string-null-empty")]
+    #[serde(deserialize_with = "deserialize_lambda_string")]
+    #[serde(default)]
     #[serde(rename = "invocationId")]
     pub invocation_id: String,
+    #[cfg(feature = "string-null-none")]
+    #[serde(deserialize_with = "deserialize_lambda_string")]
+    #[serde(default)]
+    #[serde(rename = "deliveryStreamArn")]
+    pub delivery_stream_arn: Option<String>,
+    #[cfg(feature = "string-null-empty")]
+    #[serde(deserialize_with = "deserialize_lambda_string")]
+    #[serde(default)]
     #[serde(rename = "deliveryStreamArn")]
     pub delivery_stream_arn: String,
+    #[cfg(feature = "string-null-none")]
+    #[serde(deserialize_with = "deserialize_lambda_string")]
+    #[serde(default)]
+    pub region: Option<String>,
+    #[cfg(feature = "string-null-empty")]
+    #[serde(deserialize_with = "deserialize_lambda_string")]
+    #[serde(default)]
     pub region: String,
     pub records: Vec<KinesisFirehoseEventRecord>,
 }
 
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct KinesisFirehoseEventRecord {
+    #[cfg(feature = "string-null-none")]
+    #[serde(deserialize_with = "deserialize_lambda_string")]
+    #[serde(default)]
+    #[serde(rename = "recordId")]
+    pub record_id: Option<String>,
+    #[cfg(feature = "string-null-empty")]
+    #[serde(deserialize_with = "deserialize_lambda_string")]
+    #[serde(default)]
     #[serde(rename = "recordId")]
     pub record_id: String,
     #[serde(rename = "approximateArrivalTimestamp")]

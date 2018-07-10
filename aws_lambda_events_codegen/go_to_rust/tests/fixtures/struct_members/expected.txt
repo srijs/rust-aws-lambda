@@ -1,4 +1,5 @@
 use chrono::{DateTime, Utc};
+use custom_serde::*;
 use serde_json::Value;
 use std::collections::HashMap;
 use super::super::encodings::{Base64Data, MillisecondTimestamp, SecondTimestamp};
@@ -7,6 +8,13 @@ use super::super::encodings::{Base64Data, MillisecondTimestamp, SecondTimestamp}
 pub struct SimpleEmailMessage {
     #[serde(rename = "commonHeaders")]
     pub common_headers: SimpleEmailCommonHeaders,
+    #[cfg(feature = "string-null-none")]
+    #[serde(deserialize_with = "deserialize_lambda_string")]
+    #[serde(default)]
+    pub source: Option<String>,
+    #[cfg(feature = "string-null-empty")]
+    #[serde(deserialize_with = "deserialize_lambda_string")]
+    #[serde(default)]
     pub source: String,
     pub timestamp: DateTime<Utc>,
     #[serde(rename = "rawJson")]
@@ -15,6 +23,14 @@ pub struct SimpleEmailMessage {
     pub headers: Vec<SimpleEmailHeader>,
     #[serde(rename = "headersTruncated")]
     pub headers_truncated: bool,
+    #[cfg(feature = "string-null-none")]
+    #[serde(deserialize_with = "deserialize_lambda_string")]
+    #[serde(default)]
+    #[serde(rename = "messageId")]
+    pub message_id: Option<String>,
+    #[cfg(feature = "string-null-empty")]
+    #[serde(deserialize_with = "deserialize_lambda_string")]
+    #[serde(default)]
     #[serde(rename = "messageId")]
     pub message_id: String,
     pub resolutions: Vec<HashMap<String, String>>,

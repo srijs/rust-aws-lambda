@@ -1,3 +1,4 @@
+use custom_serde::*;
 use std::collections::HashMap;
 use super::super::encodings::Base64Data;
 
@@ -9,22 +10,85 @@ pub struct SqsEvent {
 
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct SqsMessage {
+    #[cfg(feature = "string-null-none")]
+    #[serde(deserialize_with = "deserialize_lambda_string")]
+    #[serde(default)]
+    #[serde(rename = "messageId")]
+    pub message_id: Option<String>,
+    #[cfg(feature = "string-null-empty")]
+    #[serde(deserialize_with = "deserialize_lambda_string")]
+    #[serde(default)]
     #[serde(rename = "messageId")]
     pub message_id: String,
+    #[cfg(feature = "string-null-none")]
+    #[serde(deserialize_with = "deserialize_lambda_string")]
+    #[serde(default)]
+    #[serde(rename = "receiptHandle")]
+    pub receipt_handle: Option<String>,
+    #[cfg(feature = "string-null-empty")]
+    #[serde(deserialize_with = "deserialize_lambda_string")]
+    #[serde(default)]
     #[serde(rename = "receiptHandle")]
     pub receipt_handle: String,
+    #[cfg(feature = "string-null-none")]
+    #[serde(deserialize_with = "deserialize_lambda_string")]
+    #[serde(default)]
+    pub body: Option<String>,
+    #[cfg(feature = "string-null-empty")]
+    #[serde(deserialize_with = "deserialize_lambda_string")]
+    #[serde(default)]
     pub body: String,
+    #[cfg(feature = "string-null-none")]
+    #[serde(deserialize_with = "deserialize_lambda_string")]
+    #[serde(default)]
+    #[serde(rename = "md5OfBody")]
+    pub md5_of_body: Option<String>,
+    #[cfg(feature = "string-null-empty")]
+    #[serde(deserialize_with = "deserialize_lambda_string")]
+    #[serde(default)]
     #[serde(rename = "md5OfBody")]
     pub md5_of_body: String,
+    #[cfg(feature = "string-null-none")]
+    #[serde(deserialize_with = "deserialize_lambda_string")]
+    #[serde(default)]
+    #[serde(rename = "md5OfMessageAttributes")]
+    pub md5_of_message_attributes: Option<String>,
+    #[cfg(feature = "string-null-empty")]
+    #[serde(deserialize_with = "deserialize_lambda_string")]
+    #[serde(default)]
     #[serde(rename = "md5OfMessageAttributes")]
     pub md5_of_message_attributes: String,
     pub attributes: HashMap<String, String>,
     #[serde(rename = "messageAttributes")]
     pub message_attributes: HashMap<String, SqsMessageAttribute>,
+    #[cfg(feature = "string-null-none")]
+    #[serde(deserialize_with = "deserialize_lambda_string")]
+    #[serde(default)]
+    #[serde(rename = "eventSourceARN")]
+    pub event_source_arn: Option<String>,
+    #[cfg(feature = "string-null-empty")]
+    #[serde(deserialize_with = "deserialize_lambda_string")]
+    #[serde(default)]
     #[serde(rename = "eventSourceARN")]
     pub event_source_arn: String,
+    #[cfg(feature = "string-null-none")]
+    #[serde(deserialize_with = "deserialize_lambda_string")]
+    #[serde(default)]
+    #[serde(rename = "eventSource")]
+    pub event_source: Option<String>,
+    #[cfg(feature = "string-null-empty")]
+    #[serde(deserialize_with = "deserialize_lambda_string")]
+    #[serde(default)]
     #[serde(rename = "eventSource")]
     pub event_source: String,
+    #[cfg(feature = "string-null-none")]
+    #[serde(deserialize_with = "deserialize_lambda_string")]
+    #[serde(default)]
+    #[serde(rename = "awsRegion")]
+    pub aws_region: Option<String>,
+    #[cfg(feature = "string-null-empty")]
+    #[serde(deserialize_with = "deserialize_lambda_string")]
+    #[serde(default)]
     #[serde(rename = "awsRegion")]
     pub aws_region: String,
 }
@@ -39,6 +103,14 @@ pub struct SqsMessageAttribute {
     pub string_list_values: Vec<String>,
     #[serde(rename = "binaryListValues")]
     pub binary_list_values: Vec<Base64Data>,
+    #[cfg(feature = "string-null-none")]
+    #[serde(deserialize_with = "deserialize_lambda_string")]
+    #[serde(default)]
+    #[serde(rename = "dataType")]
+    pub data_type: Option<String>,
+    #[cfg(feature = "string-null-empty")]
+    #[serde(deserialize_with = "deserialize_lambda_string")]
+    #[serde(default)]
     #[serde(rename = "dataType")]
     pub data_type: String,
 }
