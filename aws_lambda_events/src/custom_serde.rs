@@ -1,7 +1,10 @@
 use base64::{decode, encode};
 use chrono::{DateTime, TimeZone, Utc};
+use serde;
 use serde::de::{Deserialize, Deserializer, Error as DeError};
 use serde::ser::Serializer;
+use std;
+use std::collections::HashMap;
 
 fn normalize_timestamp<'de, D>(deserializer: D) -> Result<(u64, u64), D::Error>
 where
@@ -130,6 +133,22 @@ where
         None => String::default(),
     };
     Ok(result)
+}
+
+/// Deserializes `HashMap<_>`, mapping JSON `null` to an empty map.
+pub(crate) fn deserialize_lambda_map<'de, D, K, V>(
+    deserializer: D,
+) -> Result<HashMap<K, V>, D::Error>
+where
+    D: Deserializer<'de>,
+    K: serde::Deserialize<'de>,
+    K: std::hash::Hash,
+    K: std::cmp::Eq,
+    V: serde::Deserialize<'de>,
+{
+    // https://github.com/serde-rs/serde/issues/1098
+    let opt = Option::deserialize(deserializer)?;
+    Ok(opt.unwrap_or(HashMap::default()))
 }
 
 #[cfg(test)]
@@ -283,5 +302,25 @@ mod test {
         });
         let decoded: Test = serde_json::from_value(input).unwrap();
         assert_eq!(Some("foo".to_string()), decoded.v);
+    }
+
+    #[test]
+    fn test_deserialize_map() {
+        #[derive(Deserialize)]
+        struct Test {
+            #[serde(deserialize_with = "deserialize_lambda_map")]
+            v: HashMap<String, String>,
+        }
+        let input = json!({
+          "v": {},
+        });
+        let decoded: Test = serde_json::from_value(input).unwrap();
+        assert_eq!(HashMap::new(), decoded.v);
+
+        let input = json!({
+          "v": null,
+        });
+        let decoded: Test = serde_json::from_value(input).unwrap();
+        assert_eq!(HashMap::new(), decoded.v);
     }
 }

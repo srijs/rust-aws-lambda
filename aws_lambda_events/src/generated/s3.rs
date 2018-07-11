@@ -56,6 +56,7 @@ pub struct S3EventRecord {
     pub principal_id: S3UserIdentity,
     #[serde(rename = "requestParameters")]
     pub request_parameters: S3RequestParameters,
+    #[serde(deserialize_with = "deserialize_lambda_map")]
     #[serde(rename = "responseElements")]
     pub response_elements: HashMap<String, String>,
     pub s3: S3Entity,

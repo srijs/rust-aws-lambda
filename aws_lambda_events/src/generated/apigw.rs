@@ -35,11 +35,15 @@ pub struct ApiGatewayProxyRequest {
     #[serde(default)]
     #[serde(rename = "httpMethod")]
     pub http_method: String,
+    #[serde(deserialize_with = "deserialize_lambda_map")]
     pub headers: HashMap<String, String>,
+    #[serde(deserialize_with = "deserialize_lambda_map")]
     #[serde(rename = "queryStringParameters")]
     pub query_string_parameters: HashMap<String, String>,
+    #[serde(deserialize_with = "deserialize_lambda_map")]
     #[serde(rename = "pathParameters")]
     pub path_parameters: HashMap<String, String>,
+    #[serde(deserialize_with = "deserialize_lambda_map")]
     #[serde(rename = "stageVariables")]
     pub stage_variables: HashMap<String, String>,
     #[serde(rename = "requestContext")]
@@ -61,6 +65,7 @@ pub struct ApiGatewayProxyRequest {
 pub struct ApiGatewayProxyResponse {
     #[serde(rename = "statusCode")]
     pub status_code: i64,
+    #[serde(deserialize_with = "deserialize_lambda_map")]
     pub headers: HashMap<String, String>,
     #[cfg(feature = "string-null-none")]
     #[serde(deserialize_with = "deserialize_lambda_string")]
@@ -127,6 +132,7 @@ pub struct ApiGatewayProxyRequestContext {
     #[serde(default)]
     #[serde(rename = "resourcePath")]
     pub resource_path: String,
+    #[serde(deserialize_with = "deserialize_lambda_map")]
     pub authorizer: HashMap<String, Value>,
     #[cfg(feature = "string-null-none")]
     #[serde(deserialize_with = "deserialize_lambda_string")]
@@ -468,11 +474,15 @@ pub struct ApiGatewayCustomAuthorizerRequestTypeRequest {
     #[serde(default)]
     #[serde(rename = "httpMethod")]
     pub http_method: String,
+    #[serde(deserialize_with = "deserialize_lambda_map")]
     pub headers: HashMap<String, String>,
+    #[serde(deserialize_with = "deserialize_lambda_map")]
     #[serde(rename = "queryStringParameters")]
     pub query_string_parameters: HashMap<String, String>,
+    #[serde(deserialize_with = "deserialize_lambda_map")]
     #[serde(rename = "pathParameters")]
     pub path_parameters: HashMap<String, String>,
+    #[serde(deserialize_with = "deserialize_lambda_map")]
     #[serde(rename = "stageVariables")]
     pub stage_variables: HashMap<String, String>,
     #[serde(rename = "requestContext")]
@@ -494,7 +504,8 @@ pub struct ApiGatewayCustomAuthorizerResponse {
     pub principal_id: String,
     #[serde(rename = "policyDocument")]
     pub policy_document: ApiGatewayCustomAuthorizerPolicy,
-    pub context: Option<HashMap<String, Value>>,
+    #[serde(deserialize_with = "deserialize_lambda_map")]
+    pub context: HashMap<String, Value>,
     #[serde(rename = "usageIdentifierKey")]
     pub usage_identifier_key: Option<String>,
 }

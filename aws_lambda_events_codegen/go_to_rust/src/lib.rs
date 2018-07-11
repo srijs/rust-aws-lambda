@@ -10,6 +10,9 @@ extern crate pest_derive;
 extern crate codegen;
 extern crate failure;
 extern crate heck;
+extern crate regex;
+#[macro_use]
+extern crate lazy_static;
 // extern crate rustfmt_nightly;
 
 use codegen::{Field, Scope, Struct};
@@ -17,6 +20,7 @@ use failure::Error;
 use heck::{CamelCase, SnakeCase};
 use pest::iterators::Pairs;
 use pest::Parser;
+use regex::Regex;
 use std::boxed::Box;
 use std::collections::HashSet;
 use std::fmt;
@@ -262,6 +266,10 @@ fn parse_struct(pairs: Pairs<Rule>) -> Result<(codegen::Struct, HashSet<String>)
         rust_struct.doc(&annotated_comments.join("\n"));
     }
 
+    lazy_static! {
+        static ref HASHMAP_RE: Regex = Regex::new("^HashMap<.+>$").expect("regex to compile");
+    }
+
     let mut libraries: HashSet<String> = HashSet::new();
 
     for f in fields {
@@ -277,7 +285,10 @@ fn parse_struct(pairs: Pairs<Rule>) -> Result<(codegen::Struct, HashSet<String>)
 
         // Make fields optional if they are optional in the json.
         if f.omit_empty {
-            rust_type = format!("Option<{}>", rust_type);
+            // We don't do this for HashMaps as they are handled special below.
+            if !HASHMAP_RE.is_match(&rust_type) {
+                rust_type = format!("Option<{}>", rust_type);
+            }
         }
 
         if let Some(rename) = f.json_name.clone() {
@@ -310,6 +321,14 @@ fn parse_struct(pairs: Pairs<Rule>) -> Result<(codegen::Struct, HashSet<String>)
                 "#[serde(default)]",
             ]);
             field_defs.push(string_as_empty);
+        } else if HASHMAP_RE.is_match(&rust_type) {
+            libraries.insert("custom_serde::*".to_string());
+            // We default to an empty `HashMap` regardless.
+            let mut map_as_empty = Field::new(&member_name, &rust_type);
+            map_as_empty.annotation(vec![
+                "#[serde(deserialize_with = \"deserialize_lambda_map\")]",
+            ]);
+            field_defs.push(map_as_empty);
         } else {
             field_defs = vec![Field::new(&member_name, &rust_type)];
         }

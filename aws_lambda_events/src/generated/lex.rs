@@ -1,3 +1,4 @@
+use custom_serde::*;
 use std::collections::HashMap;
 
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
@@ -10,10 +11,12 @@ pub struct LexEvent {
     pub user_id: Option<String>,
     #[serde(rename = "inputTranscript")]
     pub input_transcript: Option<String>,
+    #[serde(deserialize_with = "deserialize_lambda_map")]
     #[serde(rename = "sessionAttributes")]
-    pub session_attributes: Option<HashMap<String, String>>,
+    pub session_attributes: HashMap<String, String>,
+    #[serde(deserialize_with = "deserialize_lambda_map")]
     #[serde(rename = "requestAttributes")]
-    pub request_attributes: Option<HashMap<String, String>>,
+    pub request_attributes: HashMap<String, String>,
     pub bot: Option<LexBot>,
     #[serde(rename = "outputDialogMode")]
     pub output_dialog_mode: Option<String>,
@@ -34,8 +37,9 @@ pub struct LexBot {
 pub struct LexCurrentIntent {
     pub name: Option<String>,
     pub slots: Option<Slots>,
+    #[serde(deserialize_with = "deserialize_lambda_map")]
     #[serde(rename = "slotDetails")]
-    pub slot_details: Option<HashMap<String, SlotDetail>>,
+    pub slot_details: HashMap<String, SlotDetail>,
     #[serde(rename = "confirmationStatus")]
     pub confirmation_status: Option<String>,
 }
@@ -53,7 +57,8 @@ pub struct LexDialogAction {
     pub type_: Option<String>,
     #[serde(rename = "fulfillmentState")]
     pub fulfillment_state: Option<String>,
-    pub message: Option<HashMap<String, String>>,
+    #[serde(deserialize_with = "deserialize_lambda_map")]
+    pub message: HashMap<String, String>,
     #[serde(rename = "intentName")]
     pub intent_name: Option<String>,
     pub slots: Option<Slots>,
