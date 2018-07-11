@@ -13,7 +13,7 @@ pub type CodeCommitEventTime = DateTime<Utc>;
 /// represents a CodeCommit record
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct CodeCommitRecord {
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "eventId")]
@@ -23,7 +23,7 @@ pub struct CodeCommitRecord {
     #[serde(default)]
     #[serde(rename = "eventId")]
     pub event_id: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "eventVersion")]
@@ -35,7 +35,7 @@ pub struct CodeCommitRecord {
     pub event_version: String,
     #[serde(rename = "eventTime")]
     pub event_time: CodeCommitEventTime,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "eventTriggerName")]
@@ -49,7 +49,7 @@ pub struct CodeCommitRecord {
     pub event_part_number: u64,
     #[serde(rename = "codecommit")]
     pub code_commit: CodeCommitCodeCommit,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "eventName")]
@@ -59,7 +59,7 @@ pub struct CodeCommitRecord {
     #[serde(default)]
     #[serde(rename = "eventName")]
     pub event_name: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "eventTriggerConfigId")]
@@ -69,7 +69,7 @@ pub struct CodeCommitRecord {
     #[serde(default)]
     #[serde(rename = "eventTriggerConfigId")]
     pub event_trigger_config_id: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "eventSourceARN")]
@@ -79,7 +79,7 @@ pub struct CodeCommitRecord {
     #[serde(default)]
     #[serde(rename = "eventSourceARN")]
     pub event_source_arn: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "userIdentityARN")]
@@ -89,7 +89,7 @@ pub struct CodeCommitRecord {
     #[serde(default)]
     #[serde(rename = "userIdentityARN")]
     pub user_identity_arn: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "eventSource")]
@@ -99,7 +99,7 @@ pub struct CodeCommitRecord {
     #[serde(default)]
     #[serde(rename = "eventSource")]
     pub event_source: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "awsRegion")]
@@ -122,7 +122,7 @@ pub struct CodeCommitCodeCommit {
 /// `CodeCommitReference` represents a Reference object in a CodeCommit object
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct CodeCommitReference {
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     pub commit: Option<String>,
@@ -130,7 +130,7 @@ pub struct CodeCommitReference {
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     pub commit: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "ref")]

@@ -10,7 +10,7 @@ pub struct SimpleEmailEvent {
 
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct SimpleEmailRecord {
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "eventVersion")]
@@ -20,7 +20,7 @@ pub struct SimpleEmailRecord {
     #[serde(default)]
     #[serde(rename = "eventVersion")]
     pub event_version: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "eventSource")]
@@ -43,7 +43,7 @@ pub struct SimpleEmailService {
 pub struct SimpleEmailMessage {
     #[serde(rename = "commonHeaders")]
     pub common_headers: SimpleEmailCommonHeaders,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     pub source: Option<String>,
@@ -56,7 +56,7 @@ pub struct SimpleEmailMessage {
     pub headers: Vec<SimpleEmailHeader>,
     #[serde(rename = "headersTruncated")]
     pub headers_truncated: bool,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "messageId")]
@@ -87,7 +87,7 @@ pub struct SimpleEmailReceipt {
 
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct SimpleEmailHeader {
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     pub name: Option<String>,
@@ -95,7 +95,7 @@ pub struct SimpleEmailHeader {
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     pub name: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     pub value: Option<String>,
@@ -109,7 +109,7 @@ pub struct SimpleEmailHeader {
 pub struct SimpleEmailCommonHeaders {
     pub from: Vec<String>,
     pub to: Vec<String>,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "returnPath")]
@@ -119,7 +119,7 @@ pub struct SimpleEmailCommonHeaders {
     #[serde(default)]
     #[serde(rename = "returnPath")]
     pub return_path: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "messageId")]
@@ -129,7 +129,7 @@ pub struct SimpleEmailCommonHeaders {
     #[serde(default)]
     #[serde(rename = "messageId")]
     pub message_id: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     pub date: Option<String>,
@@ -137,7 +137,7 @@ pub struct SimpleEmailCommonHeaders {
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     pub date: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     pub subject: Option<String>,
@@ -149,7 +149,7 @@ pub struct SimpleEmailCommonHeaders {
 
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct SimpleEmailReceiptAction {
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "type")]
@@ -159,7 +159,7 @@ pub struct SimpleEmailReceiptAction {
     #[serde(default)]
     #[serde(rename = "type")]
     pub type_: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "invocationType")]
@@ -169,7 +169,7 @@ pub struct SimpleEmailReceiptAction {
     #[serde(default)]
     #[serde(rename = "invocationType")]
     pub invocation_type: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "functionArn")]
@@ -183,7 +183,7 @@ pub struct SimpleEmailReceiptAction {
 
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct SimpleEmailVerdict {
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     pub status: Option<String>,

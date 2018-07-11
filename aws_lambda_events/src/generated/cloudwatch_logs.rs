@@ -11,7 +11,7 @@ pub struct CloudwatchLogsEvent {
 /// of a cloudwatch logs event
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct CloudwatchLogsRawData {
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     pub data: Option<String>,
@@ -24,7 +24,7 @@ pub struct CloudwatchLogsRawData {
 /// `CloudwatchLogsData` is an unmarshal'd, ungzip'd, cloudwatch logs event
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct CloudwatchLogsData {
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     pub owner: Option<String>,
@@ -32,7 +32,7 @@ pub struct CloudwatchLogsData {
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     pub owner: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "logGroup")]
@@ -42,7 +42,7 @@ pub struct CloudwatchLogsData {
     #[serde(default)]
     #[serde(rename = "logGroup")]
     pub log_group: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "logStream")]
@@ -54,7 +54,7 @@ pub struct CloudwatchLogsData {
     pub log_stream: String,
     #[serde(rename = "subscriptionFilters")]
     pub subscription_filters: Vec<String>,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "messageType")]
@@ -71,7 +71,7 @@ pub struct CloudwatchLogsData {
 /// LogEvent represents a log entry from cloudwatch logs
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct CloudwatchLogsLogEvent {
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     pub id: Option<String>,
@@ -80,7 +80,7 @@ pub struct CloudwatchLogsLogEvent {
     #[serde(default)]
     pub id: String,
     pub timestamp: i64,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     pub message: Option<String>,

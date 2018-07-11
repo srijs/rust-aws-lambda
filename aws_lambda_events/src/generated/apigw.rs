@@ -6,7 +6,7 @@ use serde_json::Value;
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct ApiGatewayProxyRequest {
     /// The resource path defined in API Gateway
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     pub resource: Option<String>,
@@ -16,7 +16,7 @@ pub struct ApiGatewayProxyRequest {
     #[serde(default)]
     pub resource: String,
     /// The url path for the caller
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     pub path: Option<String>,
@@ -25,7 +25,7 @@ pub struct ApiGatewayProxyRequest {
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     pub path: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "httpMethod")]
@@ -48,7 +48,7 @@ pub struct ApiGatewayProxyRequest {
     pub stage_variables: HashMap<String, String>,
     #[serde(rename = "requestContext")]
     pub request_context: ApiGatewayProxyRequestContext,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     pub body: Option<String>,
@@ -67,7 +67,7 @@ pub struct ApiGatewayProxyResponse {
     pub status_code: i64,
     #[serde(deserialize_with = "deserialize_lambda_map")]
     pub headers: HashMap<String, String>,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     pub body: Option<String>,
@@ -83,7 +83,7 @@ pub struct ApiGatewayProxyResponse {
 /// Lambda function. It also includes Cognito identity information for the caller.
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct ApiGatewayProxyRequestContext {
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "accountId")]
@@ -93,7 +93,7 @@ pub struct ApiGatewayProxyRequestContext {
     #[serde(default)]
     #[serde(rename = "accountId")]
     pub account_id: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "resourceId")]
@@ -103,7 +103,7 @@ pub struct ApiGatewayProxyRequestContext {
     #[serde(default)]
     #[serde(rename = "resourceId")]
     pub resource_id: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     pub stage: Option<String>,
@@ -111,7 +111,7 @@ pub struct ApiGatewayProxyRequestContext {
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     pub stage: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "requestId")]
@@ -122,7 +122,7 @@ pub struct ApiGatewayProxyRequestContext {
     #[serde(rename = "requestId")]
     pub request_id: String,
     pub identity: ApiGatewayRequestIdentity,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "resourcePath")]
@@ -134,7 +134,7 @@ pub struct ApiGatewayProxyRequestContext {
     pub resource_path: String,
     #[serde(deserialize_with = "deserialize_lambda_map")]
     pub authorizer: HashMap<String, Value>,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "httpMethod")]
@@ -145,7 +145,7 @@ pub struct ApiGatewayProxyRequestContext {
     #[serde(rename = "httpMethod")]
     pub http_method: String,
     /// The API Gateway rest API Id
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "apiId")]
@@ -161,7 +161,7 @@ pub struct ApiGatewayProxyRequestContext {
 /// `ApiGatewayRequestIdentity` contains identity information for the request caller.
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct ApiGatewayRequestIdentity {
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "cognitoIdentityPoolId")]
@@ -171,7 +171,7 @@ pub struct ApiGatewayRequestIdentity {
     #[serde(default)]
     #[serde(rename = "cognitoIdentityPoolId")]
     pub cognito_identity_pool_id: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "accountId")]
@@ -181,7 +181,7 @@ pub struct ApiGatewayRequestIdentity {
     #[serde(default)]
     #[serde(rename = "accountId")]
     pub account_id: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "cognitoIdentityId")]
@@ -191,7 +191,7 @@ pub struct ApiGatewayRequestIdentity {
     #[serde(default)]
     #[serde(rename = "cognitoIdentityId")]
     pub cognito_identity_id: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     pub caller: Option<String>,
@@ -199,7 +199,7 @@ pub struct ApiGatewayRequestIdentity {
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     pub caller: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "apiKey")]
@@ -209,7 +209,7 @@ pub struct ApiGatewayRequestIdentity {
     #[serde(default)]
     #[serde(rename = "apiKey")]
     pub api_key: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "sourceIp")]
@@ -219,7 +219,7 @@ pub struct ApiGatewayRequestIdentity {
     #[serde(default)]
     #[serde(rename = "sourceIp")]
     pub source_ip: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "cognitoAuthenticationType")]
@@ -229,7 +229,7 @@ pub struct ApiGatewayRequestIdentity {
     #[serde(default)]
     #[serde(rename = "cognitoAuthenticationType")]
     pub cognito_authentication_type: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "cognitoAuthenticationProvider")]
@@ -239,7 +239,7 @@ pub struct ApiGatewayRequestIdentity {
     #[serde(default)]
     #[serde(rename = "cognitoAuthenticationProvider")]
     pub cognito_authentication_provider: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "userArn")]
@@ -249,7 +249,7 @@ pub struct ApiGatewayRequestIdentity {
     #[serde(default)]
     #[serde(rename = "userArn")]
     pub user_arn: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "userAgent")]
@@ -259,7 +259,7 @@ pub struct ApiGatewayRequestIdentity {
     #[serde(default)]
     #[serde(rename = "userAgent")]
     pub user_agent: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     pub user: Option<String>,
@@ -272,7 +272,7 @@ pub struct ApiGatewayRequestIdentity {
 /// `ApiGatewayCustomAuthorizerRequestTypeRequestIdentity` contains identity information for the request caller.
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct ApiGatewayCustomAuthorizerRequestTypeRequestIdentity {
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "apiKey")]
@@ -282,7 +282,7 @@ pub struct ApiGatewayCustomAuthorizerRequestTypeRequestIdentity {
     #[serde(default)]
     #[serde(rename = "apiKey")]
     pub api_key: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "sourceIp")]
@@ -311,7 +311,7 @@ pub struct ApiGatewayCustomAuthorizerContext {
 /// `ApiGatewayCustomAuthorizerRequestTypeRequestContext` represents the expected format of an API Gateway custom authorizer response.
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct ApiGatewayCustomAuthorizerRequestTypeRequestContext {
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     pub path: Option<String>,
@@ -319,7 +319,7 @@ pub struct ApiGatewayCustomAuthorizerRequestTypeRequestContext {
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     pub path: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "accountId")]
@@ -329,7 +329,7 @@ pub struct ApiGatewayCustomAuthorizerRequestTypeRequestContext {
     #[serde(default)]
     #[serde(rename = "accountId")]
     pub account_id: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "resourceId")]
@@ -339,7 +339,7 @@ pub struct ApiGatewayCustomAuthorizerRequestTypeRequestContext {
     #[serde(default)]
     #[serde(rename = "resourceId")]
     pub resource_id: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     pub stage: Option<String>,
@@ -347,7 +347,7 @@ pub struct ApiGatewayCustomAuthorizerRequestTypeRequestContext {
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     pub stage: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "requestId")]
@@ -358,7 +358,7 @@ pub struct ApiGatewayCustomAuthorizerRequestTypeRequestContext {
     #[serde(rename = "requestId")]
     pub request_id: String,
     pub identity: ApiGatewayCustomAuthorizerRequestTypeRequestIdentity,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "resourcePath")]
@@ -368,7 +368,7 @@ pub struct ApiGatewayCustomAuthorizerRequestTypeRequestContext {
     #[serde(default)]
     #[serde(rename = "resourcePath")]
     pub resource_path: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "httpMethod")]
@@ -378,7 +378,7 @@ pub struct ApiGatewayCustomAuthorizerRequestTypeRequestContext {
     #[serde(default)]
     #[serde(rename = "httpMethod")]
     pub http_method: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "apiId")]
@@ -393,7 +393,7 @@ pub struct ApiGatewayCustomAuthorizerRequestTypeRequestContext {
 /// `ApiGatewayCustomAuthorizerRequest` contains data coming in to a custom API Gateway authorizer function.
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct ApiGatewayCustomAuthorizerRequest {
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "type")]
@@ -403,7 +403,7 @@ pub struct ApiGatewayCustomAuthorizerRequest {
     #[serde(default)]
     #[serde(rename = "type")]
     pub type_: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "authorizationToken")]
@@ -413,7 +413,7 @@ pub struct ApiGatewayCustomAuthorizerRequest {
     #[serde(default)]
     #[serde(rename = "authorizationToken")]
     pub authorization_token: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "methodArn")]
@@ -428,7 +428,7 @@ pub struct ApiGatewayCustomAuthorizerRequest {
 /// `ApiGatewayCustomAuthorizerRequestTypeRequest` contains data coming in to a custom API Gateway authorizer function.
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct ApiGatewayCustomAuthorizerRequestTypeRequest {
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "type")]
@@ -438,7 +438,7 @@ pub struct ApiGatewayCustomAuthorizerRequestTypeRequest {
     #[serde(default)]
     #[serde(rename = "type")]
     pub type_: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "methodArn")]
@@ -448,7 +448,7 @@ pub struct ApiGatewayCustomAuthorizerRequestTypeRequest {
     #[serde(default)]
     #[serde(rename = "methodArn")]
     pub method_arn: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     pub resource: Option<String>,
@@ -456,7 +456,7 @@ pub struct ApiGatewayCustomAuthorizerRequestTypeRequest {
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     pub resource: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     pub path: Option<String>,
@@ -464,7 +464,7 @@ pub struct ApiGatewayCustomAuthorizerRequestTypeRequest {
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     pub path: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "httpMethod")]
@@ -492,7 +492,7 @@ pub struct ApiGatewayCustomAuthorizerRequestTypeRequest {
 /// `ApiGatewayCustomAuthorizerResponse` represents the expected format of an API Gateway authorization response.
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct ApiGatewayCustomAuthorizerResponse {
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "principalId")]
@@ -513,7 +513,7 @@ pub struct ApiGatewayCustomAuthorizerResponse {
 /// `ApiGatewayCustomAuthorizerPolicy` represents an IAM policy
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct ApiGatewayCustomAuthorizerPolicy {
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     pub version: Option<String>,
@@ -527,7 +527,7 @@ pub struct ApiGatewayCustomAuthorizerPolicy {
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct IamPolicyStatement {
     pub action: Vec<String>,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     pub effect: Option<String>,

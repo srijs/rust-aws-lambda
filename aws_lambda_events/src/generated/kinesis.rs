@@ -9,7 +9,7 @@ pub struct KinesisEvent {
 
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct KinesisEventRecord {
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "awsRegion")]
@@ -19,7 +19,7 @@ pub struct KinesisEventRecord {
     #[serde(default)]
     #[serde(rename = "awsRegion")]
     pub aws_region: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "eventID")]
@@ -29,7 +29,7 @@ pub struct KinesisEventRecord {
     #[serde(default)]
     #[serde(rename = "eventID")]
     pub event_id: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "eventName")]
@@ -39,7 +39,7 @@ pub struct KinesisEventRecord {
     #[serde(default)]
     #[serde(rename = "eventName")]
     pub event_name: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "eventSource")]
@@ -49,7 +49,7 @@ pub struct KinesisEventRecord {
     #[serde(default)]
     #[serde(rename = "eventSource")]
     pub event_source: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "eventSourceARN")]
@@ -59,7 +59,7 @@ pub struct KinesisEventRecord {
     #[serde(default)]
     #[serde(rename = "eventSourceARN")]
     pub event_source_arn: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "eventVersion")]
@@ -69,7 +69,7 @@ pub struct KinesisEventRecord {
     #[serde(default)]
     #[serde(rename = "eventVersion")]
     pub event_version: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "invokeIdentityArn")]
@@ -89,7 +89,7 @@ pub struct KinesisRecord {
     pub data: Base64Data,
     #[serde(rename = "encryptionType")]
     pub encryption_type: Option<String>,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "partitionKey")]
@@ -99,7 +99,7 @@ pub struct KinesisRecord {
     #[serde(default)]
     #[serde(rename = "partitionKey")]
     pub partition_key: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "sequenceNumber")]
@@ -109,7 +109,7 @@ pub struct KinesisRecord {
     #[serde(default)]
     #[serde(rename = "sequenceNumber")]
     pub sequence_number: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "kinesisSchemaVersion")]
