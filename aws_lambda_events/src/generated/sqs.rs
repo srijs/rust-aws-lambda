@@ -59,8 +59,10 @@ pub struct SqsMessage {
     #[serde(rename = "md5OfMessageAttributes")]
     pub md5_of_message_attributes: String,
     #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(default)]
     pub attributes: HashMap<String, String>,
     #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(default)]
     #[serde(rename = "messageAttributes")]
     pub message_attributes: HashMap<String, SqsMessageAttribute>,
     #[cfg(feature = "string-null-none")]

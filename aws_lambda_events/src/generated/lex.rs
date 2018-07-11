@@ -12,9 +12,11 @@ pub struct LexEvent {
     #[serde(rename = "inputTranscript")]
     pub input_transcript: Option<String>,
     #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(default)]
     #[serde(rename = "sessionAttributes")]
     pub session_attributes: HashMap<String, String>,
     #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(default)]
     #[serde(rename = "requestAttributes")]
     pub request_attributes: HashMap<String, String>,
     pub bot: Option<LexBot>,
@@ -38,6 +40,7 @@ pub struct LexCurrentIntent {
     pub name: Option<String>,
     pub slots: Option<Slots>,
     #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(default)]
     #[serde(rename = "slotDetails")]
     pub slot_details: HashMap<String, SlotDetail>,
     #[serde(rename = "confirmationStatus")]
@@ -58,6 +61,7 @@ pub struct LexDialogAction {
     #[serde(rename = "fulfillmentState")]
     pub fulfillment_state: Option<String>,
     #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(default)]
     pub message: HashMap<String, String>,
     #[serde(rename = "intentName")]
     pub intent_name: Option<String>,

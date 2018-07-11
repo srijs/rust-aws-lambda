@@ -88,6 +88,7 @@ pub struct SnsEntity {
     #[serde(rename = "TopicArn")]
     pub topic_arn: String,
     #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(default)]
     #[serde(rename = "MessageAttributes")]
     pub message_attributes: HashMap<String, Value>,
     #[cfg(feature = "string-null-none")]

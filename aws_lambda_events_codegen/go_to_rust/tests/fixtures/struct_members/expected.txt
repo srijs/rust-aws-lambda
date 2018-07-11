@@ -40,6 +40,7 @@ pub struct SimpleEmailMessage {
     pub secs: SecondTimestamp,
     pub millisecs: MillisecondTimestamp,
     #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(default)]
     pub detail: HashMap<String, Value>,
     pub data: Base64Data,
 }

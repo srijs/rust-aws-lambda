@@ -15,6 +15,7 @@ pub struct CognitoEvent {
     #[serde(rename = "datasetName")]
     pub dataset_name: String,
     #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(default)]
     #[serde(rename = "datasetRecords")]
     pub dataset_records: HashMap<String, CognitoDatasetRecord>,
     #[cfg(feature = "string-null-none")]
