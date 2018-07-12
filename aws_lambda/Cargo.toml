@@ -18,7 +18,7 @@ aws_lambda_runtime = { path = "../aws_lambda_runtime" }
 aws_lambda_events = { path = "../aws_lambda_events" }
 failure = "0.1.1"
 futures = "0.1.21"
-log = { version = "0.4.1", features = ["std"] }
+log = "0.4.1"
 serde = "1.0.39"
 
 [build-dependencies]
