@@ -4,9 +4,6 @@
 //! and the currently running lambda function.
 
 lazy_static! {
-    static ref AWS_LAMBDA_LOG_GROUP_NAME: String = var("AWS_LAMBDA_LOG_GROUP_NAME");
-    static ref AWS_LAMBDA_LOG_STREAM_NAME: String = var("AWS_LAMBDA_LOG_STREAM_NAME");
-
     static ref AWS_LAMBDA_FUNCTION_NAME: String = var("AWS_LAMBDA_FUNCTION_NAME");
     static ref AWS_LAMBDA_FUNCTION_VERSION: String = var("AWS_LAMBDA_FUNCTION_VERSION");
     static ref AWS_LAMBDA_FUNCTION_MEMORY_SIZE: usize = {
