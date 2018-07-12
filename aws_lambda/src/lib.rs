@@ -14,6 +14,7 @@ pub use aws_lambda_runtime::{Context, Runtime};
 
 pub use aws_lambda_events::event;
 pub use aws_lambda_runtime::context;
+pub use aws_lambda_runtime::env;
 
 pub mod logger;
 

@@ -24,6 +24,8 @@ extern crate failure;
 extern crate futures;
 extern crate gob;
 #[macro_use]
+extern crate lazy_static;
+#[macro_use]
 extern crate log;
 #[macro_use]
 extern crate scoped_tls;
@@ -42,6 +44,8 @@ extern crate tokio_service;
 extern crate void;
 
 pub mod context;
+pub mod env;
+
 mod proto;
 mod runtime;
 mod server;
