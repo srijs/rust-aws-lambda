@@ -11,7 +11,7 @@ pub struct SnsEvent {
 
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct SnsEventRecord {
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "EventVersion")]
@@ -21,7 +21,7 @@ pub struct SnsEventRecord {
     #[serde(default)]
     #[serde(rename = "EventVersion")]
     pub event_version: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "EventSubscriptionArn")]
@@ -31,7 +31,7 @@ pub struct SnsEventRecord {
     #[serde(default)]
     #[serde(rename = "EventSubscriptionArn")]
     pub event_subscription_arn: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "EventSource")]
@@ -47,7 +47,7 @@ pub struct SnsEventRecord {
 
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct SnsEntity {
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "Signature")]
@@ -57,7 +57,7 @@ pub struct SnsEntity {
     #[serde(default)]
     #[serde(rename = "Signature")]
     pub signature: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "MessageId")]
@@ -67,7 +67,7 @@ pub struct SnsEntity {
     #[serde(default)]
     #[serde(rename = "MessageId")]
     pub message_id: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "Type")]
@@ -77,7 +77,7 @@ pub struct SnsEntity {
     #[serde(default)]
     #[serde(rename = "Type")]
     pub type_: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "TopicArn")]
@@ -91,7 +91,7 @@ pub struct SnsEntity {
     #[serde(default)]
     #[serde(rename = "MessageAttributes")]
     pub message_attributes: HashMap<String, Value>,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "SignatureVersion")]
@@ -103,7 +103,7 @@ pub struct SnsEntity {
     pub signature_version: String,
     #[serde(rename = "Timestamp")]
     pub timestamp: DateTime<Utc>,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "SigningCertUrl")]
@@ -113,7 +113,7 @@ pub struct SnsEntity {
     #[serde(default)]
     #[serde(rename = "SigningCertUrl")]
     pub signing_cert_url: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "Message")]
@@ -123,7 +123,7 @@ pub struct SnsEntity {
     #[serde(default)]
     #[serde(rename = "Message")]
     pub message: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "UnsubscribeUrl")]
@@ -133,7 +133,7 @@ pub struct SnsEntity {
     #[serde(default)]
     #[serde(rename = "UnsubscribeUrl")]
     pub unsubscribe_url: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "Subject")]

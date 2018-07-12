@@ -10,7 +10,7 @@ pub struct SqsEvent {
 
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct SqsMessage {
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "messageId")]
@@ -20,7 +20,7 @@ pub struct SqsMessage {
     #[serde(default)]
     #[serde(rename = "messageId")]
     pub message_id: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "receiptHandle")]
@@ -30,7 +30,7 @@ pub struct SqsMessage {
     #[serde(default)]
     #[serde(rename = "receiptHandle")]
     pub receipt_handle: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     pub body: Option<String>,
@@ -38,7 +38,7 @@ pub struct SqsMessage {
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     pub body: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "md5OfBody")]
@@ -48,7 +48,7 @@ pub struct SqsMessage {
     #[serde(default)]
     #[serde(rename = "md5OfBody")]
     pub md5_of_body: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "md5OfMessageAttributes")]
@@ -65,7 +65,7 @@ pub struct SqsMessage {
     #[serde(default)]
     #[serde(rename = "messageAttributes")]
     pub message_attributes: HashMap<String, SqsMessageAttribute>,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "eventSourceARN")]
@@ -75,7 +75,7 @@ pub struct SqsMessage {
     #[serde(default)]
     #[serde(rename = "eventSourceARN")]
     pub event_source_arn: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "eventSource")]
@@ -85,7 +85,7 @@ pub struct SqsMessage {
     #[serde(default)]
     #[serde(rename = "eventSource")]
     pub event_source: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "awsRegion")]
@@ -107,7 +107,7 @@ pub struct SqsMessageAttribute {
     pub string_list_values: Vec<String>,
     #[serde(rename = "binaryListValues")]
     pub binary_list_values: Vec<Base64Data>,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "dataType")]

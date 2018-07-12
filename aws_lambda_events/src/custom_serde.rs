@@ -105,7 +105,7 @@ where
 }
 
 /// Deserializes `Option<String>`, mapping JSON `null` or the empty string `""` to `None`.
-#[cfg(feature = "string-null-none")]
+#[cfg(not(feature = "string-null-empty"))]
 pub(crate) fn deserialize_lambda_string<'de, D>(deserializer: D) -> Result<Option<String>, D::Error>
 where
     D: Deserializer<'de>,

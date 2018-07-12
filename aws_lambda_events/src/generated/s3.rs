@@ -10,7 +10,7 @@ pub struct S3Event {
 
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct S3EventRecord {
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "eventVersion")]
@@ -20,7 +20,7 @@ pub struct S3EventRecord {
     #[serde(default)]
     #[serde(rename = "eventVersion")]
     pub event_version: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "eventSource")]
@@ -30,7 +30,7 @@ pub struct S3EventRecord {
     #[serde(default)]
     #[serde(rename = "eventSource")]
     pub event_source: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "awsRegion")]
@@ -42,7 +42,7 @@ pub struct S3EventRecord {
     pub aws_region: String,
     #[serde(rename = "eventTime")]
     pub event_time: DateTime<Utc>,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "eventName")]
@@ -65,7 +65,7 @@ pub struct S3EventRecord {
 
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct S3UserIdentity {
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "principalId")]
@@ -79,7 +79,7 @@ pub struct S3UserIdentity {
 
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct S3RequestParameters {
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "sourceIPAddress")]
@@ -93,7 +93,7 @@ pub struct S3RequestParameters {
 
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct S3Entity {
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "s3SchemaVersion")]
@@ -103,7 +103,7 @@ pub struct S3Entity {
     #[serde(default)]
     #[serde(rename = "s3SchemaVersion")]
     pub schema_version: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "configurationId")]
@@ -119,7 +119,7 @@ pub struct S3Entity {
 
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct S3Bucket {
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     pub name: Option<String>,
@@ -129,7 +129,7 @@ pub struct S3Bucket {
     pub name: String,
     #[serde(rename = "ownerIdentity")]
     pub owner_identity: S3UserIdentity,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     pub arn: Option<String>,
@@ -141,7 +141,7 @@ pub struct S3Bucket {
 
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct S3Object {
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     pub key: Option<String>,
@@ -150,7 +150,7 @@ pub struct S3Object {
     #[serde(default)]
     pub key: String,
     pub size: i64,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "urlDecodedKey")]
@@ -160,7 +160,7 @@ pub struct S3Object {
     #[serde(default)]
     #[serde(rename = "urlDecodedKey")]
     pub url_decoded_key: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "versionId")]
@@ -170,7 +170,7 @@ pub struct S3Object {
     #[serde(default)]
     #[serde(rename = "versionId")]
     pub version_id: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "eTag")]
@@ -180,7 +180,7 @@ pub struct S3Object {
     #[serde(default)]
     #[serde(rename = "eTag")]
     pub e_tag: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     pub sequencer: Option<String>,

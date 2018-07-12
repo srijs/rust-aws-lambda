@@ -4,7 +4,7 @@ use std::collections::HashMap;
 /// `CognitoEvent` contains data from an event sent from AWS Cognito Sync
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct CognitoEvent {
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "datasetName")]
@@ -18,7 +18,7 @@ pub struct CognitoEvent {
     #[serde(default)]
     #[serde(rename = "datasetRecords")]
     pub dataset_records: HashMap<String, CognitoDatasetRecord>,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "eventType")]
@@ -28,7 +28,7 @@ pub struct CognitoEvent {
     #[serde(default)]
     #[serde(rename = "eventType")]
     pub event_type: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "identityId")]
@@ -38,7 +38,7 @@ pub struct CognitoEvent {
     #[serde(default)]
     #[serde(rename = "identityId")]
     pub identity_id: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "identityPoolId")]
@@ -48,7 +48,7 @@ pub struct CognitoEvent {
     #[serde(default)]
     #[serde(rename = "identityPoolId")]
     pub identity_pool_id: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     pub region: Option<String>,
@@ -62,7 +62,7 @@ pub struct CognitoEvent {
 /// `CognitoDatasetRecord` represents a record from an AWS Cognito Sync event
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct CognitoDatasetRecord {
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "newValue")]
@@ -72,7 +72,7 @@ pub struct CognitoDatasetRecord {
     #[serde(default)]
     #[serde(rename = "newValue")]
     pub new_value: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "oldValue")]
@@ -82,7 +82,7 @@ pub struct CognitoDatasetRecord {
     #[serde(default)]
     #[serde(rename = "oldValue")]
     pub old_value: String,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     pub op: Option<String>,

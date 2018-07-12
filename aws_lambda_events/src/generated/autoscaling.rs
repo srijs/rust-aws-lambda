@@ -7,7 +7,7 @@ use std::collections::HashMap;
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct AutoScalingEvent {
     /// The version of event data
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     pub version: Option<String>,
@@ -17,7 +17,7 @@ pub struct AutoScalingEvent {
     #[serde(default)]
     pub version: String,
     /// The unique ID of the event
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     pub id: Option<String>,
@@ -27,7 +27,7 @@ pub struct AutoScalingEvent {
     #[serde(default)]
     pub id: String,
     /// Details about event type
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "detail-type")]
@@ -39,7 +39,7 @@ pub struct AutoScalingEvent {
     #[serde(rename = "detail-type")]
     pub detail_type: String,
     /// Source of the event
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     pub source: Option<String>,
@@ -49,7 +49,7 @@ pub struct AutoScalingEvent {
     #[serde(default)]
     pub source: String,
     /// AccountId
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "account")]
@@ -63,7 +63,7 @@ pub struct AutoScalingEvent {
     /// Event timestamp
     pub time: DateTime<Utc>,
     /// Region of event
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     pub region: Option<String>,

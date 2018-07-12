@@ -8,7 +8,7 @@ use super::super::encodings::{Base64Data, MillisecondTimestamp, SecondTimestamp}
 pub struct SimpleEmailMessage {
     #[serde(rename = "commonHeaders")]
     pub common_headers: SimpleEmailCommonHeaders,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     pub source: Option<String>,
@@ -23,7 +23,7 @@ pub struct SimpleEmailMessage {
     pub headers: Vec<SimpleEmailHeader>,
     #[serde(rename = "headersTruncated")]
     pub headers_truncated: bool,
-    #[cfg(feature = "string-null-none")]
+    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "messageId")]

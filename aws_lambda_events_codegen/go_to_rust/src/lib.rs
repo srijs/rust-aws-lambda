@@ -308,7 +308,7 @@ fn parse_struct(pairs: Pairs<Rule>) -> Result<(codegen::Struct, HashSet<String>)
 
             let mut string_as_option = Field::new(&member_name, "Option<String>");
             string_as_option.annotation(vec![
-                "#[cfg(feature = \"string-null-none\")]",
+                "#[cfg(not(feature = \"string-null-empty\"))]",
                 "#[serde(deserialize_with = \"deserialize_lambda_string\")]",
                 "#[serde(default)]",
             ]);
