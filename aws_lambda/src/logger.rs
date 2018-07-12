@@ -18,7 +18,7 @@ impl Log for Logger {
     fn log(&self, record: &Record) {
         if self.enabled(record.metadata()) {
             println!(
-                "[{}] {}: {}",
+                "{} {}: {}",
                 record.level(),
                 record.target(),
                 record.args()
