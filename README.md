@@ -89,9 +89,9 @@ are available as crate features so you can choose the behavior and API that work
   - **Cons:** _Not idiomatic Rust. You manually have to check for `""` if you want to know the difference between a real value or an empty value._
 
   Change your `Cargo.toml` dependency to:
-```toml
-aws_lambda = { git = "https://github.com/srijs/rust-aws-lambda", features = ["string-null-empty"] }
-```
+  ```toml
+  aws_lambda = { git = "https://github.com/srijs/rust-aws-lambda", features = ["string-null-empty"] }
+  ```
 
 ### Context
 
