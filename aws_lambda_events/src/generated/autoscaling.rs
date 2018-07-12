@@ -75,5 +75,6 @@ pub struct AutoScalingEvent {
     /// Information about resources impacted by event
     pub resources: Vec<String>,
     #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(default)]
     pub detail: HashMap<String, Value>,
 }

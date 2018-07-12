@@ -327,6 +327,7 @@ fn parse_struct(pairs: Pairs<Rule>) -> Result<(codegen::Struct, HashSet<String>)
             let mut map_as_empty = Field::new(&member_name, &rust_type);
             map_as_empty.annotation(vec![
                 "#[serde(deserialize_with = \"deserialize_lambda_map\")]",
+                "#[serde(default)]",
             ]);
             field_defs.push(map_as_empty);
         } else {
