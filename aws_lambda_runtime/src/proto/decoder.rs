@@ -12,11 +12,18 @@ use super::payload::PayloadDeserializer;
 use context;
 
 #[derive(Deserialize)]
-struct RpcRequest<'a> {
-    #[serde(rename = "ServiceMethod")]
-    service_method: &'a str,
-    #[serde(rename = "Seq", default)]
-    seq: u64,
+#[serde(tag = "ServiceMethod")]
+enum RequestHeader {
+    #[serde(rename = "Function.Ping")]
+    Ping {
+        #[serde(rename = "Seq", default)]
+        seq: u64,
+    },
+    #[serde(rename = "Function.Invoke")]
+    Invoke {
+        #[serde(rename = "Seq", default)]
+        seq: u64,
+    },
 }
 
 pub(crate) enum Request<T> {
@@ -68,6 +75,64 @@ impl<R, T> Decoder<R, T> {
     }
 }
 
+impl<R, T> Decoder<R, T>
+where
+    R: AsyncRead,
+    T: DeserializeOwned,
+{
+    fn poll_pending(&mut self) -> Poll<Option<Request<T>>, DecodeError> {
+        match try_nb_gob!(self.stream.deserialize::<RequestHeader>()) {
+            None => {
+                self.state = DecoderState::End;
+                Ok(Async::Ready(None))
+            }
+            Some(RequestHeader::Ping { seq }) => {
+                self.state = DecoderState::ReadingPingRequest(seq);
+                self.poll_read_ping(seq)
+            }
+            Some(RequestHeader::Invoke { seq }) => {
+                self.state = DecoderState::ReadingInvokeRequest(seq);
+                self.poll_read_invoke(seq)
+            }
+        }
+    }
+
+    fn poll_read_ping(&mut self, seq: u64) -> Poll<Option<Request<T>>, DecodeError> {
+        try_nb_gob!(self.stream.deserialize::<messages::PingRequest>())
+            .ok_or_else(|| DecodeError::Frame(format_err!("unexpected end of stream")))?;
+
+        self.state = DecoderState::PendingRequest;
+        Ok(Async::Ready(Some(Request::Ping(seq))))
+    }
+
+    fn poll_read_invoke(&mut self, seq: u64) -> Poll<Option<Request<T>>, DecodeError> {
+        let message = try_nb_gob!(self.stream.deserialize::<messages::InvokeRequest>())
+            .ok_or_else(|| DecodeError::Frame(format_err!("unexpected end of stream")))?;
+
+        let identity = context::CognitoIdentity {
+            cognito_identity_id: message.cognito_identity_id,
+            cognito_identity_pool_id: message.cognito_identity_pool_id,
+        };
+
+        let ctx = context::Context::new(context::LambdaContext {
+            aws_request_id: message.request_id,
+            invoked_function_arn: message.invoked_function_arn,
+            identity: identity,
+            client_context: None,
+        });
+
+        let deadline = Duration::new(message.deadline.secs as u64, message.deadline.nanos as u32);
+
+        let payload = T::deserialize(PayloadDeserializer::new(message.payload.as_ref()))
+            .map_err(|err| DecodeError::User(seq, err.into()))?;
+
+        self.state = DecoderState::PendingRequest;
+        Ok(Async::Ready(Some(Request::Invoke(
+            seq, deadline, ctx, payload,
+        ))))
+    }
+}
+
 impl<R, T> Stream for Decoder<R, T>
 where
     R: AsyncRead,
@@ -78,63 +143,9 @@ where
 
     fn poll(&mut self) -> Poll<Option<Request<T>>, DecodeError> {
         match self.state {
-            DecoderState::PendingRequest => {
-                match try_nb_gob!(self.stream.deserialize::<RpcRequest<'_>>()) {
-                    None => {
-                        self.state = DecoderState::End;
-                        return Ok(Async::Ready(None));
-                    }
-                    Some(req) => match req.service_method {
-                        messages::SERVICE_METHOD_PING => {
-                            self.state = DecoderState::ReadingPingRequest(req.seq);
-                        }
-                        messages::SERVICE_METHOD_INVOKE => {
-                            self.state = DecoderState::ReadingInvokeRequest(req.seq);
-                        }
-                        method => {
-                            return Err(DecodeError::Frame(format_err!(
-                                "unknown service method: {}",
-                                method
-                            )));
-                        }
-                    },
-                };
-                self.poll()
-            }
-            DecoderState::ReadingPingRequest(seq) => {
-                try_nb_gob!(self.stream.deserialize::<messages::PingRequest>())
-                    .ok_or_else(|| DecodeError::Frame(format_err!("unexpected end of stream")))?;
-
-                self.state = DecoderState::PendingRequest;
-                Ok(Async::Ready(Some(Request::Ping(seq))))
-            }
-            DecoderState::ReadingInvokeRequest(seq) => {
-                let message = try_nb_gob!(self.stream.deserialize::<messages::InvokeRequest>())
-                    .ok_or_else(|| DecodeError::Frame(format_err!("unexpected end of stream")))?;
-
-                let identity = context::CognitoIdentity {
-                    cognito_identity_id: message.cognito_identity_id,
-                    cognito_identity_pool_id: message.cognito_identity_pool_id,
-                };
-
-                let ctx = context::Context::new(context::LambdaContext {
-                    aws_request_id: message.request_id,
-                    invoked_function_arn: message.invoked_function_arn,
-                    identity: identity,
-                    client_context: None,
-                });
-
-                let deadline =
-                    Duration::new(message.deadline.secs as u64, message.deadline.nanos as u32);
-
-                let payload = T::deserialize(PayloadDeserializer::new(message.payload.as_ref()))
-                    .map_err(|err| DecodeError::User(seq, err.into()))?;
-
-                self.state = DecoderState::PendingRequest;
-                Ok(Async::Ready(Some(Request::Invoke(
-                    seq, deadline, ctx, payload,
-                ))))
-            }
+            DecoderState::PendingRequest => self.poll_pending(),
+            DecoderState::ReadingPingRequest(seq) => self.poll_read_ping(seq),
+            DecoderState::ReadingInvokeRequest(seq) => self.poll_read_invoke(seq),
             DecoderState::End => Ok(Async::Ready(None)),
         }
     }
