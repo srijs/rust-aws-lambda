@@ -1,5 +1,7 @@
+use std::fmt::Write;
 use std::marker::PhantomData;
 
+use backtrace_parser::Backtrace;
 use bytes::Buf;
 use failure::Error;
 use futures::{AsyncSink, Poll, Sink, StartSend};
@@ -33,6 +35,7 @@ where
 {
     write: W,
     payload_buf: Vec<u8>,
+    error_encoder: InvokeResponseErrorEncoder,
     stream: StreamSerializer<OutputBuffer>,
     _phan: PhantomData<T>,
     type_id_response: TypeId,
@@ -46,6 +49,7 @@ where
 {
     pub fn new(w: W) -> Result<Encoder<W, T>, Error> {
         let payload_buf = Vec::with_capacity(4096);
+        let error_encoder = InvokeResponseErrorEncoder::default();
 
         let mut stream = StreamSerializer::new_with_buffer();
         let type_id_response = RpcResponse::schema_register(stream.schema_mut())?;
@@ -55,6 +59,7 @@ where
         Ok(Encoder {
             write: w,
             payload_buf,
+            error_encoder,
             stream,
             type_id_response,
             type_id_ping_response,
@@ -103,25 +108,14 @@ where
                         ::serde_json::to_writer(&mut self.payload_buf, &payload)?;
                         self.stream.serialize_with_type_id(
                             self.type_id_invoke_response,
-                            &messages::InvokeResponse {
-                                payload: Bytes::new(&self.payload_buf),
-                                error: None,
-                            },
+                            &messages::InvokeResponse::Payload(Bytes::new(&self.payload_buf)),
                         )?;
                     }
                     Err(err) => {
-                        let invoke_error = messages::InvokeResponseError {
-                            message: err.to_string(),
-                            type_: "Error".to_owned(),
-                            stack_trace: None,
-                            should_exit: false,
-                        };
+                        let invoke_error = self.error_encoder.encode(&err);
                         self.stream.serialize_with_type_id(
                             self.type_id_invoke_response,
-                            &messages::InvokeResponse {
-                                payload: Bytes::new(&[]),
-                                error: Some(invoke_error),
-                            },
+                            &messages::InvokeResponse::Error(invoke_error),
                         )?;
                     }
                 }
@@ -136,6 +130,36 @@ where
                 return Ok(self.write.poll_flush()?);
             }
             try_ready!(self.write.write_buf(self.stream.get_mut()));
+        }
+    }
+}
+
+#[derive(Default)]
+struct InvokeResponseErrorEncoder {
+    message_buf: String,
+    backtrace_buf: String,
+}
+
+impl InvokeResponseErrorEncoder {
+    fn encode<'a>(&'a mut self, err: &Error) -> messages::InvokeResponseError<'a> {
+        // Attempt to extract a stack trace from the error,
+        // by rendering the opaque backtrace into a buffer,
+        // and then running a parser over it.
+        //
+        // If the parser fails, no stack trace will be included.
+        self.backtrace_buf.clear();
+        write!(self.backtrace_buf, "{}", err.backtrace()).unwrap();
+        let stack_trace = Backtrace::parse(&self.backtrace_buf)
+            .map(messages::InvokeResponseErrorStackTrace)
+            .ok();
+        // Render the rest of the error.
+        self.message_buf.clear();
+        write!(self.message_buf, "{}", err).unwrap();
+        messages::InvokeResponseError {
+            message: &self.message_buf,
+            type_: "Error",
+            stack_trace,
+            should_exit: false,
         }
     }
 }

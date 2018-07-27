@@ -1,15 +1,18 @@
+use backtrace_parser::Backtrace;
+use serde::{Serialize, Serializer};
 use serde_bytes::Bytes;
+use serde_schema::{types::Type, Schema, SchemaSerialize};
 
 pub(crate) const SERVICE_METHOD_PING: &str = "Function.Ping";
 pub(crate) const SERVICE_METHOD_INVOKE: &str = "Function.Invoke";
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Debug, Deserialize)]
 pub(crate) struct PingRequest {}
 
-#[derive(Clone, Debug, Serialize, SchemaSerialize)]
+#[derive(Debug, Serialize, SchemaSerialize)]
 pub(crate) struct PingResponse {}
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Debug, Deserialize)]
 #[serde(rename = "InvokeRequest_Timestamp")]
 pub(crate) struct InvokeRequestTimestamp {
     #[serde(rename = "Seconds")]
@@ -18,7 +21,7 @@ pub(crate) struct InvokeRequestTimestamp {
     pub nanos: i64,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Debug, Deserialize)]
 pub(crate) struct InvokeRequest<'a> {
     #[serde(rename = "Payload", borrow)]
     pub payload: Bytes<'a>,
@@ -38,34 +41,64 @@ pub(crate) struct InvokeRequest<'a> {
     pub client_context: Option<Bytes<'a>>,
 }
 
-#[derive(Clone, Debug, Serialize, SchemaSerialize)]
-pub(crate) struct InvokeResponse<'a> {
+#[derive(Debug, Serialize, SchemaSerialize)]
+pub(crate) enum InvokeResponse<'a> {
     #[serde(rename = "Payload")]
-    pub payload: Bytes<'a>,
-    #[serde(rename = "Error", skip_serializing_if = "Option::is_none")]
-    pub error: Option<InvokeResponseError>,
+    Payload(Bytes<'a>),
+    #[serde(rename = "Error")]
+    Error(InvokeResponseError<'a>),
 }
 
-#[derive(Clone, Debug, Serialize, SchemaSerialize)]
+#[derive(Debug, Serialize, SchemaSerialize)]
 #[serde(rename = "InvokeResponse_Error")]
-pub(crate) struct InvokeResponseError {
+pub(crate) struct InvokeResponseError<'a> {
     #[serde(rename = "Message")]
-    pub message: String,
+    pub message: &'a str,
     #[serde(rename = "Type")]
-    pub type_: String,
+    pub type_: &'a str,
     #[serde(rename = "StackTrace", skip_serializing_if = "Option::is_none")]
-    pub stack_trace: Option<Vec<InvokeResponseErrorStackFrame>>,
+    pub stack_trace: Option<InvokeResponseErrorStackTrace<'a>>,
     #[serde(rename = "ShouldExit")]
     pub should_exit: bool,
 }
 
+#[derive(Debug)]
+pub(crate) struct InvokeResponseErrorStackTrace<'a>(pub Backtrace<'a>);
+
+impl<'a> Serialize for InvokeResponseErrorStackTrace<'a> {
+    fn serialize<S: Serializer>(&self, ser: S) -> Result<S::Ok, S::Error> {
+        use serde::ser::SerializeSeq;
+
+        let len = self.0.frames().map(|frame| frame.symbols().count()).sum();
+        let mut seq = ser.serialize_seq(Some(len))?;
+
+        for frame in self.0.frames() {
+            for symbol in frame.symbols() {
+                seq.serialize_element(&InvokeResponseErrorStackFrame {
+                    path: symbol.filename().and_then(|p| p.to_str()),
+                    line: symbol.lineno().map(|i| i as i32),
+                    label: symbol.name().unwrap_or("<unknown>"),
+                })?;
+            }
+        }
+        seq.end()
+    }
+}
+
+impl<'a> SchemaSerialize for InvokeResponseErrorStackTrace<'a> {
+    fn schema_register<S: Schema>(schema: &mut S) -> Result<S::TypeId, S::Error> {
+        let type_id = InvokeResponseErrorStackFrame::schema_register(schema)?;
+        schema.register_type(Type::build().seq_type(None, type_id))
+    }
+}
+
 #[derive(Clone, Debug, Serialize, SchemaSerialize)]
 #[serde(rename = "InvokeResponse_Error_StackFrame")]
-pub(crate) struct InvokeResponseErrorStackFrame {
+struct InvokeResponseErrorStackFrame<'a> {
     #[serde(rename = "Path")]
-    pub path: String,
+    path: Option<&'a str>,
     #[serde(rename = "Line")]
-    pub line: i32,
+    line: Option<i32>,
     #[serde(rename = "Label")]
-    pub label: String,
+    label: &'a str,
 }

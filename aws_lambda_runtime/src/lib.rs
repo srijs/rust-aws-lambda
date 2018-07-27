@@ -17,6 +17,7 @@ extern crate partial_io;
 #[macro_use]
 extern crate quickcheck;
 
+extern crate backtrace_parser;
 extern crate bytes;
 #[macro_use]
 extern crate failure;

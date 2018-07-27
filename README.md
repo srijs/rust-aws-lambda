@@ -135,6 +135,22 @@ fn main() {
 
 TBD
 
+### Troubleshooting
+
+To help you debug your lambda function, `aws_lambda` integrates with the `failure`
+crate to extract stack traces from errors that are returned from the handler function.
+
+In order to take advantage of this, you need to compile your program to include debugging symbols. When working with `cargo` using `--release`, you can add the following section to your `Cargo.toml` to include debug info in your release build:
+
+```toml
+[profile.release]
+debug = true
+```
+
+Next, you want to instruct the runtime to collect stack traces when errors occur. You can do this by modifying the configuration of your function in AWS to set the `RUST_BACKTRACE` environment variable to `1`.
+
+After both of these changes have been deployed, you should start to see stack traces included in both the error info returned from invocations, as well the CloudWatch logs for your function.
+
 ## Comparison to other projects
 
 AWS Lambda does not officially support Rust. To enable using Rust with lambda, great projects such as [`rust-crowbar`](https://github.com/ilianaw/rust-crowbar) and [`serverless-rust`](https://github.com/dobrite/serverless-rust) were created. They leverage Rust's C interoperability to "embed" Rust code into lambda supported language runtimes (in this case Python and Node.js respectively).
