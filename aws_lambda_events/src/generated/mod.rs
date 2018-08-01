@@ -6,6 +6,7 @@ pub mod code_commit;
 pub mod codepipeline_job;
 pub mod cognito;
 pub mod config;
+pub mod connect;
 pub mod firehose;
 pub mod kinesis;
 pub mod lex;
