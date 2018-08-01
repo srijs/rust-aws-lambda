@@ -46,5 +46,8 @@ where
     S::Item: Serialize + Send + 'static,
     R: DeserializeOwned + Send + 'static,
 {
-    Runtime::new().unwrap().start(f).unwrap()
+    Runtime::new()
+        .expect("Failed to create new Runtime")
+        .start(f)
+        .expect("Failed to start Runtime");
 }
