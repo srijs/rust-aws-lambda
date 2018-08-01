@@ -393,6 +393,7 @@ fn parse_struct_field(pairs: Pairs<Rule>) -> Result<FieldDef, Error> {
     let mut name: Option<String> = None;
     let mut json: Option<JsonMapping> = None;
     let mut go_type: Option<GoType> = None;
+    let mut comment: Option<String> = None;
     let mut is_pointer = false;
 
     for pair in pairs {
@@ -403,6 +404,7 @@ fn parse_struct_field(pairs: Pairs<Rule>) -> Result<FieldDef, Error> {
             Rule::json_mapping => json = Some(parse_json_mapping(pair.into_inner())?),
             Rule::pointer => is_pointer = true,
             Rule::struct_field_type => go_type = Some(parse_go_type(pair.into_inner())?),
+            Rule::doc_comment => comment = Some(parse_comment(span.as_str())),
             _ => unimplemented!(),
         }
     }
@@ -426,8 +428,21 @@ fn parse_struct_field(pairs: Pairs<Rule>) -> Result<FieldDef, Error> {
         omit_empty = true
     }
 
-    let comment =
-        if let Some(j) = json { j.comment } else { None };
+    // Parse inline comment after json definition.
+    if let Some(j) = json {
+        if let Some(inline_comment) = j.comment {
+            if let Some(preceding_comment) = comment {
+                // Append inline comment to any preceding comment.
+                comment = Some(format!(
+                    "{}\n///\n/// {}",
+                    preceding_comment, inline_comment
+                ));
+            } else {
+                // The only comment is the inline comment.
+                comment = Some(inline_comment);
+            }
+        }
+    };
 
     Ok(FieldDef {
         name: name.expect("fields have names"),

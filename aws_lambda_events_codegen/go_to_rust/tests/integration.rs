@@ -58,8 +58,7 @@ fn tests(src_dir: &Path) -> Vec<TestDescAndFn> {
                 let mut text = String::new();
                 reader.read_to_string(&mut text).unwrap();
                 text
-            })
-            .collect();
+            }).collect();
 
         let test_name = fixture_path
             .file_stem()
