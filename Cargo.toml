@@ -5,10 +5,14 @@ members = [
 
   # Sub-crates
   "aws_lambda_events",
-  "aws_lambda_events_codegen",
   "aws_lambda_runtime",
   "aws_lambda_gateway",
 
   # Bridge crates
-  "aws_lambda_tower_web"
+  "aws_lambda_tower_web",
+
+  # Helper crates
+  "aws_lambda_cargo",
+  "aws_lambda_events_codegen",
+
 ]

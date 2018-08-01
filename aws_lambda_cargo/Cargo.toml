@@ -1,0 +1,23 @@
+[package]
+name = "aws_lambda_cargo"
+version = "0.1.0"
+authors = [
+  "Christian Legnitto <christian@legnitto.com>",
+  "Sam Rijs <srijs@airpost.net>",
+]
+license = "MIT OR Apache-2.0"
+description = "Cargo subcommand for AWS Lambda"
+keywords = ["subcommand", "cargo", "lambda", "aws", "aws lambda"]
+repository = "https://github.com/srijs/rust-aws-lambda"
+homepage = "https://github.com/srijs/rust-aws-lambda"
+
+[[bin]]
+name = "cargo-lambda"
+path = "src/main.rs"
+
+[dependencies]
+serde_json = "1.0.24"
+quicli = "0.3.0"
+structopt = "0.2.10"
+clap = "2.32.0"
+failure = "0.1.1"
