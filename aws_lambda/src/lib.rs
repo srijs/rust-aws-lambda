@@ -47,7 +47,7 @@ where
     R: DeserializeOwned + Send + 'static,
 {
     Runtime::new()
-        .unwrap_or_else(|err| panic!("{}", err))
+        .expect("Failed to create new Runtime")
         .start(f)
-        .unwrap_or_else(|err| panic!("{}", err));
+        .expect("Failed to start Runtime");
 }
