@@ -46,13 +46,8 @@ where
     S::Item: Serialize + Send + 'static,
     R: DeserializeOwned + Send + 'static,
 {
-    match Runtime::new() {
-        Ok(runtime) => match runtime.start(f) {
-            Ok(_) => {}
-            Err(error) => panic!("{}", error),
-        },
-        Err(error) => {
-            panic!("{}", error);
-        }
-    }
+    Runtime::new()
+        .unwrap_or_else(|err| panic!("{}", err))
+        .start(f)
+        .unwrap_or_else(|err| panic!("{}", err));
 }
