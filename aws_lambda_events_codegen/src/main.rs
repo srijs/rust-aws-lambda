@@ -9,6 +9,7 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::io::Write;
 use std::path::PathBuf;
+use std::process::Command;
 
 #[derive(Debug)]
 struct ParsedEventFile {
@@ -24,10 +25,19 @@ struct ParsedEventFile {
 #[structopt(author = "")]
 struct Cli {
     /// Path to `aws-go-sdk` checkout
-    #[structopt(long = "input", name = "AWS_GO_SDK_DIRECTORY", parse(from_os_str))]
+    #[structopt(
+        long = "input",
+        name = "AWS_GO_SDK_DIRECTORY",
+        parse(from_os_str)
+    )]
     sdk_location: PathBuf,
     /// Output directory
-    #[structopt(long = "output", short = "o", name = "DIRECTORY", parse(from_os_str))]
+    #[structopt(
+        long = "output",
+        short = "o",
+        name = "DIRECTORY",
+        parse(from_os_str)
+    )]
     output_location: PathBuf,
     /// Overwrite existing files
     #[structopt(long = "overwrite")]
@@ -283,9 +293,15 @@ main!(|args: Cli, log_level: verbosity| {
     write_mod_index(&mod_path, &parsed_files, args.overwrite)?;
 
     // Write the crate readme.
-    let mut f = File::open(args.sdk_location.join(".git/ORIG_HEAD"))?;
-    let mut git_hash = String::new();
-    f.read_to_string(&mut git_hash)?;
+    let output = Command::new("git")
+            .arg(format!("--git-dir={}", args.sdk_location.join(".git").to_string_lossy()))
+            .arg("rev-parse")
+            .arg("--verify")
+            .arg("HEAD")
+            .output()
+            .expect("failed to execute git")
+            .stdout;
+    let git_hash = String::from_utf8_lossy(&output);
     let readme_path = args.output_location.clone().join("README.md");
     write_readme(&readme_path, git_hash.trim(), args.overwrite)?;
 });
