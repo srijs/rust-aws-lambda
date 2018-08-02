@@ -7,6 +7,7 @@ use gob::StreamDeserializer;
 use serde::de::DeserializeOwned;
 use tokio_io::AsyncRead;
 
+use super::super::error::ConnectionError;
 use super::messages;
 use super::payload::PayloadDeserializer;
 use context;
@@ -33,7 +34,7 @@ pub(crate) enum Request<T> {
 
 #[derive(Debug)]
 pub(crate) enum DecodeError {
-    Frame(Error),
+    Frame(ConnectionError),
     User(u64, Error),
 }
 
@@ -99,7 +100,7 @@ where
 
     fn poll_read_ping(&mut self, seq: u64) -> Poll<Option<Request<T>>, DecodeError> {
         try_nb_gob!(self.stream.deserialize::<messages::PingRequest>())
-            .ok_or_else(|| DecodeError::Frame(format_err!("unexpected end of stream")))?;
+            .ok_or_else(|| DecodeError::Frame(ConnectionError::UnexpectedEndOfStream))?;
 
         self.state = DecoderState::PendingRequest;
         Ok(Async::Ready(Some(Request::Ping(seq))))
@@ -107,7 +108,7 @@ where
 
     fn poll_read_invoke(&mut self, seq: u64) -> Poll<Option<Request<T>>, DecodeError> {
         let message = try_nb_gob!(self.stream.deserialize::<messages::InvokeRequest>())
-            .ok_or_else(|| DecodeError::Frame(format_err!("unexpected end of stream")))?;
+            .ok_or_else(|| DecodeError::Frame(ConnectionError::UnexpectedEndOfStream))?;
 
         let identity = context::CognitoIdentity {
             cognito_identity_id: message.cognito_identity_id,

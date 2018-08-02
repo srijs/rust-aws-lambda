@@ -42,23 +42,25 @@ pub(crate) struct InvokeRequest<'a> {
 }
 
 #[derive(Debug, Serialize, SchemaSerialize)]
+#[cfg_attr(test, derive(Deserialize))]
 pub(crate) enum InvokeResponse<'a> {
-    #[serde(rename = "Payload")]
+    #[serde(rename = "Payload", borrow)]
     Payload(Bytes<'a>),
-    #[serde(rename = "Error")]
+    #[serde(rename = "Error", borrow)]
     Error(InvokeResponseError<'a>),
 }
 
 #[derive(Debug, Serialize, SchemaSerialize)]
+#[cfg_attr(test, derive(Deserialize))]
 #[serde(rename = "InvokeResponse_Error")]
 pub(crate) struct InvokeResponseError<'a> {
     #[serde(rename = "Message")]
     pub message: &'a str,
     #[serde(rename = "Type")]
     pub type_: &'a str,
-    #[serde(rename = "StackTrace", skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "StackTrace", skip_serializing_if = "Option::is_none", skip_deserializing)]
     pub stack_trace: Option<InvokeResponseErrorStackTrace<'a>>,
-    #[serde(rename = "ShouldExit")]
+    #[serde(rename = "ShouldExit", default)]
     pub should_exit: bool,
 }
 

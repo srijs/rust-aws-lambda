@@ -12,6 +12,7 @@ use tokio_service::{NewService, Service};
 use void::Void;
 
 use super::context::Context;
+use super::error::{ConnectionError, RuntimeError};
 use super::proto;
 
 pub struct Server<S, I> {
@@ -37,9 +38,11 @@ where
         }
     }
 
-    fn spawn(&mut self, stream: Io) -> Result<(), Error> {
-        let service = self.new_service.new_service()?;
-        let connection = Connection::spawn(service, stream)?;
+    fn spawn(&mut self, stream: Io) -> Result<(), RuntimeError> {
+        let service = self.new_service
+            .new_service()
+            .map_err(RuntimeError::from_io)?;
+        let connection = Connection::spawn(service, stream);
         self.handle.spawn(connection.then(|res| {
             if let Err(err) = res {
                 error!("connection error: {}", err);
@@ -61,11 +64,13 @@ where
     Io: AsyncRead + AsyncWrite + Send + 'static,
 {
     type Item = ();
-    type Error = Error;
+    type Error = RuntimeError;
 
-    fn poll(&mut self) -> Poll<(), Error> {
+    fn poll(&mut self) -> Poll<(), RuntimeError> {
         loop {
-            if let Some((stream, _)) = try_ready!(self.incoming.poll()) {
+            if let Some((stream, _)) =
+                try_ready!(self.incoming.poll().map_err(RuntimeError::from_io))
+            {
                 self.spawn(stream)?;
             } else {
                 return Ok(Async::Ready(()));
@@ -74,7 +79,7 @@ where
     }
 }
 
-pub struct Connection<S, Io>
+struct Connection<S, Io>
 where
     S: Service,
     Io: AsyncRead + AsyncWrite + Send + 'static,
@@ -92,24 +97,24 @@ where
     S::Response: Serialize + Send + 'static,
     Io: AsyncRead + AsyncWrite + Send + 'static,
 {
-    fn spawn(service: S, io: Io) -> Result<Self, Error> {
+    fn spawn(service: S, io: Io) -> Self {
         let (r, w) = io.split();
         let decoder = proto::Decoder::new(r);
-        let encoder = proto::Encoder::new(w)?;
+        let encoder = proto::Encoder::new(w);
 
-        Ok(Connection {
+        Connection {
             service,
             decoder,
             encoder,
             futures: FuturesUnordered::new(),
-        })
+        }
     }
 
-    fn poll_encoder(&mut self) -> Poll<(), Error> {
+    fn poll_encoder(&mut self) -> Poll<(), ConnectionError> {
         Ok(self.encoder.poll_complete()?)
     }
 
-    fn poll_futures(&mut self) -> Poll<(), Error> {
+    fn poll_futures(&mut self) -> Poll<(), ConnectionError> {
         loop {
             if let Some((seq, result)) = try_ready!(self.futures.poll()) {
                 self.encoder
@@ -120,7 +125,7 @@ where
         }
     }
 
-    fn poll_decoder(&mut self) -> Poll<(), Error> {
+    fn poll_decoder(&mut self) -> Poll<(), ConnectionError> {
         loop {
             match self.decoder.poll() {
                 Ok(Async::Ready(Some(request))) => match request {
@@ -147,7 +152,7 @@ where
                     continue;
                 }
                 Err(proto::DecodeError::Frame(err)) => {
-                    bail!("an error occurred during decoding: {}", err)
+                    return Err(err);
                 }
             }
         }
@@ -162,9 +167,9 @@ where
     Io: AsyncRead + AsyncWrite + Send + 'static,
 {
     type Item = ();
-    type Error = Error;
+    type Error = ConnectionError;
 
-    fn poll(&mut self) -> Poll<(), Error> {
+    fn poll(&mut self) -> Poll<(), ConnectionError> {
         // poll the decoder first, as it may create work for futures and encoder
         let decoder_ready = self.poll_decoder()?.is_ready();
         // poll the futures next, as they might create work for the encoder

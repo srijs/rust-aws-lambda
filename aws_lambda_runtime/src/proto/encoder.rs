@@ -11,13 +11,15 @@ use serde_bytes::Bytes;
 use serde_schema::SchemaSerialize;
 use tokio_io::AsyncWrite;
 
+use super::super::error::ConnectionError;
 use super::messages;
 
 #[derive(Serialize, SchemaSerialize)]
+#[cfg_attr(test, derive(Deserialize))]
 #[serde(rename = "Response")]
-struct RpcResponse {
+struct RpcResponse<'a> {
     #[serde(rename = "ServiceMethod")]
-    service_method: &'static str,
+    service_method: &'a str,
     #[serde(rename = "Seq")]
     seq: u64,
     #[serde(rename = "Error", skip_serializing_if = "Option::is_none")]
@@ -29,7 +31,7 @@ pub enum Response<T> {
     Invoke(u64, Result<T, Error>),
 }
 
-pub struct Encoder<W, T>
+pub(crate) struct Encoder<W, T>
 where
     W: AsyncWrite,
 {
@@ -47,16 +49,18 @@ impl<W, T> Encoder<W, T>
 where
     W: AsyncWrite,
 {
-    pub fn new(w: W) -> Result<Encoder<W, T>, Error> {
+    pub fn new(w: W) -> Encoder<W, T> {
         let payload_buf = Vec::with_capacity(4096);
         let error_encoder = InvokeResponseErrorEncoder::default();
 
         let mut stream = StreamSerializer::new_with_buffer();
-        let type_id_response = RpcResponse::schema_register(stream.schema_mut())?;
-        let type_id_ping_response = messages::PingResponse::schema_register(stream.schema_mut())?;
+        let type_id_response = RpcResponse::schema_register(stream.schema_mut()).unwrap();
+        let type_id_ping_response =
+            messages::PingResponse::schema_register(stream.schema_mut()).unwrap();
         let type_id_invoke_response =
-            messages::InvokeResponse::schema_register(stream.schema_mut())?;
-        Ok(Encoder {
+            messages::InvokeResponse::schema_register(stream.schema_mut()).unwrap();
+
+        Encoder {
             write: w,
             payload_buf,
             error_encoder,
@@ -65,7 +69,66 @@ where
             type_id_ping_response,
             type_id_invoke_response,
             _phan: PhantomData,
-        })
+        }
+    }
+
+    fn encode_ping(&mut self, seq: u64) -> Result<(), ConnectionError> {
+        self.stream.serialize_with_type_id(
+            self.type_id_response,
+            &RpcResponse {
+                service_method: messages::SERVICE_METHOD_PING,
+                seq,
+                error: None,
+            },
+        )?;
+        self.stream
+            .serialize_with_type_id(self.type_id_ping_response, &messages::PingResponse {})?;
+        Ok(())
+    }
+
+    fn encode_invoke(&mut self, seq: u64, result: Result<T, Error>) -> Result<(), ConnectionError>
+    where
+        T: Serialize,
+    {
+        self.stream.serialize_with_type_id(
+            self.type_id_response,
+            &RpcResponse {
+                service_method: messages::SERVICE_METHOD_INVOKE,
+                seq,
+                error: None,
+            },
+        )?;
+        match result {
+            Ok(payload) => {
+                self.payload_buf.clear();
+                match ::serde_json::to_writer(&mut self.payload_buf, &payload) {
+                    Ok(()) => {
+                        self.stream.serialize_with_type_id(
+                            self.type_id_invoke_response,
+                            &messages::InvokeResponse::Payload(Bytes::new(&self.payload_buf)),
+                        )?;
+                    }
+                    Err(err) => {
+                        // We failed to encode the invoke response payload. Instead
+                        // of bubbling it up as a connection error, encode the error
+                        // as part of the response.
+                        let invoke_error = self.error_encoder.encode_serialize_error(&err);
+                        self.stream.serialize_with_type_id(
+                            self.type_id_invoke_response,
+                            &messages::InvokeResponse::Error(invoke_error),
+                        )?;
+                    }
+                }
+            }
+            Err(err) => {
+                let invoke_error = self.error_encoder.encode(&err);
+                self.stream.serialize_with_type_id(
+                    self.type_id_invoke_response,
+                    &messages::InvokeResponse::Error(invoke_error),
+                )?;
+            }
+        }
+        Ok(())
     }
 }
 
@@ -75,51 +138,12 @@ where
     T: Serialize,
 {
     type SinkItem = Response<T>;
-    type SinkError = Error;
+    type SinkError = ConnectionError;
 
     fn start_send(&mut self, res: Response<T>) -> StartSend<Self::SinkItem, Self::SinkError> {
         match res {
-            Response::Ping(seq) => {
-                self.stream.serialize_with_type_id(
-                    self.type_id_response,
-                    &RpcResponse {
-                        service_method: messages::SERVICE_METHOD_PING,
-                        seq,
-                        error: None,
-                    },
-                )?;
-                self.stream.serialize_with_type_id(
-                    self.type_id_ping_response,
-                    &messages::PingResponse {},
-                )?;
-            }
-            Response::Invoke(seq, result) => {
-                self.stream.serialize_with_type_id(
-                    self.type_id_response,
-                    &RpcResponse {
-                        service_method: messages::SERVICE_METHOD_INVOKE,
-                        seq,
-                        error: None,
-                    },
-                )?;
-                match result {
-                    Ok(payload) => {
-                        self.payload_buf.truncate(0);
-                        ::serde_json::to_writer(&mut self.payload_buf, &payload)?;
-                        self.stream.serialize_with_type_id(
-                            self.type_id_invoke_response,
-                            &messages::InvokeResponse::Payload(Bytes::new(&self.payload_buf)),
-                        )?;
-                    }
-                    Err(err) => {
-                        let invoke_error = self.error_encoder.encode(&err);
-                        self.stream.serialize_with_type_id(
-                            self.type_id_invoke_response,
-                            &messages::InvokeResponse::Error(invoke_error),
-                        )?;
-                    }
-                }
-            }
+            Response::Ping(seq) => self.encode_ping(seq)?,
+            Response::Invoke(seq, result) => self.encode_invoke(seq, result)?,
         }
         Ok(AsyncSink::Ready)
     }
@@ -162,21 +186,80 @@ impl InvokeResponseErrorEncoder {
             should_exit: false,
         }
     }
+
+    fn encode_serialize_error<'a>(
+        &'a mut self,
+        err: &::serde_json::Error,
+    ) -> messages::InvokeResponseError<'a> {
+        self.message_buf.clear();
+        write!(self.message_buf, "failed to serialize response: {}", err).unwrap();
+        messages::InvokeResponseError {
+            message: &self.message_buf,
+            type_: "Error",
+            stack_trace: None,
+            should_exit: false,
+        }
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use futures::Sink;
+    use gob::StreamDeserializer;
     use partial_io::{GenWouldBlock, PartialAsyncWrite, PartialWithErrors};
 
-    use super::{Encoder, Response};
+    use super::*;
+
+    #[test]
+    fn serialization_error() {
+        struct FailToSerialize;
+        impl ::serde::Serialize for FailToSerialize {
+            fn serialize<S: ::serde::Serializer>(&self, _: S) -> Result<S::Ok, S::Error> {
+                Err(::serde::ser::Error::custom("foo bar reason"))
+            }
+        }
+
+        let mut buffer = ::std::io::Cursor::new(Vec::<u8>::new());
+        {
+            let mut encoder = Encoder::<_, FailToSerialize>::new(&mut buffer).wait();
+            encoder
+                .send(Response::Invoke(1, Ok(FailToSerialize)))
+                .unwrap();
+            encoder.flush().unwrap();
+        };
+        buffer.set_position(0);
+
+        let mut de = StreamDeserializer::new(buffer);
+
+        {
+            let header = de.deserialize::<RpcResponse>().unwrap().unwrap();
+
+            assert_eq!(header.service_method, "Function.Invoke");
+            assert_eq!(header.seq, 1);
+            assert_eq!(header.error, None);
+        }
+
+        {
+            let body = de.deserialize::<messages::InvokeResponse>()
+                .unwrap()
+                .unwrap();
+
+            if let messages::InvokeResponse::Error(err) = body {
+                assert_eq!(err.type_, "Error");
+                assert_eq!(err.message, "failed to serialize response: foo bar reason");
+                assert_eq!(err.should_exit, false);
+            } else {
+                panic!("not an invoke error")
+            }
+        }
+    }
 
     quickcheck! {
         fn encode_messages(seq: PartialWithErrors<GenWouldBlock>) -> bool {
             let mut write = ::std::io::Cursor::new(Vec::<u8>::new());
             {
                 let pwrite = PartialAsyncWrite::new(&mut write, seq);
-                let mut encoder = Encoder::<_, String>::new(pwrite).unwrap().wait();
+                let mut encoder = Encoder::<_, String>::new(pwrite).wait();
                 encoder.send(Response::Ping(0)).unwrap();
                 encoder.flush().unwrap();
                 encoder

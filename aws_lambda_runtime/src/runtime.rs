@@ -13,6 +13,7 @@ use tokio_core::reactor::{Core, Handle as OldHandle};
 use tokio_reactor::Handle;
 use tokio_service::{NewService, Service};
 
+use super::error::RuntimeError;
 use super::server::Server;
 
 /// Runtime environment.
@@ -23,8 +24,8 @@ pub struct Runtime {
 
 impl Runtime {
     /// Create a new `Runtime`, returning any error that happened during the creation.
-    pub fn new() -> Result<Runtime, Error> {
-        let core = Core::new()?;
+    pub fn new() -> Result<Runtime, RuntimeError> {
+        let core = Core::new().map_err(RuntimeError::from_io)?;
         Ok(Runtime { core })
     }
 
@@ -42,7 +43,7 @@ impl Runtime {
     }
 
     /// Start the runtime with the given handler function.
-    pub fn start<F, R, S>(self, f: F) -> Result<(), Error>
+    pub fn start<F, R, S>(self, f: F) -> Result<(), RuntimeError>
     where
         F: Fn(R) -> S + 'static,
         S: IntoFuture<Error = Error>,
@@ -56,20 +57,28 @@ impl Runtime {
     }
 
     /// Start the runtime with the given `Service`.
-    pub fn start_service<S>(mut self, s: S) -> Result<(), Error>
+    pub fn start_service<S>(mut self, s: S) -> Result<(), RuntimeError>
     where
         S: NewService<Error = Error>,
         S::Instance: 'static,
         S::Request: DeserializeOwned + Send + 'static,
         S::Response: Serialize + Send + 'static,
     {
-        let port = env::var("_LAMBDA_SERVER_PORT")?.parse()?;
+        let port = server_port()?;
         let addr = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), port);
         let handle = self.core.handle();
-        let listener = TcpListener::bind(&addr, &handle)?;
+        let listener = TcpListener::bind(&addr, &handle).map_err(RuntimeError::from_io)?;
         let server = Server::new(s, listener.incoming(), handle);
-        self.core.run(server)?;
-        Ok(())
+        self.core.run(server)
+    }
+}
+
+fn server_port() -> Result<u16, RuntimeError> {
+    let reason = "the _LAMBDA_SERVER_PORT variable must specify a valid port to listen on";
+
+    match env::var("_LAMBDA_SERVER_PORT") {
+        Ok(var) => var.parse().map_err(|_| RuntimeError::environment(reason)),
+        Err(_) => Err(RuntimeError::environment(reason)),
     }
 }
 

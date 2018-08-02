@@ -19,7 +19,6 @@ extern crate quickcheck;
 
 extern crate backtrace_parser;
 extern crate bytes;
-#[macro_use]
 extern crate failure;
 #[macro_use]
 extern crate futures;
@@ -44,12 +43,14 @@ extern crate tokio_reactor;
 extern crate tokio_service;
 extern crate void;
 
-pub mod context;
-pub mod env;
-
+mod error;
 mod proto;
 mod runtime;
 mod server;
 
+pub mod context;
+pub mod env;
+
 pub use context::Context;
+pub use error::RuntimeError;
 pub use runtime::Runtime;
