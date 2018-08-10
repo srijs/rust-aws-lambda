@@ -1,4 +1,8 @@
-use quicli::prelude::*;
+use askama::Template;
+use cargo_metadata::Metadata;
+use docker::{DockerDynamicTemplate, DockerRunner};
+use failure::Error;
+use manifest_info::ManifestInfo;
 use std;
 use std::process::{self, Command, ExitStatus, Stdio};
 
@@ -11,23 +15,22 @@ enum DockerError {
 }
 
 pub enum Scope {
-    All,
     Docker,
+    Rust,
 }
 
-fn check_docker() -> Result<()> {
-    let status = Command::new("docker")
-        .args(vec!["--version"])
-        .stdout(Stdio::null())
-        .stderr(Stdio::null())
-        .status()
-        .map_err(|e| DockerError::BinaryNotFound { error: e })?;
-    if (status.success()) {
-        Ok(())
-    } else {
-        Err(DockerError::VersionCommandStatus { status })?
-    }
+fn check_docker(runner: &mut DockerRunner) -> Result<(), Error> {
+    info!("Checking docker install");
+    runner.validate()
 }
+
+fn check_rust(runner: &mut DockerRunner) -> Result<(), Error> {
+    info!("Running `cargo check` in the docker container");
+    // Make the docker image.
+    let image_name = runner.make_image()?;
+    Ok(())
+}
+
 #[derive(Debug, Default, StructOpt)]
 pub struct Settings {
     #[structopt(name = "CARGO_OPTIONS")]
@@ -35,14 +38,15 @@ pub struct Settings {
     cargo_options: Vec<String>,
 }
 
-pub fn run(settings: &Settings, scope: Scope) -> Result<()> {
-    println!("Running check");
+pub fn run(
+    settings: &Settings,
+    manifest_info: &ManifestInfo,
+    runner: &mut DockerRunner,
+    scope: Scope,
+) -> Result<(), Error> {
+    trace!("Running `check` command");
     match scope {
-        Scope::All => {
-            check_docker()?;
-            // TODO: Run `cargo check` in the docker container.
-        }
-        Scope::Docker => check_docker()?,
+        Scope::Docker => check_docker(runner),
+        Scope::Rust => check_rust(runner),
     }
-    Ok(())
 }

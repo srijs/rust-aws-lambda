@@ -1,4 +1,5 @@
-use quicli::prelude::*;
+use docker::DockerRunner;
+use failure::Error;
 
 arg_enum! {
     #[derive(Debug)]
@@ -13,7 +14,10 @@ pub struct Settings {
     #[structopt(long = "link_type", short = "l")]
     #[structopt(
         default_value = "Static",
-        raw(possible_values = "&LinkType::variants()", case_insensitive = "true")
+        raw(
+            possible_values = "&LinkType::variants()",
+            case_insensitive = "true"
+        )
     )]
     link: LinkType,
     #[structopt(name = "CARGO_OPTIONS")]
@@ -21,7 +25,7 @@ pub struct Settings {
     cargo_options: Vec<String>,
 }
 
-pub fn run(settings: &Settings) -> Result<()> {
-    println!("Running a build");
+pub fn run(settings: &Settings) -> Result<(), Error> {
+    trace!("Running `build` command");
     Ok(())
 }
