@@ -23,8 +23,7 @@ use commands::check::{Scope, Settings as CheckSettings};
 use docker::{DockerDynamicTemplate, DockerRunner};
 use failure::Error;
 use manifest_info::ManifestInfo;
-use rustc_version::{version, Version};
-use std::env;
+use rustc_version::version;
 use std::path::PathBuf;
 use structopt::clap::AppSettings;
 use structopt::StructOpt;
@@ -94,5 +93,11 @@ fn inner_main(args: Cli) -> Result<(), Error> {
 fn main() {
     drop(env_logger::init());
     let args = Cli::from_args();
-    inner_main(args).unwrap();
+    ::std::process::exit(match inner_main(args) {
+        Ok(_) => 0,
+        Err(err) => {
+            eprintln!("error: {}", err);
+            1
+        }
+    });
 }
