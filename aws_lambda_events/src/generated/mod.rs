@@ -1,4 +1,5 @@
 pub mod apigw;
+pub mod appsync;
 pub mod autoscaling;
 pub mod cloudwatch_events;
 pub mod cloudwatch_logs;

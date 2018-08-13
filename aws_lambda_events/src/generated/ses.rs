@@ -78,6 +78,8 @@ pub struct SimpleEmailReceipt {
     pub dkim_verdict: SimpleEmailVerdict,
     #[serde(rename = "dmarcVerdict")]
     pub dmarc_verdict: SimpleEmailVerdict,
+    #[serde(rename = "dmarcPolicy")]
+    pub dmarc_policy: SimpleEmailVerdict,
     #[serde(rename = "spfVerdict")]
     pub spf_verdict: SimpleEmailVerdict,
     #[serde(rename = "virusVerdict")]
