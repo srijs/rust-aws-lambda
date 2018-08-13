@@ -11,11 +11,14 @@ extern crate rustc_version;
 #[macro_use]
 extern crate askama;
 extern crate cargo_metadata;
+extern crate console;
+extern crate indicatif;
 extern crate tempfile;
 
 mod commands;
 mod docker;
 mod manifest_info;
+mod progress;
 
 use askama::Template;
 use commands::build::Settings as BuildSettings;
@@ -23,6 +26,7 @@ use commands::check::{Scope, Settings as CheckSettings};
 use docker::{DockerDynamicTemplate, DockerRunner};
 use failure::Error;
 use manifest_info::ManifestInfo;
+use progress::Progress;
 use rustc_version::version;
 use std::path::PathBuf;
 use structopt::clap::AppSettings;
@@ -67,24 +71,33 @@ fn inner_main(args: Cli) -> Result<(), Error> {
     let v = version()?;
     let x = DockerDynamicTemplate { rust_version: &v };
     let dockerfile = x.render()?;
+    debug!("Dockerfile:\n");
     debug!("{}", dockerfile);
 
     let mut runner = DockerRunner::new(dockerfile);
+    let mut progress = Progress::new();
 
     match args.cmd {
         Command::Build(x) => {
             // We want to check to make sure docker is set up correctly.
             commands::check::run(
+                &mut progress,
                 &CheckSettings::default(),
                 &manifest_info,
                 &mut runner,
                 Scope::Docker,
             )?;
-            commands::build::run(&x)?;
+            commands::build::run(&mut progress, &x)?;
         }
         Command::Check(x) => {
-            commands::check::run(&x, &manifest_info, &mut runner, Scope::Docker)?;
-            commands::check::run(&x, &manifest_info, &mut runner, Scope::Rust)?;
+            commands::check::run(
+                &mut progress,
+                &x,
+                &manifest_info,
+                &mut runner,
+                Scope::Docker,
+            )?;
+            commands::check::run(&mut progress, &x, &manifest_info, &mut runner, Scope::Rust)?;
         }
     }
     Ok(())

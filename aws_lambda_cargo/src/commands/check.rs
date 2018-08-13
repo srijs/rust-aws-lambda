@@ -1,18 +1,7 @@
-use askama::Template;
-use cargo_metadata::Metadata;
-use docker::{DockerDynamicTemplate, DockerRunner};
+use docker::DockerRunner;
 use failure::Error;
 use manifest_info::ManifestInfo;
-use std;
-use std::process::{self, Command, ExitStatus, Stdio};
-
-#[derive(Debug, Fail)]
-enum DockerError {
-    #[fail(display = "docker is not installed or running: {}", error)]
-    BinaryNotFound { error: std::io::Error },
-    #[fail(display = "`docker --version` failed: {}", status)]
-    VersionCommandStatus { status: ExitStatus },
-}
+use progress::Progress;
 
 pub enum Scope {
     Docker,
@@ -27,7 +16,7 @@ fn check_docker(runner: &mut DockerRunner) -> Result<(), Error> {
 fn check_rust(runner: &mut DockerRunner) -> Result<(), Error> {
     info!("Running `cargo check` in the docker container");
     // Make the docker image.
-    let image_name = runner.make_image()?;
+    let _image_name = runner.make_image()?;
     Ok(())
 }
 
@@ -39,8 +28,9 @@ pub struct Settings {
 }
 
 pub fn run(
-    settings: &Settings,
-    manifest_info: &ManifestInfo,
+    _progress: &mut Progress,
+    _settings: &Settings,
+    _manifest_info: &ManifestInfo,
     runner: &mut DockerRunner,
     scope: Scope,
 ) -> Result<(), Error> {
