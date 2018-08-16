@@ -1,5 +1,4 @@
 use failure::Error;
-use progress::Progress;
 
 arg_enum! {
     #[derive(Debug)]
@@ -25,7 +24,7 @@ pub struct Settings {
     cargo_options: Vec<String>,
 }
 
-pub fn run(_progress: &mut Progress, _settings: &Settings) -> Result<(), Error> {
+pub fn run(_settings: &Settings) -> Result<(), Error> {
     trace!("Running `build` command");
     Ok(())
 }

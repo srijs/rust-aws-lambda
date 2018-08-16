@@ -2,7 +2,7 @@
 extern crate structopt;
 #[macro_use]
 extern crate log;
-extern crate env_logger;
+extern crate pretty_env_logger;
 #[macro_use]
 extern crate clap;
 #[macro_use]
@@ -11,14 +11,12 @@ extern crate rustc_version;
 #[macro_use]
 extern crate askama;
 extern crate cargo_metadata;
-extern crate console;
-extern crate indicatif;
 extern crate tempfile;
+extern crate users;
 
 mod commands;
 mod docker;
 mod manifest_info;
-mod progress;
 
 use askama::Template;
 use commands::build::Settings as BuildSettings;
@@ -26,7 +24,6 @@ use commands::check::{Scope, Settings as CheckSettings};
 use docker::{DockerDynamicTemplate, DockerRunner};
 use failure::Error;
 use manifest_info::ManifestInfo;
-use progress::Progress;
 use rustc_version::version;
 use std::path::PathBuf;
 use structopt::clap::AppSettings;
@@ -66,45 +63,37 @@ fn inner_main(args: Cli) -> Result<(), Error> {
     let metadata = cargo_metadata::metadata(args.manifest_path)
         .map_err(|_| ProgramError::ManifestPathNotFound)?;
     let manifest_info = ManifestInfo::new(metadata)?;
+    debug!("Manifest info:\n{:#?}", manifest_info);
 
     // Process the dockerfile template.
     let v = version()?;
     let x = DockerDynamicTemplate { rust_version: &v };
     let dockerfile = x.render()?;
-    debug!("Dockerfile:\n");
-    debug!("{}", dockerfile);
+    debug!("Dockerfile:\n{}", dockerfile);
 
     let mut runner = DockerRunner::new(dockerfile);
-    let mut progress = Progress::new();
 
     match args.cmd {
         Command::Build(x) => {
             // We want to check to make sure docker is set up correctly.
             commands::check::run(
-                &mut progress,
                 &CheckSettings::default(),
                 &manifest_info,
                 &mut runner,
                 Scope::Docker,
             )?;
-            commands::build::run(&mut progress, &x)?;
+            commands::build::run(&x)?;
         }
         Command::Check(x) => {
-            commands::check::run(
-                &mut progress,
-                &x,
-                &manifest_info,
-                &mut runner,
-                Scope::Docker,
-            )?;
-            commands::check::run(&mut progress, &x, &manifest_info, &mut runner, Scope::Rust)?;
+            commands::check::run(&x, &manifest_info, &mut runner, Scope::Docker)?;
+            commands::check::run(&x, &manifest_info, &mut runner, Scope::Rust)?;
         }
     }
     Ok(())
 }
 
 fn main() {
-    drop(env_logger::init());
+    drop(pretty_env_logger::init());
     let args = Cli::from_args();
     ::std::process::exit(match inner_main(args) {
         Ok(_) => 0,

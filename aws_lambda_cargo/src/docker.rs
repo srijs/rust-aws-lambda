@@ -3,8 +3,10 @@ use failure::Error;
 use rustc_version::Version;
 use std::fs::File;
 use std::io::{self, Write};
+use std::path::PathBuf;
 use std::process::{Command, ExitStatus, Stdio};
 use tempfile::tempdir;
+use users::User;
 
 #[derive(Debug, Fail)]
 enum DockerError {
@@ -21,8 +23,15 @@ enum DockerError {
     DockerfileWriteFailed { error: io::Error },
     #[fail(display = "`docker --version` failed: {}", status)]
     VersionCommandFailed { status: ExitStatus },
-    #[fail(display = "Unable to build docker image: {}", error)]
+    #[fail(display = "unable to build docker image: {}", error)]
     ImageBuildCommandFailed { error: io::Error },
+    #[fail(display = "unable to run command in container: {}", error)]
+    RunCommandFailed { error: io::Error },
+    #[fail(
+        display = "command run in container returned error: {}",
+        error
+    )]
+    RunCommandReturnedError { error: io::Error },
 }
 
 #[derive(Template)]
@@ -60,7 +69,7 @@ impl DockerRunner {
     }
 
     /// Make or update the docker image. This is idempotent.
-    pub fn make_image(&mut self) -> Result<String, Error> {
+    pub fn prepare_image(&mut self) -> Result<String, Error> {
         trace!("Making docker image");
         if !self.checked {
             self.validate()?;
@@ -93,7 +102,43 @@ impl DockerRunner {
             .wait()
             .map_err(|e| DockerError::ImageBuildCommandFailed { error: e })?;
 
-        trace!("Built docker image `{}`", image_name);
+        info!("Successfully built docker image `{}`", image_name);
         Ok(String::from(image_name))
+    }
+
+    /// Make or update the docker image. This is idempotent.
+    pub fn run(
+        &mut self,
+        bash_command: &str,
+        docker_image: &str,
+        source_location: &PathBuf,
+        user: &User,
+    ) -> Result<String, Error> {
+        trace!("Running command in docker image");
+        if !self.checked {
+            self.validate()?;
+        }
+
+        let location_in_docker = "/code";
+
+        let mut child = Command::new("docker").arg("run").arg("--rm")
+        .args(vec![
+            "-v", &format!("{}:/{}", source_location.to_string_lossy(), location_in_docker),
+            "-w", location_in_docker,
+            "-u", &format!("{}:{}", user.uid(), user.primary_group_id()),
+            &docker_image,
+            "bash", "-c", bash_command,
+        ])
+        //.stdout(Stdio::null())
+        //.stderr(Stdio::null())
+        .stderr(Stdio::piped())
+        .spawn()
+        .map_err(|e| DockerError::RunCommandFailed { error: e })?;
+
+        child
+            .wait()
+            .map_err(|e| DockerError::RunCommandReturnedError { error: e })?;
+
+        Ok("my/coolbin.txt".to_string())
     }
 }

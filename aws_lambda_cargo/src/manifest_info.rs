@@ -11,7 +11,8 @@ enum ManifestError {
 #[derive(Debug, Clone)]
 pub struct ManifestInfo {
     pub binaries: Vec<Target>,
-    pub target_directory: PathBuf,
+    pub source_location: PathBuf,
+    pub target_location: PathBuf,
 }
 
 impl ManifestInfo {
@@ -27,7 +28,8 @@ impl ManifestInfo {
         }
         Ok(ManifestInfo {
             binaries,
-            target_directory: PathBuf::from(raw.target_directory),
+            source_location: PathBuf::from(raw.workspace_root),
+            target_location: PathBuf::from(raw.target_directory),
         })
     }
 }

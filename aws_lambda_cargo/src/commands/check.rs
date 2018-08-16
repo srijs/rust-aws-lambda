@@ -1,7 +1,13 @@
 use docker::DockerRunner;
 use failure::Error;
 use manifest_info::ManifestInfo;
-use progress::Progress;
+use users::{get_current_uid, get_user_by_uid};
+
+#[derive(Debug, Fail)]
+enum CommandError {
+    #[fail(display = "unable to get the current user and group")]
+    GetCurrentUserFailed,
+}
 
 pub enum Scope {
     Docker,
@@ -13,10 +19,19 @@ fn check_docker(runner: &mut DockerRunner) -> Result<(), Error> {
     runner.validate()
 }
 
-fn check_rust(runner: &mut DockerRunner) -> Result<(), Error> {
+fn check_rust(runner: &mut DockerRunner, manifest_info: &ManifestInfo) -> Result<(), Error> {
     info!("Running `cargo check` in the docker container");
     // Make the docker image.
-    let _image_name = runner.make_image()?;
+    let image_name = runner.prepare_image()?;
+
+    let user = get_user_by_uid(get_current_uid()).ok_or(CommandError::GetCurrentUserFailed)?;
+    
+    let _binary = runner.run(
+        "cargo check",
+        &image_name,
+        &manifest_info.source_location,
+        &user,
+    )?;
     Ok(())
 }
 
@@ -28,15 +43,14 @@ pub struct Settings {
 }
 
 pub fn run(
-    _progress: &mut Progress,
     _settings: &Settings,
-    _manifest_info: &ManifestInfo,
+    manifest_info: &ManifestInfo,
     runner: &mut DockerRunner,
     scope: Scope,
 ) -> Result<(), Error> {
     trace!("Running `check` command");
     match scope {
         Scope::Docker => check_docker(runner),
-        Scope::Rust => check_rust(runner),
+        Scope::Rust => check_rust(runner, &manifest_info),
     }
 }
