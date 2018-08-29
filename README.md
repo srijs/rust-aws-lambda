@@ -133,7 +133,18 @@ fn main() {
 
 ### Deploy
 
-TBD
+To deploy on AWS lambda, you will need a zip file of your binary, built against amazonlinux with MUSL. A docker file is provided as an example, which will work for single project binaries that need OpenSSL. It is based off of [rust-musl-builder](https://github.com/emk/rust-musl-builder).
+
+    docker pull amazonlinux
+    docker build --force-rm -t aws-lambda:latest --build-arg SRC=example -f docker/dockerfile .
+    docker run -v /tmp/artifacts:/export --rm aws-lambda:latest
+    
+Create your lambda function, uploading your zip file. Change your runtime to `go 1.x` and set your handler function to the name of your application as defined in your Cargo.toml.
+
+If using SSL functionality (e.g. rusoto), add the following environment variables
+
+    SSL_CERT_DIR=/etc/ssl/certs
+    SSL_CERT_FILE=/etc/ssl/certs/ca-bundle.crt
 
 ### Troubleshooting
 
