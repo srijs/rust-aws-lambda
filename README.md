@@ -132,6 +132,7 @@ fn main() {
 ```
 
 ### Deploy
+Note: These instructions will produce a MUSL binary of your rust code. If you are looking for non-MUSL binaries, you might try [docker-lambda](https://github.com/lambci/docker-lambda).
 
 To deploy on AWS lambda, you will need a zip file of your binary, built against amazonlinux with MUSL. A docker file is provided as an example, which will work for single project binaries that need OpenSSL. It is based off of [rust-musl-builder](https://github.com/emk/rust-musl-builder).
 
@@ -145,6 +146,14 @@ If using SSL functionality (e.g. rusoto), add the following environment variable
 
     SSL_CERT_DIR=/etc/ssl/certs
     SSL_CERT_FILE=/etc/ssl/certs/ca-bundle.crt
+    
+If you are using `error_chain` in your rust code, you will also have to disable default features for a musl build. Add the following to your Cargo.toml
+
+    #Error chain users will have to disable default-features for musl
+    [dependencies.error-chain]
+    version = "~0.12"
+    default-features = false
+
 
 ### Troubleshooting
 

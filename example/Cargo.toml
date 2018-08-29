@@ -6,7 +6,3 @@ authors = ["Danny Browning <danny.browning@protectwise.com>"]
 [dependencies]
 aws_lambda = { git = "https://github.com/srijs/rust-aws-lambda" }
 log = "~0.4"
-
-[dependencies.error-chain]
-version = "~0.12"
-default-features = false
