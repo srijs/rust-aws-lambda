@@ -96,5 +96,3 @@ RUN mkdir -p $EXPORT_DIR
 VOLUME $EXPORT_DIR
 
 CMD find $ARTIFACTS_DIR -type f -name "aws_lambda.zip" -exec cp '{}' $EXPORT_DIR \;
-
-#CMD ["/bin/sh"]
