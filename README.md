@@ -147,6 +147,8 @@ If using SSL functionality (e.g. rusoto), add the following environment variable
     SSL_CERT_DIR=/etc/ssl/certs
     SSL_CERT_FILE=/etc/ssl/certs/ca-bundle.crt
     
+If you are still running into SSL issues, you may need to modify your application per https://github.com/emk/rust-musl-builder#making-openssl-work.
+    
 If you are using `error_chain` in your rust code, you will also have to disable default features for a musl build. Add the following to your Cargo.toml
 
     #Error chain users will have to disable default-features for musl

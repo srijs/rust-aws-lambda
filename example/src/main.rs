@@ -1,4 +1,3 @@
-#![recursion_limit="128"]
 extern crate aws_lambda;
 #[macro_use] extern crate log;
 
