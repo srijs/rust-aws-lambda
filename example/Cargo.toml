@@ -1,0 +1,8 @@
+[package]
+name = "aws-lambda-example"
+version = "0.1.0"
+authors = ["Danny Browning <danny.browning@protectwise.com>"]
+
+[dependencies]
+aws_lambda = { git = "https://github.com/srijs/rust-aws-lambda" }
+log = "~0.4"
