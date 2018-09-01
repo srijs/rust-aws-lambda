@@ -4,9 +4,7 @@ This repository contains multiple crates that make it possible to run programs w
 
 [![Build Status](https://travis-ci.org/srijs/rust-aws-lambda.svg?branch=master)](https://travis-ci.org/srijs/rust-aws-lambda)
 
-## Usage
-
-### Install
+## Install
 
 Because this project is still in an early (but functional!) stage, it has not yet been published to the `crates` registry. You will therefore need to depend directly on the Github repository. Add the following to the `[dependencies]` section in your `Cargo.toml` file.
 
@@ -14,7 +12,7 @@ Because this project is still in an early (but functional!) stage, it has not ye
 aws_lambda = { git = "https://github.com/srijs/rust-aws-lambda" }
 ```
 
-### Create
+## Create
 
 The `start` function will launch a runtime which will listen for messages from the lambda environment, and call a handler function every time the lambda is invoked. This handler function can be async, as the runtime itself is based on top of `futures` and `tokio`.
 
@@ -27,7 +25,7 @@ fn main() {
 }
 ```
 
-### Input
+## Input
 
 To provide input data to your handler function, you can change the type of the argument that the function accepts. For this to work, the argument type needs to implement the `serde::Deserialize` trait (most types in the standard library do).
 
@@ -93,7 +91,7 @@ are available as crate features so you can choose the behavior and API that work
   aws_lambda = { git = "https://github.com/srijs/rust-aws-lambda", features = ["string-null-empty"] }
   ```
 
-### Context
+## Context
 
 While your function is running you can call `Context::current()` to get additional information, such as the ARN of your lambda, the Amazon request id or the Cognito identity of the calling application.
 
@@ -109,7 +107,7 @@ fn main() {
 }
 ```
 
-### Logging
+## Logging
 
 The `aws_runtime` crate bundles its own logger, which can be used through the
 [`log`](https://crates.io/crates/log) facade.
@@ -131,7 +129,8 @@ fn main() {
 }
 ```
 
-### Deploy
+## Deploy
+
 *Note: These instructions will produce a static musl binary of your rust code. If you are looking for non-musl binaries, you might try [docker-lambda](https://github.com/lambci/docker-lambda).*
 
 To deploy on AWS lambda, you will need a zip file of your binary built against amazonlinux. A Dockerfile is provided as an example and will work for single project binaries that need OpenSSL. The Dockerfile is based off of [rust-musl-builder](https://github.com/emk/rust-musl-builder).
@@ -160,7 +159,7 @@ In general we suggest you use the [`failure`](https://github.com/rust-lang-nurse
     default-features = false
 
 
-### Troubleshooting
+## Troubleshooting
 
 To help you debug your lambda function, `aws_lambda` integrates with the [`failure`](https://github.com/rust-lang-nursery/failure)
 crate to extract stack traces from errors that are returned from the handler function.
@@ -176,7 +175,7 @@ Next, you want to instruct the runtime to collect stack traces when errors occur
 
 After both of these changes have been deployed, you should start to see stack traces included in both the error info returned from invocations, as well the CloudWatch logs for your function.
 
-## Comparison to other projects
+# Comparison to other projects
 
 AWS Lambda does not officially support Rust. To enable using Rust with lambda, great projects such as [`rust-crowbar`](https://github.com/ilianaw/rust-crowbar) and [`serverless-rust`](https://github.com/dobrite/serverless-rust) were created. They leverage Rust's C interoperability to "embed" Rust code into lambda supported language runtimes (in this case Python and Node.js respectively).
 
