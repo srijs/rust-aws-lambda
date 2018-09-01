@@ -132,26 +132,29 @@ fn main() {
 ```
 
 ### Deploy
-Note: These instructions will produce a MUSL binary of your rust code. If you are looking for non-MUSL binaries, you might try [docker-lambda](https://github.com/lambci/docker-lambda).
+*Note: These instructions will produce a static musl binary of your rust code. If you are looking for non-musl binaries, you might try [docker-lambda](https://github.com/lambci/docker-lambda).*
 
-To deploy on AWS lambda, you will need a zip file of your binary, built against amazonlinux with MUSL. A docker file is provided as an example, which will work for single project binaries that need OpenSSL. It is based off of [rust-musl-builder](https://github.com/emk/rust-musl-builder).
+To deploy on AWS lambda, you will need a zip file of your binary built against amazonlinux. A Dockerfile is provided as an example and will work for single project binaries that need OpenSSL. The Dockerfile is based off of [rust-musl-builder](https://github.com/emk/rust-musl-builder).
 
     docker pull amazonlinux
     docker build --force-rm -t aws-lambda:latest --build-arg SRC=example -f docker/dockerfile .
     docker run -v /tmp/artifacts:/export --rm aws-lambda:latest
     
-Create your lambda function, uploading your zip file. Change your runtime to `go 1.x` and set your handler function to the name of your application as defined in your Cargo.toml.
+Build your lambda function and upload your zip file. Change the lambda runtime to `go 1.x` and set the handler function to the name of your application as defined in your `Cargo.toml`.
 
-If using SSL functionality (e.g. rusoto), add the following environment variables
+#### SSL considerations
+
+If your binary requires SSL (e.g. [`rusoto`](https://github.com/rusoto/rusoto)), add the following environment variables:
 
     SSL_CERT_DIR=/etc/ssl/certs
     SSL_CERT_FILE=/etc/ssl/certs/ca-bundle.crt
     
 If you are still running into SSL issues, you may need to modify your application per https://github.com/emk/rust-musl-builder#making-openssl-work.
-    
-If you are using `error_chain` in your rust code, you will also have to disable default features for a musl build. Add the following to your Cargo.toml
 
-    #Error chain users will have to disable default-features for musl
+#### `error_chain`
+    
+In general we suggest you use the [`failure`](https://github.com/rust-lang-nursery/failure) crate for error handling. If you are instead using [`error_chain`](https://github.com/rust-lang-nursery/error-chain) in your rust code, you will also have to disable default features to use the example musl Dockerfile. Add the following to your `Cargo.toml`:
+
     [dependencies.error-chain]
     version = "~0.12"
     default-features = false
@@ -159,7 +162,7 @@ If you are using `error_chain` in your rust code, you will also have to disable 
 
 ### Troubleshooting
 
-To help you debug your lambda function, `aws_lambda` integrates with the `failure`
+To help you debug your lambda function, `aws_lambda` integrates with the [`failure`](https://github.com/rust-lang-nursery/failure)
 crate to extract stack traces from errors that are returned from the handler function.
 
 In order to take advantage of this, you need to compile your program to include debugging symbols. When working with `cargo` using `--release`, you can add the following section to your `Cargo.toml` to include debug info in your release build:
