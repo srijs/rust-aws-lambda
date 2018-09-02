@@ -8,6 +8,8 @@ use futures::IntoFuture;
 use serde::{de::DeserializeOwned, Serialize};
 
 extern crate aws_lambda_events;
+#[cfg(feature = "gateway")]
+extern crate aws_lambda_gateway;
 extern crate aws_lambda_runtime;
 
 pub use aws_lambda_runtime::{Context, Runtime};
@@ -16,6 +18,8 @@ pub use aws_lambda_events::event;
 pub use aws_lambda_runtime::context;
 pub use aws_lambda_runtime::env;
 
+#[cfg(feature = "gateway")]
+pub mod gateway;
 pub mod logger;
 
 /// Start the lambda runtime using the provided handler function.

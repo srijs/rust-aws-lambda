@@ -25,6 +25,21 @@ fn main() {
 }
 ```
 
+Alternatively, the `gateway` module contains functionality to implement a lambda function that can be used to [build an API Gateway API with Lambda Proxy Integration](https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-create-api-as-simple-proxy-for-lambda.html).
+
+```rust,no_run
+extern crate aws_lambda as lambda;
+
+fn main() {
+    lambda::gateway::start(|_req| {
+        let res = lambda::gateway::response()
+            .status(200)
+            .body("Hello ƛ!".into())?;
+        Ok(res)
+    })
+}
+```
+
 ## Input
 
 To provide input data to your handler function, you can change the type of the argument that the function accepts. For this to work, the argument type needs to implement the `serde::Deserialize` trait (most types in the standard library do).
@@ -138,7 +153,7 @@ To deploy on AWS lambda, you will need a zip file of your binary built against a
     docker pull amazonlinux
     docker build --force-rm -t aws-lambda:latest --build-arg SRC=example -f docker/dockerfile .
     docker run -v /tmp/artifacts:/export --rm aws-lambda:latest
-    
+
 Build your lambda function and upload your zip file. Change the lambda runtime to `go 1.x` and set the handler function to the name of your application as defined in your `Cargo.toml`.
 
 #### SSL considerations
@@ -147,11 +162,11 @@ If your binary requires SSL (e.g. [`rusoto`](https://github.com/rusoto/rusoto)),
 
     SSL_CERT_DIR=/etc/ssl/certs
     SSL_CERT_FILE=/etc/ssl/certs/ca-bundle.crt
-    
+
 If you are still running into SSL issues, you may need to modify your application per https://github.com/emk/rust-musl-builder#making-openssl-work.
 
 #### `error_chain`
-    
+
 In general we suggest you use the [`failure`](https://github.com/rust-lang-nursery/failure) crate for error handling. If you are instead using [`error_chain`](https://github.com/rust-lang-nursery/error-chain) in your rust code, you will also have to disable default features to use the example musl Dockerfile. Add the following to your `Cargo.toml`:
 
     [dependencies.error-chain]
