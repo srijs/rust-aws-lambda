@@ -18,7 +18,7 @@ pub struct Server<S, I> {
     incoming: I,
 }
 
-impl<S, I, Io> Server<S, I>
+impl<S, I> Server<S, I>
 where
     S: NewService<Error = Error, InitError = Error> + 'static,
     S::Future: Send + 'static,
@@ -26,8 +26,8 @@ where
     <S::Service as Service>::Future: Send,
     S::Request: DeserializeOwned + Send + 'static,
     S::Response: Serialize + Send + 'static,
-    I: Stream<Item = Io, Error = io::Error> + 'static,
-    Io: AsyncRead + AsyncWrite + Send + 'static,
+    I: Stream<Error = io::Error> + 'static,
+    I::Item: AsyncRead + AsyncWrite + Send + 'static,
 {
     pub fn new(new_service: S, incoming: I) -> Server<S, I> {
         Server {
@@ -48,7 +48,7 @@ where
             })
     }
 
-    fn spawn(&mut self, stream: Io) -> Result<(), RuntimeError> {
+    fn spawn(&mut self, stream: I::Item) -> Result<(), RuntimeError> {
         let connection = self.spawn_service().and_then(|service| {
             let connection = Connection::spawn(service, stream);
             connection.then(|res| {
@@ -64,7 +64,7 @@ where
     }
 }
 
-impl<S, I, Io> Future for Server<S, I>
+impl<S, I> Future for Server<S, I>
 where
     S: NewService<InitError = Error, Error = Error> + 'static,
     S::Service: Send + 'static,
@@ -72,8 +72,8 @@ where
     S::Future: Send + 'static,
     S::Request: DeserializeOwned + Send + 'static,
     S::Response: Serialize + Send + 'static,
-    I: Stream<Item = Io, Error = io::Error> + 'static,
-    Io: AsyncRead + AsyncWrite + Send + 'static,
+    I: Stream<Error = io::Error> + 'static,
+    I::Item: AsyncRead + AsyncWrite + Send + 'static,
 {
     type Item = ();
     type Error = RuntimeError;
