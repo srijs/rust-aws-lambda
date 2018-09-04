@@ -4,4 +4,4 @@ header_pages:
   - getting-started.md
 
 markdown: kramdown
-theme: minima
+theme: jekyll-theme-cayman
