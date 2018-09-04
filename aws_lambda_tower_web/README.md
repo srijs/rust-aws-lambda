@@ -38,3 +38,7 @@ In order to run your Tower Web application on AWS Lambda, you need to change exa
 -     .run(&addr)
       .unwrap();
 ```
+
+## Deploy
+
+For more information on how to deploy your app to AWS Lambda, please check the [relevant section in the main README](https://github.com/srijs/rust-aws-lambda/blob/master/README.md#deploy).
