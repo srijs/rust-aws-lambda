@@ -1,6 +1,4 @@
-use std::error::Error as StdError;
-
-use failure::Error;
+use failure::{Error, Fail};
 use futures::{future::FutureResult, Async, Future, Poll};
 use http;
 use tower_service::{NewService, Service};
@@ -23,8 +21,8 @@ where
     T: Resource,
     U: Catch,
     M: HttpMiddleware<RoutedService<T, U>, RequestBody = ::RequestBody>,
-    M::Error: StdError + Send + Sync + 'static,
-    <M::ResponseBody as BufStream>::Error: StdError + Send + Sync + 'static,
+    M::Error: Fail,
+    <M::ResponseBody as BufStream>::Error: Fail,
 {
     type Request = http::Request<Body>;
     type Response = http::Response<Body>;
@@ -53,8 +51,8 @@ where
     T: Resource,
     U: Catch,
     M: HttpMiddleware<RoutedService<T, U>, RequestBody = ::RequestBody>,
-    M::Error: StdError + Send + Sync,
-    <M::ResponseBody as BufStream>::Error: StdError + Send + Sync + 'static,
+    M::Error: Fail,
+    <M::ResponseBody as BufStream>::Error: Fail,
 {
     type Item = ServiceWrapper<T, U, M>;
     type Error = Error;
@@ -73,8 +71,8 @@ where
     T: Resource,
     U: Catch,
     M: HttpMiddleware<RoutedService<T, U>, RequestBody = ::RequestBody>,
-    M::Error: StdError + Send + Sync + 'static,
-    <M::ResponseBody as BufStream>::Error: StdError + Send + Sync + 'static,
+    M::Error: Fail,
+    <M::ResponseBody as BufStream>::Error: Fail,
 {
     type Request = http::Request<Body>;
     type Response = http::Response<Body>;
@@ -88,7 +86,8 @@ where
     fn call(&mut self, request: Self::Request) -> Self::Future {
         let (parts, body) = request.into_parts();
         ServiceWrapperFuture::Waiting {
-            future: self.inner
+            future: self
+                .inner
                 .call(http::Request::from_parts(parts, ::RequestBody(Some(body)))),
         }
     }
@@ -110,8 +109,8 @@ where
     T: Resource,
     U: Catch,
     M: HttpMiddleware<RoutedService<T, U>, RequestBody = ::RequestBody>,
-    M::Error: StdError + Send + Sync + 'static,
-    <M::ResponseBody as BufStream>::Error: StdError + Send + Sync + 'static,
+    M::Error: Fail,
+    <M::ResponseBody as BufStream>::Error: Fail,
 {
     type Item = http::Response<Body>;
     type Error = Error;

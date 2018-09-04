@@ -9,8 +9,9 @@ extern crate tower_service;
 extern crate tower_web;
 extern crate void;
 
-use std::error::Error as StdError;
 use std::io;
+
+use failure::Fail;
 
 use aws_lambda_gateway::NewApiGatewayProxy;
 use aws_lambda_runtime::Runtime;
@@ -40,11 +41,11 @@ where
     M: HttpMiddleware<RoutedService<T::Resource, C::Catch>, RequestBody = ::RequestBody>
         + Send
         + 'static,
-    M::Error: StdError + Send + Sync + 'static,
+    M::Error: Fail,
     M::ResponseBody: Send,
     M::Service: Send,
     <M::Service as HttpService>::Future: Send,
-    <M::ResponseBody as BufStream>::Error: StdError + Send + Sync + 'static,
+    <M::ResponseBody as BufStream>::Error: Fail,
 {
     fn run_lambda(self) -> Result<(), io::Error> {
         let new_service = NewServiceWrapper {

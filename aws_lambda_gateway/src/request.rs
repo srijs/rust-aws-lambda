@@ -51,7 +51,7 @@ impl<'a> ApiGatewayProxyRequestDef<'a> {
         if let Some(raw_body) = self.body {
             if self.is_base64_encoded.unwrap_or(false) {
                 body = Body::from(
-                    base64::decode(raw_body.as_ref().as_bytes()).map_err(|err| E::custom(err))?
+                    base64::decode(raw_body.as_ref().as_bytes()).map_err(|err| E::custom(err))?,
                 );
             } else {
                 body = Body::from(raw_body.into_owned());

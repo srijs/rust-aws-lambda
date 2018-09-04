@@ -240,7 +240,8 @@ mod tests {
         }
 
         {
-            let body = de.deserialize::<messages::InvokeResponse>()
+            let body = de
+                .deserialize::<messages::InvokeResponse>()
                 .unwrap()
                 .unwrap();
 
