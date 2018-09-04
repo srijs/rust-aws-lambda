@@ -8,7 +8,7 @@ use serde::de::DeserializeOwned;
 use serde::Serialize;
 use tokio_core::reactor::Handle;
 use tokio_io::{io::ReadHalf, io::WriteHalf, AsyncRead, AsyncWrite};
-use tokio_service::{NewService, Service};
+use tower_service::{NewService, Service};
 use void::Void;
 
 use super::context::Context;
@@ -23,11 +23,12 @@ pub struct Server<S, I> {
 
 impl<S, I, Io> Server<S, I>
 where
-    S: NewService<Error = Error>,
-    S::Instance: 'static,
+    S: NewService<Error = Error, InitError = Error> + 'static,
+    S::Future: 'static,
+    S::Service: 'static,
     S::Request: DeserializeOwned + Send + 'static,
     S::Response: Serialize + Send + 'static,
-    I: Stream<Item = (Io, SocketAddr), Error = io::Error>,
+    I: Stream<Item = (Io, SocketAddr), Error = io::Error> + 'static,
     Io: AsyncRead + AsyncWrite + Send + 'static,
 {
     pub fn new(new_service: S, incoming: I, handle: Handle) -> Server<S, I> {
@@ -38,17 +39,29 @@ where
         }
     }
 
-    fn spawn(&mut self, stream: Io) -> Result<(), RuntimeError> {
-        let service = self.new_service
+    fn spawn_service(&mut self) -> impl Future<Item = S::Service, Error = ()> {
+        self.new_service
             .new_service()
-            .map_err(RuntimeError::from_io)?;
-        let connection = Connection::spawn(service, stream);
-        self.handle.spawn(connection.then(|res| {
-            if let Err(err) = res {
-                error!("connection error: {}", err);
-            }
-            Ok(())
-        }));
+            .then(|service_result| match service_result {
+                Ok(service) => Ok(service),
+                Err(err) => {
+                    error!("service error: {}", err);
+                    Err(())
+                }
+            })
+    }
+
+    fn spawn(&mut self, stream: Io) -> Result<(), RuntimeError> {
+        let connection = self.spawn_service().and_then(|service| {
+            let connection = Connection::spawn(service, stream);
+            connection.then(|res| {
+                if let Err(err) = res {
+                    error!("connection error: {}", err);
+                }
+                Ok(())
+            })
+        });
+        self.handle.spawn(connection);
 
         Ok(())
     }
@@ -56,11 +69,12 @@ where
 
 impl<S, I, Io> Future for Server<S, I>
 where
-    S: NewService<Error = Error>,
-    S::Instance: 'static,
+    S: NewService<InitError = Error, Error = Error> + 'static,
+    S::Service: 'static,
+    S::Future: 'static,
     S::Request: DeserializeOwned + Send + 'static,
     S::Response: Serialize + Send + 'static,
-    I: Stream<Item = (Io, SocketAddr), Error = io::Error>,
+    I: Stream<Item = (Io, SocketAddr), Error = io::Error> + 'static,
     Io: AsyncRead + AsyncWrite + Send + 'static,
 {
     type Item = ();

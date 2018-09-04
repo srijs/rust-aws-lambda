@@ -2,6 +2,7 @@ use failure::Error;
 use futures::IntoFuture;
 
 use aws_lambda_gateway::NewApiGatewayProxy;
+use aws_lambda_runtime::Handler;
 
 pub use aws_lambda_gateway::{http, Body};
 
@@ -37,8 +38,9 @@ where
     S: IntoFuture<Item = Response, Error = Error>,
     S::Future: 'static,
 {
+    let service = NewApiGatewayProxy::new(Handler::from(f));
     ::Runtime::new()
-        .and_then(|runtime| runtime.start_service(NewApiGatewayProxy::new_with_handler(f)))
+        .and_then(|runtime| runtime.start_service(service))
         .unwrap_or_else(|err| panic!("failed to start runtime: {}", err))
 }
 

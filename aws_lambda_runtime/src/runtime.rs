@@ -1,8 +1,5 @@
 use std::env;
-use std::io;
-use std::marker::PhantomData;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
-use std::rc::Rc;
 
 use failure::Error;
 use futures::IntoFuture;
@@ -11,9 +8,10 @@ use serde::Serialize;
 use tokio_core::net::TcpListener;
 use tokio_core::reactor::{Core, Handle as OldHandle};
 use tokio_reactor::Handle;
-use tokio_service::{NewService, Service};
+use tower_service::NewService;
 
 use super::error::RuntimeError;
+use super::handler::Handler;
 use super::server::Server;
 
 /// Runtime environment.
@@ -50,17 +48,15 @@ impl Runtime {
         S::Item: Serialize + Send + 'static,
         R: DeserializeOwned + Send + 'static,
     {
-        self.start_service(ServiceFn {
-            f: Rc::new(f),
-            _phan: PhantomData,
-        })
+        self.start_service(Handler::from(f))
     }
 
     /// Start the runtime with the given `Service`.
     pub fn start_service<S>(mut self, s: S) -> Result<(), RuntimeError>
     where
-        S: NewService<Error = Error>,
-        S::Instance: 'static,
+        S: NewService<InitError = Error, Error = Error> + 'static,
+        S::Service: 'static,
+        S::Future: 'static,
         S::Request: DeserializeOwned + Send + 'static,
         S::Response: Serialize + Send + 'static,
     {
@@ -79,43 +75,5 @@ fn server_port() -> Result<u16, RuntimeError> {
     match env::var("_LAMBDA_SERVER_PORT") {
         Ok(var) => var.parse().map_err(|_| RuntimeError::environment(reason)),
         Err(_) => Err(RuntimeError::environment(reason)),
-    }
-}
-
-struct ServiceFn<F, R> {
-    f: Rc<F>,
-    _phan: PhantomData<fn() -> R>,
-}
-
-impl<F, R, S> Service for ServiceFn<F, R>
-where
-    F: Fn(R) -> S,
-    S: IntoFuture,
-{
-    type Request = R;
-    type Response = S::Item;
-    type Error = S::Error;
-    type Future = S::Future;
-
-    fn call(&self, req: Self::Request) -> Self::Future {
-        (self.f)(req).into_future()
-    }
-}
-
-impl<F, R, S> NewService for ServiceFn<F, R>
-where
-    F: Fn(R) -> S,
-    S: IntoFuture,
-{
-    type Request = R;
-    type Response = S::Item;
-    type Error = S::Error;
-    type Instance = Self;
-
-    fn new_service(&self) -> Result<Self, io::Error> {
-        Ok(ServiceFn {
-            f: self.f.clone(),
-            _phan: PhantomData,
-        })
     }
 }

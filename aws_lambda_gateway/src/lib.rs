@@ -7,15 +7,12 @@ extern crate serde;
 #[macro_use]
 extern crate serde_derive;
 extern crate serde_json;
-extern crate tokio_service;
-
-use std::io;
-use std::sync::Arc;
+extern crate tower_service;
 
 use failure::Error;
-use futures::{Async, Future, IntoFuture, Poll};
+use futures::{Async, Future, Poll};
 use http::{Request, Response};
-use tokio_service::{NewService, Service};
+use tower_service::{NewService, Service};
 
 mod body;
 pub use body::Body;
@@ -24,75 +21,79 @@ pub use request::ApiGatewayProxyRequest;
 mod response;
 pub use response::ApiGatewayProxyResponse;
 
-#[derive(Clone)]
-struct Handler {
-    inner: Arc<Fn(Request<Body>) -> Box<Future<Item = Response<Body>, Error = Error>>>,
+pub struct NewApiGatewayProxy<S> {
+    new_service: S,
 }
 
-impl Handler {
-    fn new<F, R>(f: F) -> Handler
-    where
-        F: Fn(Request<Body>) -> R + 'static,
-        R: IntoFuture<Item = Response<Body>, Error = Error>,
-        R::Future: Sized + 'static,
-    {
-        Handler {
-            inner: Arc::new(move |req| Box::new(f(req).into_future())),
-        }
+impl<S> NewApiGatewayProxy<S>
+where
+    S: NewService<Error = Error, Request = Request<Body>, Response = Response<Body>>,
+{
+    pub fn new(new_service: S) -> NewApiGatewayProxy<S> {
+        NewApiGatewayProxy { new_service }
     }
 }
 
-pub struct NewApiGatewayProxy {
-    handler: Handler,
-}
+impl<S> NewService for NewApiGatewayProxy<S>
+where
+    S: NewService<Error = Error, Request = Request<Body>, Response = Response<Body>>,
+{
+    type Future = NewApiGatewayProxyFuture<S>;
+    type InitError = S::InitError;
 
-impl NewApiGatewayProxy {
-    pub fn new_with_handler<F, R>(f: F) -> NewApiGatewayProxy
-    where
-        F: Fn(Request<Body>) -> R + 'static,
-        R: IntoFuture<Item = Response<Body>, Error = Error>,
-        R::Future: Sized + 'static,
-    {
-        NewApiGatewayProxy {
-            handler: Handler::new(f),
-        }
+    type Service = ApiGatewayProxy<S::Service>;
+    type Request = ApiGatewayProxyRequest;
+    type Response = ApiGatewayProxyResponse;
+    type Error = Error;
+
+    fn new_service(&self) -> Self::Future {
+        NewApiGatewayProxyFuture(self.new_service.new_service())
     }
 }
 
-impl NewService for NewApiGatewayProxy where {
+pub struct ApiGatewayProxy<S> {
+    service: S,
+}
+
+impl<S> Service for ApiGatewayProxy<S>
+where
+    S: Service<Error = Error, Request = Request<Body>, Response = Response<Body>>,
+{
     type Error = Error;
     type Request = ApiGatewayProxyRequest;
     type Response = ApiGatewayProxyResponse;
-    type Instance = ApiGatewayProxy;
+    type Future = ApiGatewayProxyFuture<S>;
 
-    fn new_service(&self) -> io::Result<Self::Instance> {
-        Ok(ApiGatewayProxy {
-            handler: self.handler.clone(),
-        })
+    fn poll_ready(&mut self) -> Poll<(), Self::Error> {
+        self.service.poll_ready()
     }
-}
 
-pub struct ApiGatewayProxy {
-    handler: Handler,
-}
-
-impl Service for ApiGatewayProxy {
-    type Error = Error;
-    type Request = ApiGatewayProxyRequest;
-    type Response = ApiGatewayProxyResponse;
-    type Future = ApiGatewayProxyFuture;
-
-    fn call(&self, req: Self::Request) -> Self::Future {
-        let inner = (self.handler.inner)(req.0);
+    fn call(&mut self, req: Self::Request) -> Self::Future {
+        let inner = self.service.call(req.0);
         ApiGatewayProxyFuture { inner }
     }
 }
 
-pub struct ApiGatewayProxyFuture {
-    inner: Box<Future<Item = Response<Body>, Error = Error>>,
+pub struct NewApiGatewayProxyFuture<S: NewService>(S::Future);
+
+impl<S: NewService> Future for NewApiGatewayProxyFuture<S> {
+    type Item = ApiGatewayProxy<S::Service>;
+    type Error = S::InitError;
+
+    fn poll(&mut self) -> Poll<Self::Item, Self::Error> {
+        let service = try_ready!(self.0.poll());
+        Ok(Async::Ready(ApiGatewayProxy { service }))
+    }
 }
 
-impl Future for ApiGatewayProxyFuture {
+pub struct ApiGatewayProxyFuture<S: Service> {
+    inner: S::Future,
+}
+
+impl<S> Future for ApiGatewayProxyFuture<S>
+where
+    S: Service<Error = Error, Request = Request<Body>, Response = Response<Body>>,
+{
     type Item = ApiGatewayProxyResponse;
     type Error = Error;
 

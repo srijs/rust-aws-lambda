@@ -40,10 +40,11 @@ extern crate serde_schema_derive;
 extern crate tokio_core;
 extern crate tokio_io;
 extern crate tokio_reactor;
-extern crate tokio_service;
+extern crate tower_service;
 extern crate void;
 
 mod error;
+mod handler;
 mod proto;
 mod runtime;
 mod server;
@@ -53,4 +54,5 @@ pub mod env;
 
 pub use context::Context;
 pub use error::RuntimeError;
+pub use handler::Handler;
 pub use runtime::Runtime;
