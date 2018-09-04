@@ -10,6 +10,7 @@ extern crate tower_web;
 extern crate void;
 
 use std::error::Error as StdError;
+use std::io;
 
 use aws_lambda_gateway::NewApiGatewayProxy;
 use aws_lambda_runtime::Runtime;
@@ -27,7 +28,7 @@ mod service;
 use service::NewServiceWrapper;
 
 pub trait ServiceBuilderExt {
-    fn run_lambda(self);
+    fn run_lambda(self) -> Result<(), io::Error>;
 }
 
 impl<T, C, M> ServiceBuilderExt for ServiceBuilder<T, C, M>
@@ -40,13 +41,13 @@ where
     M::Error: StdError + Send + Sync + 'static,
     <M::ResponseBody as BufStream>::Error: StdError + Send + Sync + 'static,
 {
-    fn run_lambda(self) {
+    fn run_lambda(self) -> Result<(), io::Error> {
         let new_service = NewServiceWrapper {
             inner: self.build_new_service(),
         };
         let new_proxy = NewApiGatewayProxy::new(new_service);
         Runtime::new()
             .and_then(|runtime| runtime.start_service(new_proxy))
-            .unwrap_or_else(|err| panic!("failed to start runtime: {}", err))
+            .map_err(|err| io::Error::new(io::ErrorKind::Other, err))
     }
 }

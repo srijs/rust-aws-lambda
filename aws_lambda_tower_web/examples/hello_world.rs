@@ -42,5 +42,6 @@ pub fn main() {
         .resource(HelloWorld {
             motd: "tower-web is amazing!!!".to_string(),
         })
-        .run_lambda();
+        .run_lambda()
+        .unwrap();
 }
