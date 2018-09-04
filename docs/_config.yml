@@ -1,0 +1,7 @@
+title: Rust on AWS Lambda
+header_pages:
+  - index.md
+  - getting-started.md
+
+markdown: kramdown
+theme: minima
