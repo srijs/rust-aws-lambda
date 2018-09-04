@@ -35,6 +35,12 @@ impl Body {
     }
 }
 
+impl AsRef<[u8]> for Body {
+    fn as_ref(&self) -> &[u8] {
+        self.as_bytes()
+    }
+}
+
 impl Default for Body {
     fn default() -> Body {
         Body(Inner::Empty)

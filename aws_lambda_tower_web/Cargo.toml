@@ -1,0 +1,15 @@
+[package]
+name = "aws_lambda_tower_web"
+version = "0.1.0"
+authors = ["Sam Rijs <srijs@airpost.net>"]
+
+[dependencies]
+aws_lambda_gateway = { path = "../aws_lambda_gateway" }
+aws_lambda_runtime = { path = "../aws_lambda_runtime" }
+bytes = "0.4.9"
+failure = "0.1.1"
+futures = "0.1.21"
+http = "0.1.5"
+tower-service = "0.1.0"
+tower-web = "0.2.1"
+void = "1.0.2"
