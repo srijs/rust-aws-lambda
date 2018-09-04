@@ -37,9 +37,7 @@ extern crate serde_json;
 extern crate serde_schema;
 #[macro_use]
 extern crate serde_schema_derive;
-extern crate tokio_core;
-extern crate tokio_io;
-extern crate tokio_reactor;
+extern crate tokio;
 extern crate tower_service;
 extern crate void;
 

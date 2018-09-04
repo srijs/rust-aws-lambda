@@ -1,13 +1,11 @@
 use std::io;
-use std::net::SocketAddr;
 
 use failure::Error;
 use futures::stream::FuturesUnordered;
 use futures::{Async, Future, Poll, Sink, Stream};
 use serde::de::DeserializeOwned;
 use serde::Serialize;
-use tokio_core::reactor::Handle;
-use tokio_io::{io::ReadHalf, io::WriteHalf, AsyncRead, AsyncWrite};
+use tokio::io::{AsyncRead, AsyncWrite, ReadHalf, WriteHalf};
 use tower_service::{NewService, Service};
 use void::Void;
 
@@ -18,24 +16,23 @@ use super::proto;
 pub struct Server<S, I> {
     new_service: S,
     incoming: I,
-    handle: Handle,
 }
 
 impl<S, I, Io> Server<S, I>
 where
     S: NewService<Error = Error, InitError = Error> + 'static,
-    S::Future: 'static,
-    S::Service: 'static,
+    S::Future: Send + 'static,
+    S::Service: Send + 'static,
+    <S::Service as Service>::Future: Send,
     S::Request: DeserializeOwned + Send + 'static,
     S::Response: Serialize + Send + 'static,
-    I: Stream<Item = (Io, SocketAddr), Error = io::Error> + 'static,
+    I: Stream<Item = Io, Error = io::Error> + 'static,
     Io: AsyncRead + AsyncWrite + Send + 'static,
 {
-    pub fn new(new_service: S, incoming: I, handle: Handle) -> Server<S, I> {
+    pub fn new(new_service: S, incoming: I) -> Server<S, I> {
         Server {
             new_service,
             incoming,
-            handle,
         }
     }
 
@@ -61,7 +58,7 @@ where
                 Ok(())
             })
         });
-        self.handle.spawn(connection);
+        ::tokio::spawn(connection);
 
         Ok(())
     }
@@ -70,11 +67,12 @@ where
 impl<S, I, Io> Future for Server<S, I>
 where
     S: NewService<InitError = Error, Error = Error> + 'static,
-    S::Service: 'static,
-    S::Future: 'static,
+    S::Service: Send + 'static,
+    <S::Service as Service>::Future: Send,
+    S::Future: Send + 'static,
     S::Request: DeserializeOwned + Send + 'static,
     S::Response: Serialize + Send + 'static,
-    I: Stream<Item = (Io, SocketAddr), Error = io::Error> + 'static,
+    I: Stream<Item = Io, Error = io::Error> + 'static,
     Io: AsyncRead + AsyncWrite + Send + 'static,
 {
     type Item = ();
@@ -82,9 +80,7 @@ where
 
     fn poll(&mut self) -> Poll<(), RuntimeError> {
         loop {
-            if let Some((stream, _)) =
-                try_ready!(self.incoming.poll().map_err(RuntimeError::from_io))
-            {
+            if let Some(stream) = try_ready!(self.incoming.poll().map_err(RuntimeError::from_io)) {
                 self.spawn(stream)?;
             } else {
                 return Ok(Async::Ready(()));

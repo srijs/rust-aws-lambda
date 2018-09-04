@@ -22,9 +22,7 @@ serde_derive = "1.0.42"
 serde_json = "1.0.18"
 serde_schema = { git = "https://github.com/srijs/rust-serde-schema", features = ["bytes"] }
 serde_schema_derive = { git = "https://github.com/srijs/rust-serde-schema" }
-tokio-core = "0.1.17"
-tokio-io = "0.1.6"
-tokio-reactor = "0.1.1"
+tokio = "0.1.8"
 tower-service = "0.1.0"
 void = "1.0.2"
 

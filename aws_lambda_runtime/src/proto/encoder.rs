@@ -9,7 +9,7 @@ use gob::{ser::OutputBuffer, ser::TypeId, StreamSerializer};
 use serde::Serialize;
 use serde_bytes::Bytes;
 use serde_schema::SchemaSerialize;
-use tokio_io::AsyncWrite;
+use tokio::io::AsyncWrite;
 
 use super::super::error::ConnectionError;
 use super::messages;

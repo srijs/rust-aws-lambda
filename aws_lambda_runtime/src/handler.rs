@@ -1,5 +1,5 @@
 use std::marker::PhantomData;
-use std::rc::Rc;
+use std::sync::Arc;
 
 use failure::Error;
 use futures::{future::FutureResult, Async, IntoFuture, Poll};
@@ -8,7 +8,7 @@ use tower_service::{NewService, Service};
 /// Wrapper to convert a `Fn` into a `NewService`.
 #[derive(Debug)]
 pub struct Handler<F, R> {
-    f: Rc<F>,
+    f: Arc<F>,
     _phan: PhantomData<fn() -> R>,
 }
 
@@ -19,7 +19,7 @@ where
 {
     fn from(f: F) -> Self {
         Handler {
-            f: Rc::new(f),
+            f: Arc::new(f),
             _phan: PhantomData,
         }
     }
@@ -47,7 +47,7 @@ where
 
 #[derive(Debug)]
 pub struct HandlerService<F, R> {
-    f: Rc<F>,
+    f: Arc<F>,
     _phan: PhantomData<fn() -> R>,
 }
 

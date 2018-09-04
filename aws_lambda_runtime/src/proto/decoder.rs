@@ -5,7 +5,7 @@ use failure::Error;
 use futures::{Async, Poll, Stream};
 use gob::StreamDeserializer;
 use serde::de::DeserializeOwned;
-use tokio_io::AsyncRead;
+use tokio::io::AsyncRead;
 
 use super::super::error::ConnectionError;
 use super::messages;

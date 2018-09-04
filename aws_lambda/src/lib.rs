@@ -45,8 +45,9 @@ pub mod logger;
 /// instead.
 pub fn start<F, R, S>(f: F)
 where
-    F: Fn(R) -> S + 'static,
-    S: IntoFuture<Error = Error>,
+    F: Fn(R) -> S + Send + Sync + 'static,
+    S: IntoFuture<Error = Error> + Send,
+    S::Future: Send,
     S::Item: Serialize + Send + 'static,
     R: DeserializeOwned + Send + 'static,
 {

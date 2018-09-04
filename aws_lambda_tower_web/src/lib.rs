@@ -18,7 +18,7 @@ use aws_lambda_runtime::Runtime;
 use tower_web::error::IntoCatch;
 use tower_web::response::DefaultSerializer;
 use tower_web::routing::{IntoResource, RoutedService};
-use tower_web::util::http::HttpMiddleware;
+use tower_web::util::http::{HttpMiddleware, HttpService};
 use tower_web::util::BufStream;
 use tower_web::ServiceBuilder;
 
@@ -34,11 +34,16 @@ pub trait ServiceBuilderExt {
 impl<T, C, M> ServiceBuilderExt for ServiceBuilder<T, C, M>
 where
     T: IntoResource<DefaultSerializer, RequestBody>,
-    T::Resource: 'static,
+    T::Resource: Send + 'static,
     C: IntoCatch<DefaultSerializer>,
-    C::Catch: 'static,
-    M: HttpMiddleware<RoutedService<T::Resource, C::Catch>, RequestBody = ::RequestBody> + 'static,
+    C::Catch: Send + 'static,
+    M: HttpMiddleware<RoutedService<T::Resource, C::Catch>, RequestBody = ::RequestBody>
+        + Send
+        + 'static,
     M::Error: StdError + Send + Sync + 'static,
+    M::ResponseBody: Send,
+    M::Service: Send,
+    <M::Service as HttpService>::Future: Send,
     <M::ResponseBody as BufStream>::Error: StdError + Send + Sync + 'static,
 {
     fn run_lambda(self) -> Result<(), io::Error> {

@@ -34,9 +34,9 @@ pub type Response = http::Response<Body>;
 /// This function will panic if it fails to create the runtime.
 pub fn start<F, S>(f: F)
 where
-    F: Fn(Request) -> S + 'static,
+    F: Fn(Request) -> S + Send + Sync + 'static,
     S: IntoFuture<Item = Response, Error = Error>,
-    S::Future: 'static,
+    S::Future: Send + 'static,
 {
     let service = NewApiGatewayProxy::new(Handler::from(f));
     ::Runtime::new()
