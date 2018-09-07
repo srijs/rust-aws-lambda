@@ -7,6 +7,7 @@ use std::path::PathBuf;
 use std::process::{Command, ExitStatus, Stdio};
 use tempfile::tempdir;
 use users::User;
+use duct::cmd;
 
 #[derive(Debug, Fail)]
 enum DockerError {
@@ -37,7 +38,7 @@ enum DockerError {
 #[derive(Template)]
 #[template(path = "Dockerfile.dynamic")]
 pub struct DockerDynamicTemplate<'a> {
-    pub rust_version: &'a Version,
+    pub rust_version: &'a String,
 }
 
 pub struct DockerRunner {
@@ -54,17 +55,14 @@ impl DockerRunner {
     }
     pub fn validate(&mut self) -> Result<(), Error> {
         trace!("Validating docker install");
-        let status = Command::new("docker")
-            .args(vec!["--version"])
-            .stdout(Stdio::null())
-            .stderr(Stdio::null())
-            .status()
+        let output = cmd("docker", vec!["--version"])
+            .run()
             .map_err(|e| DockerError::BinaryNotFound { error: e })?;
         self.checked = true;
-        if status.success() {
+        if output.status.success() {
             Ok(())
         } else {
-            Err(DockerError::VersionCommandFailed { status })?
+            Err(DockerError::VersionCommandFailed { status: output.status })?
         }
     }
 
@@ -88,14 +86,11 @@ impl DockerRunner {
             .map_err(|e| DockerError::DockerfileWriteFailed { error: e })?;
 
         // Create or update the docker image.
-        let mut child = Command::new("docker")
-            .args(vec!["build",
+        let child = cmd("docker", vec!["build",
             "-t", image_name,
             "-f", &file_path.to_string_lossy(),
             &dir.path().to_string_lossy()])
-            //.stdout(Stdio::null())
-            //.stderr(Stdio::null())
-            .spawn()
+            .start()
             .map_err(|e| DockerError::ImageBuildCommandFailed { error: e })?;
 
         child
@@ -106,7 +101,7 @@ impl DockerRunner {
         Ok(String::from(image_name))
     }
 
-    /// Make or update the docker image. This is idempotent.
+    /// Run a command in docker.
     pub fn run(
         &mut self,
         bash_command: &str,
@@ -119,21 +114,28 @@ impl DockerRunner {
             self.validate()?;
         }
 
-        let location_in_docker = "/code";
+        let location_in_docker = PathBuf::from("/code");
+        let mut cache_location = source_location.clone();
+        cache_location.push("./target/cached_data");
 
-        let mut child = Command::new("docker").arg("run").arg("--rm")
-        .args(vec![
-            "-v", &format!("{}:/{}", source_location.to_string_lossy(), location_in_docker),
-            "-w", location_in_docker,
+        let child = cmd("docker", vec!["run",
+            // This makes the docker container stop after running.
+            "--rm",
+            // Speeds up builds by storing the cargo registry on the host.
+            "-v", &format!("{}:/usr/local/cargo/registry", cache_location.to_string_lossy()),
+            // Maps the source code into docker container.
+            "-v", &format!("{}:/{}", source_location.to_string_lossy(), location_in_docker.to_string_lossy()),
+            // Sets the working directory to where the code is in the container.
+            "-w", &location_in_docker.to_string_lossy(),
+            // Sets the proper user/group instead of the docker user/group.
             "-u", &format!("{}:{}", user.uid(), user.primary_group_id()),
+            // The docker image to use for the container.
             &docker_image,
+            // The (usually cargo) command to run.
             "bash", "-c", bash_command,
         ])
-        //.stdout(Stdio::null())
-        //.stderr(Stdio::null())
-        .stderr(Stdio::piped())
-        .spawn()
-        .map_err(|e| DockerError::RunCommandFailed { error: e })?;
+          .start()
+          .map_err(|e| DockerError::ImageBuildCommandFailed { error: e })?;
 
         child
             .wait()
