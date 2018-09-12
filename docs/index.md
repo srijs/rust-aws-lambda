@@ -5,7 +5,7 @@ layout: default
 
 # About
 
-The Rust on AWS Lambda project consists of multiple crates that make it possible to run programs written in Rust directly as functions in AWS Lambda, while keeping a low footprint with regards to memory consumption, bundle size, and start-up speed.
+The [Rust on AWS Lambda](https://github.com/srijs/rust-aws-lambda) project consists of multiple crates that make it possible to run programs written in Rust directly as functions in AWS Lambda, while keeping a low footprint with regards to memory consumption, bundle size, and start-up speed.
 
 ## Comparison to other projects
 
