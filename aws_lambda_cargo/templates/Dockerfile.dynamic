@@ -3,7 +3,7 @@ FROM lambci/lambda-base:build
 ENV RUSTUP_HOME=/usr/local/rustup \
     CARGO_HOME=/usr/local/cargo \
     PATH=/usr/local/cargo/bin:$PATH \
-    RUST_VERSION={{ rust_version }}
+    RUST_VERSION={{ rustup_version }}
 
 RUN curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain $RUST_VERSION --no-modify-path -y && \
     chmod -R a+w $RUSTUP_HOME $CARGO_HOME; \
