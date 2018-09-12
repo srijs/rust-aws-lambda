@@ -103,6 +103,7 @@ are available as crate features so you can choose the behavior and API that work
   - **Cons:** _Not idiomatic Rust. You manually have to check for `""` if you want to know the difference between a real value or an empty value._
 
   Change your `Cargo.toml` dependency to:
+
   ```toml
   aws_lambda = { git = "https://github.com/srijs/rust-aws-lambda", features = ["string-null-empty"] }
   ```
@@ -147,9 +148,11 @@ fn main() {
 
 ## Deploy
 
-*Note: These instructions will produce a static musl binary of your rust code. If you are looking for non-musl binaries, you might try [docker-lambda](https://github.com/lambci/docker-lambda).*
+_Note: These instructions will produce a static musl binary of your rust code. If you are looking for non-musl binaries, you might try [docker-lambda](https://github.com/lambci/docker-lambda)._
 
-To deploy on AWS lambda, you will need a zip file of your binary built against amazonlinux. A Dockerfile is provided as an example and will work for single project binaries that need OpenSSL. The Dockerfile is based off of [rust-musl-builder](https://github.com/emk/rust-musl-builder).
+To deploy on AWS lambda, you will need a zip file of your binary. If you are running Linux, this may be as simple as running `cargo --target x86_64-unknown-linux-musl` if your dependencies do not require OpenSSL. If you are on non-Linux platforms, the binary needs to built against amazonlinux.
+
+A Dockerfile is provided as an example and will work for single project binaries that need OpenSSL. The Dockerfile is based off of [rust-musl-builder](https://github.com/emk/rust-musl-builder).
 
     docker pull amazonlinux
     docker build --force-rm -t aws-lambda:latest --build-arg SRC=example -f docker/dockerfile .
@@ -159,12 +162,14 @@ Build your lambda function and upload your zip file. Change the lambda runtime t
 
 #### SSL considerations
 
-If your binary requires SSL (e.g. [`rusoto`](https://github.com/rusoto/rusoto)), add the following environment variables:
+If your binary requires SSL, add the following environment variables:
 
     SSL_CERT_DIR=/etc/ssl/certs
     SSL_CERT_FILE=/etc/ssl/certs/ca-bundle.crt
 
-If you are still running into SSL issues, you may need to modify your application per https://github.com/emk/rust-musl-builder#making-openssl-work.
+If you are still running into SSL issues using the Docker image or are building directly on Linux, you may need to modify your application per https://github.com/emk/rust-musl-builder#making-openssl-work.
+
+When using [`rusoto`](https://github.com/rusoto/rusoto) it is highly suggested to use the crate's [`rustls` feature](https://github.com/rusoto/rusoto/blob/master/rusoto/core/README.md#usage-with-rustls) instead of building OpenSSL.
 
 #### `error_chain`
 
@@ -173,7 +178,6 @@ In general we suggest you use the [`failure`](https://github.com/rust-lang-nurse
     [dependencies.error-chain]
     version = "~0.12"
     default-features = false
-
 
 ## Troubleshooting
 
