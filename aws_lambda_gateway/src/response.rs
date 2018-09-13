@@ -7,6 +7,12 @@ use body::{self, Body};
 #[derive(Debug)]
 pub struct ApiGatewayProxyResponse(pub(crate) http::Response<Body>);
 
+impl Default for ApiGatewayProxyResponse {
+    fn default() -> Self {
+        ApiGatewayProxyResponse(http::Response::default())
+    }
+}
+
 impl Serialize for ApiGatewayProxyResponse {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -103,5 +109,14 @@ fn serialize_with_utf8_body() {
     assert_eq!(
         json,
         "{\"statusCode\":200,\"headers\":{},\"body\":\"Hello World!\",\"isBase64Encoded\":false}"
+    );
+}
+
+#[test]
+fn serialize_default() {
+    let json = ::serde_json::to_string(&ApiGatewayProxyResponse::default()).unwrap();
+    assert_eq!(
+        json,
+        "{\"statusCode\":200,\"headers\":{},\"body\":null,\"isBase64Encoded\":false}"
     );
 }
