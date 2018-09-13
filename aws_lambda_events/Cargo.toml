@@ -1,10 +1,14 @@
 [package]
 name = "aws_lambda_events"
 version = "0.1.0"
+description = "AWS Lambda event definitions"
 authors = [
   "Christian Legnitto <christian@legnitto.com>",
   "Sam Rijs <srijs@airpost.net>"
 ]
+license = "MIT"
+homepage = "https://github.com/srijs/rust-aws-lambda/tree/master/aws_lambda_events"
+repository = "https://github.com/srijs/rust-aws-lambda"
 
 [features]
 default = ["string-null-none"]
