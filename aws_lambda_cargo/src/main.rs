@@ -35,6 +35,8 @@ use users::{get_current_uid, get_user_by_uid};
 enum ProgramError {
     #[fail(display = "unable to get the current user and group")]
     GetCurrentUserFailed,
+    #[fail(display = "the manifest-path must be a path to a Cargo.toml file")]
+    ManifestPathNotFound,
 }
 
 arg_enum! {
@@ -97,8 +99,22 @@ fn version_from_rustc() -> Result<RustupVersion, Error> {
     }))
 }
 
+/// TODO: This only checks direct deps.
+fn openssl_in_dependencies(p: Option<PathBuf>) -> Result<bool, Error> {
+    let metadata = cargo_metadata::metadata(p).map_err(|_| ProgramError::ManifestPathNotFound)?;
+    debug!("Metadata:\n{:#?}", metadata);
+    Ok(metadata
+        .packages
+        .iter()
+        .flat_map(|x| x.dependencies.clone())
+        .any(|x| x.name == "openssl" || x.name == "openssl-sys" || x.name.contains("openssl")))
+}
+
 fn inner_main(args: Cli) -> Result<(), Error> {
     debug!("Arguments:\n{:#?}", args);
+
+    let needs_openssl = openssl_in_dependencies(args.manifest_path.clone())?;
+    debug!("Needs OpenSSL: {}", needs_openssl);
 
     // Process the dockerfile template.
     let v = args.rustup_version.unwrap_or(version_from_rustc()?);
@@ -122,7 +138,7 @@ fn inner_main(args: Cli) -> Result<(), Error> {
             Link::Dynamic => "rust-amazonlinux-lambda-dynamic",
         }).to_string(),
     );
-
+    /*
     let mut runner = DockerRunner::new(&dockerfile, &image_name);
     runner.validate()?;
     let docker_image = runner.prepare_image()?;
@@ -134,7 +150,7 @@ fn inner_main(args: Cli) -> Result<(), Error> {
             .unwrap_or(env::current_dir().expect("working directory")),
         &user,
     )?;
-
+*/
     Ok(())
 }
 
