@@ -52,6 +52,36 @@ pub struct KinesisFirehoseEventRecord {
     pub data: Base64Data,
 }
 
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
+pub struct KinesisFirehoseResponse {
+    pub records: Vec<KinesisFirehoseResponseRecord>,
+}
+
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
+pub struct KinesisFirehoseResponseRecord {
+    #[cfg(not(feature = "string-null-empty"))]
+    #[serde(deserialize_with = "deserialize_lambda_string")]
+    #[serde(default)]
+    #[serde(rename = "recordId")]
+    pub record_id: Option<String>,
+    #[cfg(feature = "string-null-empty")]
+    #[serde(deserialize_with = "deserialize_lambda_string")]
+    #[serde(default)]
+    #[serde(rename = "recordId")]
+    pub record_id: String,
+    /// The status of the transformation. May be TransformedStateOk, TransformedStateDropped or TransformedStateProcessingFailed
+    #[cfg(not(feature = "string-null-empty"))]
+    #[serde(deserialize_with = "deserialize_lambda_string")]
+    #[serde(default)]
+    pub result: Option<String>,
+    /// The status of the transformation. May be TransformedStateOk, TransformedStateDropped or TransformedStateProcessingFailed
+    #[cfg(feature = "string-null-empty")]
+    #[serde(deserialize_with = "deserialize_lambda_string")]
+    #[serde(default)]
+    pub result: String,
+    pub data: Base64Data,
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
