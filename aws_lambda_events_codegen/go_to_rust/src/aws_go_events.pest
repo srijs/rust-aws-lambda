@@ -43,7 +43,7 @@ json_meta = _{ json_name ~ omit_empty? }
 json_mapping = { "`json:\"" ~ json_meta ~ "\"`" ~ whitespace* ~ any_comment?  }
 
 struct_field_type = { interface | primitive | array | map | package_ident | ident }
-struct_field = ${ doc_comment? ~ whitespace* ~ ident ~ whitespace+ ~ pointer? ~ struct_field_type ~ whitespace* ~ json_mapping? }
+struct_field = ${ (whitespace* ~ doc_comment)* ~ whitespace* ~ ident ~ whitespace+ ~ pointer? ~ struct_field_type ~ whitespace* ~ json_mapping? }
 
 struct_fields = { struct_field ~ (newline+ ~ struct_field)* }
 

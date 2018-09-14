@@ -13,7 +13,6 @@ extern crate heck;
 extern crate regex;
 #[macro_use]
 extern crate lazy_static;
-// extern crate rustfmt_nightly;
 
 use codegen::{Field, Scope, Struct};
 use failure::Error;
@@ -151,7 +150,7 @@ pub fn parse_go_string(go_source: String) -> Result<(GoCode, RustCode), Error> {
 struct FieldDef {
     name: String,
     json_name: Option<String>,
-    comment: Option<String>,
+    comments: Vec<String>,
     omit_empty: bool,
     go_type: GoType,
 }
@@ -338,8 +337,8 @@ fn parse_struct(pairs: Pairs<Rule>) -> Result<(codegen::Struct, HashSet<String>)
             // Fields are public.
             field.vis("pub");
 
-            if let Some(c) = f.comment.clone() {
-                field.doc(&c);
+            if !f.comments.is_empty() {
+                field.doc(&f.comments.join("\n"));
             }
 
             if !rust_data.annotations.is_empty() {
@@ -393,7 +392,7 @@ fn parse_struct_field(pairs: Pairs<Rule>) -> Result<FieldDef, Error> {
     let mut name: Option<String> = None;
     let mut json: Option<JsonMapping> = None;
     let mut go_type: Option<GoType> = None;
-    let mut comment: Option<String> = None;
+    let mut comments: Vec<String> = vec![];
     let mut is_pointer = false;
 
     for pair in pairs {
@@ -404,7 +403,7 @@ fn parse_struct_field(pairs: Pairs<Rule>) -> Result<FieldDef, Error> {
             Rule::json_mapping => json = Some(parse_json_mapping(pair.into_inner())?),
             Rule::pointer => is_pointer = true,
             Rule::struct_field_type => go_type = Some(parse_go_type(pair.into_inner())?),
-            Rule::doc_comment => comment = Some(parse_comment(span.as_str())),
+            Rule::doc_comment => comments.push(parse_comment(span.as_str())),
             _ => unimplemented!(),
         }
     }
@@ -431,23 +430,18 @@ fn parse_struct_field(pairs: Pairs<Rule>) -> Result<FieldDef, Error> {
     // Parse inline comment after json definition.
     if let Some(j) = json {
         if let Some(inline_comment) = j.comment {
-            if let Some(preceding_comment) = comment {
-                // Append inline comment to any preceding comment.
-                comment = Some(format!(
-                    "{}\n///\n/// {}",
-                    preceding_comment, inline_comment
-                ));
-            } else {
-                // The only comment is the inline comment.
-                comment = Some(inline_comment);
+            if !comments.is_empty() {
+                // Append inline comment with a blank comment line before it.
+                comments.push("".to_string());
             }
+            comments.push(inline_comment)
         }
     };
 
     Ok(FieldDef {
         name: name.expect("fields have names"),
         json_name,
-        comment,
+        comments,
         omit_empty,
         go_type: go_type.expect("fields have types"),
     })

@@ -20,3 +20,11 @@ pub struct Foo {
     #[serde(rename = "blah")]
     pub x: Y,
 }
+
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
+pub struct Bar {
+    /// Doc a
+    /// Doc b
+    #[serde(rename = "foo")]
+    pub x: Y,
+}

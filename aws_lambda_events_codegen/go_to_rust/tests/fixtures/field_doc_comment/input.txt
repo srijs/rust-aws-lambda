@@ -8,3 +8,9 @@ type Foo struct {
   // Doc 1
 	x y `json:"blah"` // Doc 2
 }
+
+type Bar struct {
+  // Doc a
+	// Doc b
+	x y `json:"foo"`
+}
