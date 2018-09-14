@@ -112,6 +112,9 @@ function = ${
 constant_kw = _{ "const" }
 constant_def = ${ constant_kw ~ whitespace+ ~ ident ~ whitespace* ~ "=" ~ whitespace* ~ (!newline ~ any)+ ~ newline  }
 
+// "Enum" type ---------------------------------------------------------------
+enum_options = {constant_kw ~ "(" ~ (!")" ~ any)* ~ ")" }
+
 // Top-level type --------------------------------------------------------------
-all = _{ constant_def | function | package_def | import | import_multiple | struct_def | type_alias | any_comment }
+all = _{ enum_options | constant_def | function | package_def | import | import_multiple | struct_def | type_alias | any_comment }
 aws_go_events = _{  (newline? ~ newline? ~ all ~ newline)+  }

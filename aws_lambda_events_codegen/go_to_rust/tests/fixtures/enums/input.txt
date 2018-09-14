@@ -1,0 +1,9 @@
+type DynamoDBOperationType string
+
+const (
+	DynamoDBOperationTypeInsert DynamoDBOperationType = "INSERT"
+	DynamoDBOperationTypeModify DynamoDBOperationType = "MODIFY"
+	DynamoDBOperationTypeRemove DynamoDBOperationType = "REMOVE"
+)
+
+type DynamoDBSharedIteratorType string

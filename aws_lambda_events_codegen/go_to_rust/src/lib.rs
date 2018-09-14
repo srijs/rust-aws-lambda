@@ -121,7 +121,8 @@ pub fn parse_go_string(go_source: String) -> Result<(GoCode, RustCode), Error> {
             | Rule::package_def
             | Rule::import
             | Rule::import_multiple
-            | Rule::function => {
+            | Rule::function
+            | Rule::enum_options => {
                 debug!("Skipping: {}", pair.clone().into_span().as_str());
                 ()
             }
