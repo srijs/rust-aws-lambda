@@ -153,7 +153,7 @@ impl<'a> DockerRunner<'a> {
                 &bash_command.join(" "),
             ],
         ).start()
-        .map_err(|e| DockerError::ImageBuildCommandFailed { error: e })?;
+        .map_err(|e| DockerError::RunCommandFailed { error: e })?;
 
         child
             .wait()

@@ -1,4 +1,3 @@
-#[macro_use]
 extern crate structopt;
 #[macro_use]
 extern crate log;
@@ -13,7 +12,6 @@ extern crate askama;
 extern crate cargo_metadata;
 extern crate tempfile;
 extern crate users;
-#[macro_use]
 extern crate duct;
 
 mod docker;
@@ -138,7 +136,7 @@ fn inner_main(args: Cli) -> Result<(), Error> {
             Link::Dynamic => "rust-amazonlinux-lambda-dynamic",
         }).to_string(),
     );
-    /*
+
     let mut runner = DockerRunner::new(&dockerfile, &image_name);
     runner.validate()?;
     let docker_image = runner.prepare_image()?;
@@ -150,7 +148,6 @@ fn inner_main(args: Cli) -> Result<(), Error> {
             .unwrap_or(env::current_dir().expect("working directory")),
         &user,
     )?;
-*/
     Ok(())
 }
 

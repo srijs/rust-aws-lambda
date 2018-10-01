@@ -1,4 +1,4 @@
-FROM lambci/lambda-base:build
+FROM lambci/lambda:build-go1.x
 
 ENV RUSTUP_HOME=/usr/local/rustup \
     CARGO_HOME=/usr/local/cargo \
