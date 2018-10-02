@@ -58,7 +58,11 @@ pub(crate) struct InvokeResponseError<'a> {
     pub message: &'a str,
     #[serde(rename = "Type")]
     pub type_: &'a str,
-    #[serde(rename = "StackTrace", skip_serializing_if = "Option::is_none", skip_deserializing)]
+    #[serde(
+        rename = "StackTrace",
+        skip_serializing_if = "Option::is_none",
+        skip_deserializing
+    )]
     pub stack_trace: Option<InvokeResponseErrorStackTrace<'a>>,
     #[serde(rename = "ShouldExit", default)]
     pub should_exit: bool,

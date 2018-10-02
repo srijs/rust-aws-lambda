@@ -1,6 +1,6 @@
 use custom_serde::*;
-use std::collections::HashMap;
 use serde_json::Value;
+use std::collections::HashMap;
 
 /// `ApiGatewayProxyRequest` contains data coming from the API Gateway proxy
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]

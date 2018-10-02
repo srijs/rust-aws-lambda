@@ -58,7 +58,7 @@ pub struct DockerDynamicTemplate<'a> {
 #[template(path = "Dockerfile.static")]
 pub struct DockerStaticTemplate<'a> {
     pub rustup_version: &'a RustupVersion,
-    pub build_target: &'a str,
+    pub target_triple: &'a str,
     pub musl_version: &'a MuslVersion,
     pub openssl_version: &'a OpenSslVersion,
 }

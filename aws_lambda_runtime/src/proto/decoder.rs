@@ -43,8 +43,7 @@ macro_rules! try_nb_gob {
         match $e {
             Ok(t) => t,
             Err(ref e)
-                if e.kind()
-                    == ::gob::error::ErrorKind::Io(::std::io::ErrorKind::WouldBlock) =>
+                if e.kind() == ::gob::error::ErrorKind::Io(::std::io::ErrorKind::WouldBlock) =>
             {
                 return Ok(Async::NotReady)
             }

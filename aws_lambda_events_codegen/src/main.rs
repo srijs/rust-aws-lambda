@@ -294,13 +294,15 @@ main!(|args: Cli, log_level: verbosity| {
 
     // Write the crate readme.
     let output = Command::new("git")
-            .arg(format!("--git-dir={}", args.sdk_location.join(".git").to_string_lossy()))
-            .arg("rev-parse")
-            .arg("--verify")
-            .arg("HEAD")
-            .output()
-            .expect("failed to execute git")
-            .stdout;
+        .arg(format!(
+            "--git-dir={}",
+            args.sdk_location.join(".git").to_string_lossy()
+        )).arg("rev-parse")
+        .arg("--verify")
+        .arg("HEAD")
+        .output()
+        .expect("failed to execute git")
+        .stdout;
     let git_hash = String::from_utf8_lossy(&output);
     let readme_path = args.output_location.clone().join("README.md");
     write_readme(&readme_path, git_hash.trim(), args.overwrite)?;

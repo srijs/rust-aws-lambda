@@ -93,9 +93,9 @@ impl<'de> Deserialize<'de> for DeserializeHeaders {
                     let header_name = map_key
                         .parse::<http::header::HeaderName>()
                         .map_err(|err| A::Error::custom(err))?;
-                    let header_value = http::header::HeaderValue::from_shared(
-                        map_value.into_owned().into(),
-                    ).map_err(|err| A::Error::custom(err))?;
+                    let header_value =
+                        http::header::HeaderValue::from_shared(map_value.into_owned().into())
+                            .map_err(|err| A::Error::custom(err))?;
                     headers.append(header_name, header_value);
                 }
                 Ok(DeserializeHeaders(headers))

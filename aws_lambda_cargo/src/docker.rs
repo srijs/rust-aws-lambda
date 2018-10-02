@@ -5,6 +5,7 @@ use rustc_version::Version;
 use std::fs::File;
 use std::io::{self, Write};
 use std::path::PathBuf;
+use std::process::Output;
 use std::process::{Command, ExitStatus, Stdio};
 use tempfile::tempdir;
 use users::User;
@@ -38,15 +39,17 @@ enum DockerError {
 pub struct DockerRunner<'a> {
     dockerfile: &'a str,
     image_name: &'a str,
+    user: &'a User,
     checked: bool,
 }
 
 impl<'a> DockerRunner<'a> {
-    pub fn new(dockerfile: &'a str, image_name: &'a str) -> Self {
+    pub fn new(dockerfile: &'a str, image_name: &'a str, user: &'a User) -> Self {
         DockerRunner {
-            checked: false,
             dockerfile,
             image_name,
+            user,
+            checked: false,
         }
     }
     pub fn validate(&mut self) -> Result<(), Error> {
@@ -107,18 +110,19 @@ impl<'a> DockerRunner<'a> {
     pub fn run(
         &mut self,
         bash_command: &Vec<String>,
-        docker_image: &str,
         source_location: &PathBuf,
-        user: &User,
-    ) -> Result<String, Error> {
-        trace!("Running command in docker image");
+    ) -> Result<Output, Error> {
+        trace!(
+            "Running command in docker image: {}",
+            bash_command.join(" ")
+        );
         if !self.checked {
             self.validate()?;
         }
 
         let location_in_docker = PathBuf::from("/code");
         let mut cache_location = source_location.clone();
-        cache_location.push("./target/cached_data");
+        cache_location.push(format!("./target/cached_data/{}", self.image_name));
 
         let child = cmd(
             "docker",
@@ -144,9 +148,9 @@ impl<'a> DockerRunner<'a> {
                 &location_in_docker.to_string_lossy(),
                 // Sets the proper user/group instead of the docker user/group.
                 "-u",
-                &format!("{}:{}", user.uid(), user.primary_group_id()),
+                &format!("{}:{}", self.user.uid(), self.user.primary_group_id()),
                 // The docker image to use for the container.
-                &docker_image,
+                &self.image_name,
                 // The (usually cargo) command to run.
                 "bash",
                 "-c",
@@ -155,10 +159,10 @@ impl<'a> DockerRunner<'a> {
         ).start()
         .map_err(|e| DockerError::RunCommandFailed { error: e })?;
 
-        child
+        let output = child
             .wait()
             .map_err(|e| DockerError::RunCommandReturnedError { error: e })?;
 
-        Ok("my/coolbin.txt".to_string())
+        Ok(output.clone())
     }
 }

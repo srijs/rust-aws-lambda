@@ -1,7 +1,7 @@
 FROM amazonlinux:latest
 
 ENV PREFIX="/musl" \
-    BUILD_TARGET={{ build_target }} \
+    BUILD_TARGET={{ target_triple }} \
     RUSTUP_HOME=/usr/local/rustup \
     CARGO_HOME=/usr/local/cargo \
     PATH=/usr/local/cargo/bin:$PATH \
@@ -9,17 +9,23 @@ ENV PREFIX="/musl" \
     MUSL_VERSION={{ musl_version }} \
     OPENSSL_VERSION={{ openssl_version }}
 
-    RUN curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain $RUST_VERSION --no-modify-path -y && \
-        chmod -R a+w $RUSTUP_HOME $CARGO_HOME; \
-        rustup install $RUST_VERSION; \
-        rustup default $RUST_VERSION
+RUN echo "Installing Rust $RUST_VERSION";
+Run curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain $RUST_VERSION --no-modify-path -y && \
+    chmod -R a+w $RUSTUP_HOME $CARGO_HOME; \
+    rustup install $RUST_VERSION && \
+    rustup default $RUST_VERSION;
 
-RUN yum -y groupinstall "Development Tools"
+RUN echo "Installing support for building $BUILD_TARGET";
+RUN rustup target add $BUILD_TARGET;
+
+RUN echo "Installing tools needed to compile MUSL and OpenSSL";
+RUN yum -y groupinstall "Development Tools";
 
 WORKDIR $PREFIX
 
 # Build Musl
-ADD http://www.musl-libc.org/releases/musl-$MUSL_VERSION.tar.gz .
+RUN echo "Downloading MUSL version $MUSL_VERSION"
+RUN curl http://www.musl-libc.org/releases/musl-$MUSL_VERSION.tar.gz -o musl-$MUSL_VERSION.tar.gz
 RUN tar -xvzf musl-$MUSL_VERSION.tar.gz \
     && cd musl-$MUSL_VERSION \
     && ./configure --prefix=$PREFIX \
@@ -33,8 +39,8 @@ ENV CC=$PREFIX/bin/musl-gcc \
     LDFLAGS=-L$PREFIX/lib
 
 # Build OpenSSL
-ADD https://www.openssl.org/source/openssl-$OPENSSL_VERSION.tar.gz .
-
+RUN echo "Downloading OpenSSL version $OPENSSL_VERSION"
+RUN curl https://www.openssl.org/source/openssl-$OPENSSL_VERSION.tar.gz -o openssl-$OPENSSL_VERSION.tar.gz
 RUN echo "Building OpenSSL" \
     && tar -xzf "openssl-$OPENSSL_VERSION.tar.gz" \
     && cd openssl-$OPENSSL_VERSION \

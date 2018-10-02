@@ -41,7 +41,6 @@ pub fn main() {
     ServiceBuilder::new()
         .resource(HelloWorld {
             motd: "tower-web is amazing!!!".to_string(),
-        })
-        .run_lambda()
+        }).run_lambda()
         .unwrap();
 }
