@@ -119,6 +119,7 @@ fn find_example_event(sdk_location: &PathBuf, service_name: &str) -> Result<Opti
         "codepipeline_job" => "events/testdata/codepipline-event.json".to_string(),
         "cloudwatch_logs" => "events/testdata/cloudwatch-logs-event.json".to_string(),
         "firehose" => "events/testdata/kinesis-firehose-event.json".to_string(),
+        "iot_button" => "events/testdata/iot-button-event.json".to_string(),
         _ => format!("events/testdata/{}-event.json", service_name),
     };
     let p = sdk_location.join(location);

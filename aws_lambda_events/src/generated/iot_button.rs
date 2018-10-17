@@ -33,3 +33,19 @@ pub struct IoTButtonEvent {
     #[serde(rename = "batteryVoltage")]
     pub battery_voltage: String,
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    extern crate serde_json;
+
+    #[test]
+    fn example_event() {
+        let data = include_bytes!("fixtures/example-iot_button-event.json");
+        let parsed: IoTButtonEvent = serde_json::from_slice(data).unwrap();
+        let output: String = serde_json::to_string(&parsed).unwrap();
+        let reparsed: IoTButtonEvent = serde_json::from_slice(output.as_bytes()).unwrap();
+        assert_eq!(parsed, reparsed);
+    }
+}
