@@ -197,6 +197,14 @@ pub struct SimpleEmailVerdict {
     pub status: String,
 }
 
+pub type SimpleEmailDispositionValue = String;
+
+/// `SimpleEmailDisposition` disposition return for SES to control rule functions
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
+pub struct SimpleEmailDisposition {
+    pub disposition: SimpleEmailDispositionValue,
+}
+
 #[cfg(test)]
 mod test {
     use super::*;

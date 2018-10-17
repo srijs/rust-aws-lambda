@@ -9,6 +9,7 @@ pub mod cognito;
 pub mod config;
 pub mod connect;
 pub mod firehose;
+pub mod iot_button;
 pub mod kinesis;
 pub mod lex;
 pub mod s3;
