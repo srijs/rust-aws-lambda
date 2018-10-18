@@ -134,15 +134,14 @@ fn find_example_event(
     service_name: &str,
     example_event_path: &Path,
 ) -> Result<Option<String>> {
-    let name_with_quirks = match service_name.as_ref() {
-        "codepipeline_job" => "codepipline".to_string(),
-        "firehose" => "kinesis-firehose".to_string(),
-        service_name => service_name.to_string(),
+    let mut name_with_quirks = match service_name.as_ref() {
+        "codepipeline_job" => "codepipline-event.json".to_string(),
+        "firehose" => "kinesis-firehose-event.json".to_string(),
+        service_name => format!("{}-event.json", service_name),
     };
-    let mut event_path = format!("{}-event.json", name_with_quirks);
-    fuzz(&mut event_path);
+    fuzz(&mut name_with_quirks);
     trace!("Looking for example event: {}", service_name);
-    let file = match fuzzy_files.get(&event_path) {
+    let file = match fuzzy_files.get(&name_with_quirks) {
         None => {
             info!("No example event for service: {}", service_name);
             return Ok(None);
