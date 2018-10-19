@@ -4,11 +4,11 @@ extern crate quicli;
 extern crate codegen;
 
 use quicli::prelude::*;
-use std::collections::HashSet;
-use std::fs::File;
+use std::collections::{HashMap, HashSet};
+use std::fs::{self, File};
 use std::io::prelude::*;
 use std::io::Write;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::Command;
 
 #[derive(Debug)]
@@ -113,29 +113,53 @@ fn write_readme(readme_path: &PathBuf, git_hash: &str, overwrite: bool) -> Resul
     Ok(())
 }
 
-fn find_example_event(sdk_location: &PathBuf, service_name: &str) -> Result<Option<String>> {
-    let location = match service_name.as_ref() {
-        "code_commit" => "events/testdata/code-commit-event.json".to_string(),
-        "codepipeline_job" => "events/testdata/codepipline-event.json".to_string(),
-        "cloudwatch_logs" => "events/testdata/cloudwatch-logs-event.json".to_string(),
-        "firehose" => "events/testdata/kinesis-firehose-event.json".to_string(),
-        "iot_button" => "events/testdata/iot-button-event.json".to_string(),
-        _ => format!("events/testdata/{}-event.json", service_name),
-    };
-    let p = sdk_location.join(location);
-    read_example_event(&p, service_name)
+fn fuzz(string: &mut String) {
+    string.retain(|c| c != '_' && c != '-')
 }
 
-fn read_example_event(test_fixture: &PathBuf, service_name: &str) -> Result<Option<String>> {
-    trace!(
-        "Looking for example event: {}",
-        test_fixture.to_string_lossy()
-    );
-    if !test_fixture.exists() {
-        info!("No example event for service: {}", service_name);
-        return Ok(None);
+fn get_fuzzy_file_listing(dir_path: &Path) -> Result<HashMap<String, PathBuf>> {
+    let mut listing = HashMap::new();
+    for entry in fs::read_dir(dir_path)? {
+        let entry = entry?;
+        let original_path = entry.path().strip_prefix(dir_path)?.to_owned();
+        let mut fuzzy_path = original_path.to_string_lossy().to_string();
+        fuzz(&mut fuzzy_path);
+        listing.insert(fuzzy_path, original_path);
     }
-    info!("Found example event for service: {}", service_name);
+    Ok(listing)
+}
+
+fn find_example_event(
+    fuzzy_files: &HashMap<String, PathBuf>,
+    service_name: &str,
+    example_event_path: &Path,
+) -> Result<Option<String>> {
+    let mut name_with_quirks = match service_name.as_ref() {
+        "codepipeline_job" => "codepipline-event.json".to_string(),
+        "firehose" => "kinesis-firehose-event.json".to_string(),
+        service_name => format!("{}-event.json", service_name),
+    };
+    fuzz(&mut name_with_quirks);
+    trace!("Looking for example event: {}", service_name);
+    let file = match fuzzy_files.get(&name_with_quirks) {
+        None => {
+            info!("No example event for service: {}", service_name);
+            return Ok(None);
+        }
+        Some(file) => {
+            info!(
+                "Found example event for service {} at: {}",
+                service_name,
+                file.to_string_lossy()
+            );
+            example_event_path.join(&file)
+        }
+    };
+
+    read_example_event(&file)
+}
+
+fn read_example_event(test_fixture: &PathBuf) -> Result<Option<String>> {
     let mut f = File::open(test_fixture).expect("fixture not found");
     let mut contents = String::new();
     f.read_to_string(&mut contents)
@@ -222,6 +246,9 @@ main!(|args: Cli, log_level: verbosity| {
     // Some files we don't properly handle yet.
     let blacklist = get_blacklist();
 
+    let example_event_path = args.sdk_location.clone().join("events/testdata");
+    let fuzzy_example_events = get_fuzzy_file_listing(&example_event_path)?;
+
     // Loop over matched files.
     for path in glob(&pattern)? {
         let x = path.clone();
@@ -236,7 +263,8 @@ main!(|args: Cli, log_level: verbosity| {
             debug!("Rust-----v\n{}", rust);
 
             // Check for an example event in their test data.
-            let example_event = find_example_event(&args.sdk_location, &file_name)?;
+            let example_event =
+                find_example_event(&fuzzy_example_events, &file_name, &example_event_path)?;
 
             parsed_files.push(ParsedEventFile {
                 service_name: file_name.into_owned(),
@@ -295,13 +323,15 @@ main!(|args: Cli, log_level: verbosity| {
 
     // Write the crate readme.
     let output = Command::new("git")
-            .arg(format!("--git-dir={}", args.sdk_location.join(".git").to_string_lossy()))
-            .arg("rev-parse")
-            .arg("--verify")
-            .arg("HEAD")
-            .output()
-            .expect("failed to execute git")
-            .stdout;
+        .arg(format!(
+            "--git-dir={}",
+            args.sdk_location.join(".git").to_string_lossy()
+        )).arg("rev-parse")
+        .arg("--verify")
+        .arg("HEAD")
+        .output()
+        .expect("failed to execute git")
+        .stdout;
     let git_hash = String::from_utf8_lossy(&output);
     let readme_path = args.output_location.clone().join("README.md");
     write_readme(&readme_path, git_hash.trim(), args.overwrite)?;
