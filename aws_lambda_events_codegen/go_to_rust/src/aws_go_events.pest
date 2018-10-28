@@ -29,7 +29,8 @@ array = { "[]" ~ (interface | primitive | map | array | ident) }
 
 // Collections. This isn't 100% correct but whatever.
 key_type = { primitive }
-value_type = { interface | primitive | array | ident }
+pointer_type = { pointer ~ value_type }
+value_type = { pointer_type | interface | primitive | array | ident }
 map = { "map[" ~ key_type ~ "]" ~ value_type }
 
 non_primitive = { map | array | interface }

@@ -491,6 +491,7 @@ enum GoType {
     ArrayType(Box<GoType>),
     MapType(Box<GoType>, Box<GoType>),
     InterfaceType,
+    PointerType(Box<GoType>),
     TimeType,
     TimestampMillisecondsType,
     TimestampSecondsType,
@@ -517,7 +518,8 @@ fn parse_go_type(pairs: Pairs<Rule>) -> Result<GoType, Error> {
             Rule::package_ident => Some(parse_go_package_ident(value)?),
             Rule::map => Some(parse_go_type_map(pair.into_inner())?),
             Rule::interface => Some(parse_go_type_interface(value)?),
-            _ => unimplemented!(),
+            Rule::pointer_type => Some(parse_go_type_pointer(pair.into_inner())?),
+            _ => unimplemented!("{}\n{}", value, pair),
         };
     }
 
@@ -573,6 +575,20 @@ fn parse_go_type_map(pairs: Pairs<Rule>) -> Result<GoType, Error> {
 fn parse_go_type_interface(_t: &str) -> Result<GoType, Error> {
     // For now we don't parse.
     Ok(GoType::InterfaceType)
+}
+
+fn parse_go_type_pointer(pairs: Pairs<Rule>) -> Result<GoType, Error> {
+    debug!("Parsing go pointer");
+    let mut pointed_at = None;
+    for pair in pairs {
+        debug!("{:?}", pair);
+        match pair.as_rule() {
+            Rule::pointer => (),
+            Rule::value_type => pointed_at = Some(parse_go_type(pair.into_inner())?),
+            _ => unimplemented!(),
+        };
+    }
+    Ok(GoType::PointerType(Box::new(pointed_at.expect("something pointed at"))))
 }
 
 fn parse_go_type_primitive(t: &str) -> Result<GoType, Error> {
@@ -647,7 +663,16 @@ fn translate_go_type_to_rust_type(go_type: GoType) -> Result<RustType, Error> {
                     libraries: i.libraries,
                 }
             }
-        }
+        },
+        GoType::PointerType(v) => {
+            let data = translate_go_type_to_rust_type(*v.clone())?;
+            let libraries: HashSet<String> = data.libraries.iter().cloned().collect();
+            RustType {
+                annotations: vec![],
+                value: format!("Option<{}>", data.value),
+                libraries,
+            }
+        },
         GoType::MapType(k, v) => {
             let key_data = translate_go_type_to_rust_type(*k.clone())?;
             let value_data = translate_go_type_to_rust_type(*v.clone())?;
