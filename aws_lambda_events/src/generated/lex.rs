@@ -72,7 +72,7 @@ pub struct LexDialogAction {
     pub response_card: Option<LexResponseCard>,
 }
 
-pub type Slots = HashMap<String, String>;
+pub type Slots = HashMap<String, Option<String>>;
 
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct LexResponseCard {
