@@ -17,7 +17,7 @@ use aws_lambda_gateway::NewApiGatewayProxy;
 use aws_lambda_runtime::Runtime;
 
 use tower_web::error::IntoCatch;
-use tower_web::response::DefaultSerializer;
+use tower_web::response::Serializer;
 use tower_web::routing::{IntoResource, RoutedService};
 use tower_web::util::http::{HttpMiddleware, HttpService};
 use tower_web::util::BufStream;
@@ -32,11 +32,12 @@ pub trait ServiceBuilderExt {
     fn run_lambda(self) -> Result<(), io::Error>;
 }
 
-impl<T, C, M> ServiceBuilderExt for ServiceBuilder<T, C, M>
+impl<T, S, C, M> ServiceBuilderExt for ServiceBuilder<T, S, C, M>
 where
-    T: IntoResource<DefaultSerializer, RequestBody>,
+    T: IntoResource<S, RequestBody>,
     T::Resource: Send + 'static,
-    C: IntoCatch<DefaultSerializer>,
+    S: Serializer,
+    C: IntoCatch<S>,
     C::Catch: Send + 'static,
     M: HttpMiddleware<RoutedService<T::Resource, C::Catch>, RequestBody = ::RequestBody>
         + Send
