@@ -10,24 +10,13 @@ pub struct CodePipelineEvent {
 /// `CodePipelineJob` represents a job from an AWS CodePipeline event
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct CodePipelineJob {
-    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     pub id: Option<String>,
-    #[cfg(feature = "string-null-empty")]
-    #[serde(deserialize_with = "deserialize_lambda_string")]
-    #[serde(default)]
-    pub id: String,
-    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "accountId")]
     pub account_id: Option<String>,
-    #[cfg(feature = "string-null-empty")]
-    #[serde(deserialize_with = "deserialize_lambda_string")]
-    #[serde(default)]
-    #[serde(rename = "accountId")]
-    pub account_id: String,
     pub data: CodePipelineData,
 }
 
@@ -42,16 +31,10 @@ pub struct CodePipelineData {
     pub out_put_artifacts: Vec<CodePipelineOutputArtifact>,
     #[serde(rename = "artifactCredentials")]
     pub artifact_credentials: CodePipelineArtifactCredentials,
-    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "continuationToken")]
     pub continuation_token: Option<String>,
-    #[cfg(feature = "string-null-empty")]
-    #[serde(deserialize_with = "deserialize_lambda_string")]
-    #[serde(default)]
-    #[serde(rename = "continuationToken")]
-    pub continuation_token: String,
 }
 
 /// `CodePipelineActionConfiguration` represents an Action Configuration
@@ -63,26 +46,14 @@ pub struct CodePipelineActionConfiguration {
 /// `CodePipelineConfiguration` represents a configuration for an Action Configuration
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct CodePipelineConfiguration {
-    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "FunctionName")]
     pub function_name: Option<String>,
-    #[cfg(feature = "string-null-empty")]
-    #[serde(deserialize_with = "deserialize_lambda_string")]
-    #[serde(default)]
-    #[serde(rename = "FunctionName")]
-    pub function_name: String,
-    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "UserParameters")]
     pub user_parameters: Option<String>,
-    #[cfg(feature = "string-null-empty")]
-    #[serde(deserialize_with = "deserialize_lambda_string")]
-    #[serde(default)]
-    #[serde(rename = "UserParameters")]
-    pub user_parameters: String,
 }
 
 /// `CodePipelineInputArtifact` represents an input artifact
@@ -90,14 +61,9 @@ pub struct CodePipelineConfiguration {
 pub struct CodePipelineInputArtifact {
     pub location: CodePipelineInputLocation,
     pub revision: Option<String>,
-    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     pub name: Option<String>,
-    #[cfg(feature = "string-null-empty")]
-    #[serde(deserialize_with = "deserialize_lambda_string")]
-    #[serde(default)]
-    pub name: String,
 }
 
 /// `CodePipelineInputLocation` represents a input location
@@ -105,41 +71,23 @@ pub struct CodePipelineInputArtifact {
 pub struct CodePipelineInputLocation {
     #[serde(rename = "s3Location")]
     pub s3_location: CodePipelineS3Location,
-    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "type")]
     pub location_type: Option<String>,
-    #[cfg(feature = "string-null-empty")]
-    #[serde(deserialize_with = "deserialize_lambda_string")]
-    #[serde(default)]
-    #[serde(rename = "type")]
-    pub location_type: String,
 }
 
 /// `CodePipelineS3Location` represents an s3 input location
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct CodePipelineS3Location {
-    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "bucketName")]
     pub bucket_name: Option<String>,
-    #[cfg(feature = "string-null-empty")]
-    #[serde(deserialize_with = "deserialize_lambda_string")]
-    #[serde(default)]
-    #[serde(rename = "bucketName")]
-    pub bucket_name: String,
-    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "objectKey")]
     pub object_key: Option<String>,
-    #[cfg(feature = "string-null-empty")]
-    #[serde(deserialize_with = "deserialize_lambda_string")]
-    #[serde(default)]
-    #[serde(rename = "objectKey")]
-    pub object_key: String,
 }
 
 /// `CodePipelineOutputArtifact` represents an output artifact
@@ -147,14 +95,9 @@ pub struct CodePipelineS3Location {
 pub struct CodePipelineOutputArtifact {
     pub location: CodePipelineInputLocation,
     pub revision: Option<String>,
-    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     pub name: Option<String>,
-    #[cfg(feature = "string-null-empty")]
-    #[serde(deserialize_with = "deserialize_lambda_string")]
-    #[serde(default)]
-    pub name: String,
 }
 
 /// `CodePipelineOutputLocation` represents a output location
@@ -162,51 +105,27 @@ pub struct CodePipelineOutputArtifact {
 pub struct CodePipelineOutputLocation {
     #[serde(rename = "s3Location")]
     pub s3_location: CodePipelineS3Location,
-    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "type")]
     pub location_type: Option<String>,
-    #[cfg(feature = "string-null-empty")]
-    #[serde(deserialize_with = "deserialize_lambda_string")]
-    #[serde(default)]
-    #[serde(rename = "type")]
-    pub location_type: String,
 }
 
 /// `CodePipelineArtifactCredentials` represents CodePipeline artifact credentials
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct CodePipelineArtifactCredentials {
-    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "secretAccessKey")]
     pub secret_access_key: Option<String>,
-    #[cfg(feature = "string-null-empty")]
-    #[serde(deserialize_with = "deserialize_lambda_string")]
-    #[serde(default)]
-    #[serde(rename = "secretAccessKey")]
-    pub secret_access_key: String,
-    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "sessionToken")]
     pub session_token: Option<String>,
-    #[cfg(feature = "string-null-empty")]
-    #[serde(deserialize_with = "deserialize_lambda_string")]
-    #[serde(default)]
-    #[serde(rename = "sessionToken")]
-    pub session_token: String,
-    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "accessKeyId")]
     pub access_key_id: Option<String>,
-    #[cfg(feature = "string-null-empty")]
-    #[serde(deserialize_with = "deserialize_lambda_string")]
-    #[serde(default)]
-    #[serde(rename = "accessKeyId")]
-    pub access_key_id: String,
 }
 
 #[cfg(test)]

@@ -122,19 +122,6 @@ where
     }
 }
 
-/// Deserializes `String`, mapping JSON `null` to the empty string `""`.
-#[cfg(feature = "string-null-empty")]
-pub(crate) fn deserialize_lambda_string<'de, D>(deserializer: D) -> Result<String, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    let result: String = match Option::deserialize(deserializer)? {
-        Some(s) => s,
-        None => String::default(),
-    };
-    Ok(result)
-}
-
 /// Deserializes `HashMap<_>`, mapping JSON `null` to an empty map.
 pub(crate) fn deserialize_lambda_map<'de, D, K, V>(
     deserializer: D,

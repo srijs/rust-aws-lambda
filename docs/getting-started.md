@@ -84,29 +84,7 @@ The types in the `event` module are automatically generated from the [official G
 
 The official Lambda Go SDK sometimes marks a field as required when the underlying lambda event json could actually be `null` or an empty string. Normally, this would cause a panic as Rust is much more strict.
 
-The `event` module has two strategies for dealing with this reality. Both
-are available as crate features so you can choose the behavior and API that works best for you:
-
-- `string-null-none` - All required json string fields are `Option<String>` in Rust. Json `null` or the empty string are deserialized into Rust structs as `None`.
-
-  This is the default behavior, as it is idiomatic Rust.
-
-  - **Pros:** _Idiomatic Rust. It is easy to determine if lambda gave you a "real" value with data or not by checking the `Option<String>`._
-
-  - **Cons:** _you have to `unwrap()`/`expect()`/`match` every string field to use its contents._
-
-- `string-null-empty` - All required json string fields are `String` in Rust. Json `null` is deserialized into Rust structs as the empty string (`""`).
-
-  This is what the official Go SDK does.
-
-  - **Pros:** _you do not have to `unwrap()`/`expect()`/`match` every string field before using._
-  - **Cons:** _Not idiomatic Rust. You manually have to check for `""` if you want to know the difference between a real value or an empty value._
-
-  Change your `Cargo.toml` dependency to:
-
-  ```toml
-  aws_lambda = { git = "https://github.com/srijs/rust-aws-lambda", features = ["string-null-empty"] }
-  ```
+The `event` module deals with this reality by marking all required json string fields as `Option<String>` in Rust. Json `null` or the empty string are deserialized into Rust structs as `None`.
 
 ## Context
 

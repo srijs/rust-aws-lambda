@@ -7,17 +7,10 @@ pub struct ConnectEvent {
     #[serde(rename = "Details")]
     pub details: ConnectDetails,
     /// The name of the event.
-    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "Name")]
     pub name: Option<String>,
-    /// The name of the event.
-    #[cfg(feature = "string-null-empty")]
-    #[serde(deserialize_with = "deserialize_lambda_string")]
-    #[serde(default)]
-    #[serde(rename = "Name")]
-    pub name: String,
 }
 
 /// `ConnectDetails` holds the details of a Connect event
@@ -40,124 +33,63 @@ pub struct ConnectContactData {
     #[serde(default)]
     #[serde(rename = "Attributes")]
     pub attributes: HashMap<String, String>,
-    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "Channel")]
     pub channel: Option<String>,
-    #[cfg(feature = "string-null-empty")]
-    #[serde(deserialize_with = "deserialize_lambda_string")]
-    #[serde(default)]
-    #[serde(rename = "Channel")]
-    pub channel: String,
-    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "ContactId")]
     pub contact_id: Option<String>,
-    #[cfg(feature = "string-null-empty")]
-    #[serde(deserialize_with = "deserialize_lambda_string")]
-    #[serde(default)]
-    #[serde(rename = "ContactId")]
-    pub contact_id: String,
     #[serde(rename = "CustomerEndpoint")]
     pub customer_endpoint: ConnectEndpoint,
-    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "InitialContactId")]
     pub initial_contact_id: Option<String>,
-    #[cfg(feature = "string-null-empty")]
-    #[serde(deserialize_with = "deserialize_lambda_string")]
-    #[serde(default)]
-    #[serde(rename = "InitialContactId")]
-    pub initial_contact_id: String,
     /// Either: INBOUND/OUTBOUND/TRANSFER/CALLBACK
-    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "InitiationMethod")]
     pub initiation_method: Option<String>,
-    /// Either: INBOUND/OUTBOUND/TRANSFER/CALLBACK
-    #[cfg(feature = "string-null-empty")]
-    #[serde(deserialize_with = "deserialize_lambda_string")]
-    #[serde(default)]
-    #[serde(rename = "InitiationMethod")]
-    pub initiation_method: String,
-    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "PreviousContactId")]
     pub previous_contact_id: Option<String>,
-    #[cfg(feature = "string-null-empty")]
-    #[serde(deserialize_with = "deserialize_lambda_string")]
-    #[serde(default)]
-    #[serde(rename = "PreviousContactId")]
-    pub previous_contact_id: String,
     #[serde(rename = "Queue")]
     pub queue: ConnectQueue,
     #[serde(rename = "SystemEndpoint")]
     pub system_endpoint: ConnectEndpoint,
-    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "InstanceARN")]
     pub instance_arn: Option<String>,
-    #[cfg(feature = "string-null-empty")]
-    #[serde(deserialize_with = "deserialize_lambda_string")]
-    #[serde(default)]
-    #[serde(rename = "InstanceARN")]
-    pub instance_arn: String,
 }
 
 /// `ConnectEndpoint` represents routing information.
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct ConnectEndpoint {
-    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "Address")]
     pub address: Option<String>,
-    #[cfg(feature = "string-null-empty")]
-    #[serde(deserialize_with = "deserialize_lambda_string")]
-    #[serde(default)]
-    #[serde(rename = "Address")]
-    pub address: String,
-    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "Type")]
     pub type_: Option<String>,
-    #[cfg(feature = "string-null-empty")]
-    #[serde(deserialize_with = "deserialize_lambda_string")]
-    #[serde(default)]
-    #[serde(rename = "Type")]
-    pub type_: String,
 }
 
 /// `ConnectQueue` represents a queue object.
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct ConnectQueue {
-    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "Name")]
     pub name: Option<String>,
-    #[cfg(feature = "string-null-empty")]
-    #[serde(deserialize_with = "deserialize_lambda_string")]
-    #[serde(default)]
-    #[serde(rename = "Name")]
-    pub name: String,
-    #[cfg(not(feature = "string-null-empty"))]
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "ARN")]
     pub arn: Option<String>,
-    #[cfg(feature = "string-null-empty")]
-    #[serde(deserialize_with = "deserialize_lambda_string")]
-    #[serde(default)]
-    #[serde(rename = "ARN")]
-    pub arn: String,
 }
 
 pub type ConnectResponse = HashMap<String, String>;

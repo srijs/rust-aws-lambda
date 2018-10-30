@@ -8,11 +8,8 @@ authors = [
 build = "build.rs"
 
 [features]
-default = ["gateway", "string-null-none"]
+default = ["gateway"]
 gateway = ["aws_lambda_gateway"]
-# Re-export from events crate.
-string-null-empty = ["aws_lambda_events/string-null-empty"]
-string-null-none = ["aws_lambda_events/string-null-none"]
 
 [dependencies]
 aws_lambda_events = { path = "../aws_lambda_events" }

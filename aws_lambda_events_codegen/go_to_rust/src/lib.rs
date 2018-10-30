@@ -301,29 +301,22 @@ fn parse_struct(pairs: Pairs<Rule>) -> Result<(codegen::Struct, HashSet<String>)
 
         let mut field_defs = vec![];
 
-        // Go converts null strings to "". Let consumers choose how they want
-        // to handle that.
+        // Behavior overrides for specific types.
         if rust_type == "String" {
+            // Go converts null strings to "" and sometimes is wrong about
+            // json string fields that can be `null`. We treat all `String`
+            // fields as `Option<String>` and convert `""` to `None`.
             libraries.insert("custom_serde::*".to_string());
 
             let mut string_as_option = Field::new(&member_name, "Option<String>");
             string_as_option.annotation(vec![
-                "#[cfg(not(feature = \"string-null-empty\"))]",
                 "#[serde(deserialize_with = \"deserialize_lambda_string\")]",
                 "#[serde(default)]",
             ]);
             field_defs.push(string_as_option);
-
-            let mut string_as_empty = Field::new(&member_name, &rust_type);
-            string_as_empty.annotation(vec![
-                "#[cfg(feature = \"string-null-empty\")]",
-                "#[serde(deserialize_with = \"deserialize_lambda_string\")]",
-                "#[serde(default)]",
-            ]);
-            field_defs.push(string_as_empty);
         } else if HASHMAP_RE.is_match(&rust_type) {
+            // We default to an empty `HashMap` even if the field is `null`.
             libraries.insert("custom_serde::*".to_string());
-            // We default to an empty `HashMap` regardless.
             let mut map_as_empty = Field::new(&member_name, &rust_type);
             map_as_empty.annotation(vec![
                 "#[serde(deserialize_with = \"deserialize_lambda_map\")]",
