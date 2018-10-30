@@ -12,7 +12,7 @@ backtrace-parser = "0.1.0"
 bytes = "0.4.8"
 failure = "0.1.1"
 futures = "0.1.21"
-gob = { git = "https://github.com/srijs/rust-gob" }
+gob = "0.1.0"
 lazy_static = "1.0.1"
 log = "0.4.1"
 scoped-tls = "0.1"
@@ -20,8 +20,8 @@ serde = "1.0.39"
 serde_bytes = "0.10.4"
 serde_derive = "1.0.42"
 serde_json = "1.0.18"
-serde_schema = { git = "https://github.com/srijs/rust-serde-schema", features = ["bytes"] }
-serde_schema_derive = { git = "https://github.com/srijs/rust-serde-schema" }
+serde_schema = { version = "0.0.1", features = ["bytes"] }
+serde_schema_derive = "0.0.1"
 tokio = "0.1.8"
 tower-service = "0.1.0"
 void = "1.0.2"
