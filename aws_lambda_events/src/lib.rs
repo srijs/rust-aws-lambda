@@ -14,6 +14,8 @@ extern crate serde_json;
 extern crate serde_json;
 
 mod custom_serde;
+/// Encodings used in AWS Lambda json event values.
 pub mod encodings;
+/// AWS Lambda event definitions.
 pub mod event;
 mod generated;

@@ -78,6 +78,10 @@ fn write_mod_index(
         let mut mod_content: Vec<String> = Vec::new();
         for parsed in parsed_files {
             mod_content.push(format!(
+                "/// AWS Lambda event definitions for {}.",
+                parsed.service_name
+            ));
+            mod_content.push(format!(
                 "pub mod {};",
                 parsed
                     .path
