@@ -21,6 +21,10 @@ fn main() {
 }
 ```
 
+## Blogposts
+
+- [Running Rust natively in AWS Lambda and testing it locally](https://medium.com/@bernardo.belchior1/running-rust-natively-in-aws-lambda-and-testing-it-locally-57080421426d) by [@bernardobelchior](https://github.com/bernardobelchior) shows how to use the `gateway` integration to build and deploy an image resizing function.
+
 ## Comparison to other projects
 
 AWS Lambda does not officially support Rust. To enable using Rust with lambda, great projects such as [`rust-crowbar`](https://github.com/ilianaw/rust-crowbar) and [`serverless-rust`](https://github.com/softprops/serverless-rust) were created. They leverage Rust's C interoperability to "embed" Rust code into lambda supported language runtimes (in this case Python and Node.js respectively).
