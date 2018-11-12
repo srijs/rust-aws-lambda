@@ -23,7 +23,9 @@ fn main() {
 
 ## Blogposts
 
-- [Running Rust natively in AWS Lambda and testing it locally](https://medium.com/@bernardo.belchior1/running-rust-natively-in-aws-lambda-and-testing-it-locally-57080421426d) by [@bernardobelchior](https://github.com/bernardobelchior) shows how to use the `gateway` integration to build and deploy an image resizing function.
+- [Running Rust natively in AWS Lambda and testing it locally](https://medium.com/@bernardo.belchior1/running-rust-natively-in-aws-lambda-and-testing-it-locally-57080421426d) by [@bernardobelchior](https://github.com/bernardobelchior) shows how to use the `gateway` integration to build and deploy an image resizing function ([repo](https://github.com/bernardobelchior/rust-aws-lambda-tutorial)).
+
+- [Parsing logs 230x faster with Rust](https://andre.arko.net/2018/10/25/parsing-logs-230x-faster-with-rust/) by [@indirect](https://github.com/indirect) talks about using the `events` integration to parse 500GB of logs per day ([repo](https://github.com/rubytogether/kirby)).
 
 ## Comparison to other projects
 
