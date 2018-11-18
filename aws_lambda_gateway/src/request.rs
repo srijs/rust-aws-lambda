@@ -4,7 +4,7 @@ use std::fmt;
 use base64;
 use http;
 use serde::{de::Error as DeError, de::MapAccess, de::Visitor, Deserialize, Deserializer};
-
+use std::collections::HashMap;
 use body::Body;
 
 #[derive(Debug)]
@@ -31,6 +31,8 @@ struct ApiGatewayProxyRequestDef<'a> {
     headers: Option<DeserializeHeaders>,
     #[serde(default, borrow)]
     body: Option<Cow<'a, str>>,
+    path_parameters:Option<HashMap<String, String> >,
+    query_string_parameters:Option<HashMap<String, String> >,
     #[serde(default, rename = "isBase64Encoded")]
     is_base64_encoded: Option<bool>,
 }
@@ -57,13 +59,18 @@ impl<'a> ApiGatewayProxyRequestDef<'a> {
                 body = Body::from(raw_body.into_owned());
             }
         }
-
+        let mut extensions=http::Extensions::new();
+        if let Some(path_parameters) = self.path_parameters {
+            extensions.insert(path_parameters);
+        }
+        if let Some(query_string_parameters) = self.query_string_parameters {
+            extensions.insert(query_string_parameters);
+        }
+        builder.extension(extensions);
         let mut req = builder.body(body).map_err(|err| E::custom(err))?;
-
         if let Some(DeserializeHeaders(headers)) = self.headers {
             ::std::mem::replace(req.headers_mut(), headers);
         }
-
         Ok(req)
     }
 }
@@ -125,6 +132,7 @@ fn deserialize_complex() {
 
     assert_eq!(req.method(), http::Method::POST);
     assert_eq!(req.uri().path(), "/path/to/resource");
+    println!("{}", req.extensions().get().unwrap());
     assert_eq!(req.body().as_str().unwrap(), "{\"test\":\"body\"}");
     assert_eq!(
         req.headers()["Accept"],
