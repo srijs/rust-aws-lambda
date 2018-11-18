@@ -128,7 +128,7 @@ fn main() {
 
 _Note: These instructions will produce a static musl binary of your rust code. If you are looking for non-musl binaries, you might try [docker-lambda](https://github.com/lambci/docker-lambda)._
 
-To deploy on AWS lambda, you will need a zip file of your binary. If you are running Linux, this may be as simple as running `cargo --target x86_64-unknown-linux-musl` if your dependencies do not require OpenSSL. If you are on non-Linux platforms, the binary needs to built against amazonlinux.
+To deploy on AWS lambda, you will need a zip file of your binary. If you are running Linux, this may be as simple as running `cargo --target x86_64-unknown-linux-musl` if your dependencies do not require OpenSSL. If you are on non-Linux platforms, the binary needs to built against amazonlinux or cross-compiled for musl, as described in [this tutorial](https://medium.com/@bernardo.belchior1/running-rust-natively-in-aws-lambda-and-testing-it-locally-57080421426d).
 
 A Dockerfile is provided as an example and will work for single project binaries that need OpenSSL. The Dockerfile is based off of [rust-musl-builder](https://github.com/emk/rust-musl-builder).
 
