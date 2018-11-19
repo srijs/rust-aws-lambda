@@ -31,11 +31,19 @@ struct ApiGatewayProxyRequestDef<'a> {
     headers: Option<DeserializeHeaders>,
     #[serde(default, borrow)]
     body: Option<Cow<'a, str>>,
+    #[serde(default, rename = "pathParameters")]
     path_parameters:Option<HashMap<String, String> >,
-    query_string_parameters:Option<HashMap<String, String> >,
+    #[serde(default, rename = "queryStringParameters")]
+    query_parameters:Option<HashMap<String, String> >,
     #[serde(default, rename = "isBase64Encoded")]
     is_base64_encoded: Option<bool>,
 }
+
+#[derive(Debug, PartialEq)]
+struct PathParameters(HashMap<String, String>);
+
+#[derive(Debug, PartialEq)]
+struct QueryParameters(HashMap<String, String> );
 
 impl<'a> ApiGatewayProxyRequestDef<'a> {
     fn try_into_http_request<E: DeError>(self) -> Result<http::Request<Body>, E> {
@@ -60,12 +68,13 @@ impl<'a> ApiGatewayProxyRequestDef<'a> {
             }
         }
         let mut extensions=http::Extensions::new();
-        if let Some(path_parameters) = self.path_parameters {
-            extensions.insert(path_parameters);
+        if let Some(raw_path) = self.path_parameters {
+            extensions.insert(PathParameters(raw_path));
         }
-        if let Some(query_string_parameters) = self.query_string_parameters {
-            extensions.insert(query_string_parameters);
+        if let Some(raw_query) = self.query_parameters {
+            extensions.insert(QueryParameters(raw_query));
         }
+        
         builder.extension(extensions);
         let mut req = builder.body(body).map_err(|err| E::custom(err))?;
         if let Some(DeserializeHeaders(headers)) = self.headers {
@@ -132,7 +141,18 @@ fn deserialize_complex() {
 
     assert_eq!(req.method(), http::Method::POST);
     assert_eq!(req.uri().path(), "/path/to/resource");
-    println!("{}", req.extensions().get().unwrap());
+    let PathParameters(path_parameter)=req.extensions().get::<PathParameters>().unwrap();
+    let QueryParameters(query_parameter)=req.extensions().get::<QueryParameters>().unwrap();
+
+    for (key, value) in path_parameter{
+        println!("{}, {}", key, value);
+    }
+    for (key, value) in query_parameter{
+        println!("{}, {}", key, value);
+    }
+
+    
+    //println!("{}", extension);
     assert_eq!(req.body().as_str().unwrap(), "{\"test\":\"body\"}");
     assert_eq!(
         req.headers()["Accept"],
