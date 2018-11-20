@@ -40,10 +40,10 @@ struct ApiGatewayProxyRequestDef<'a> {
 }
 
 #[derive(Debug, PartialEq)]
-struct PathParameters(HashMap<String, String>);
+pub struct PathParameters(HashMap<String, String>);
 
 #[derive(Debug, PartialEq)]
-struct QueryParameters(HashMap<String, String> );
+pub struct QueryParameters(HashMap<String, String> );
 
 impl<'a> ApiGatewayProxyRequestDef<'a> {
     fn try_into_http_request<E: DeError>(self) -> Result<http::Request<Body>, E> {
@@ -67,18 +67,17 @@ impl<'a> ApiGatewayProxyRequestDef<'a> {
                 body = Body::from(raw_body.into_owned());
             }
         }
-        let mut extensions=http::Extensions::new();
-        if let Some(raw_path) = self.path_parameters {
-            extensions.insert(PathParameters(raw_path));
-        }
-        if let Some(raw_query) = self.query_parameters {
-            extensions.insert(QueryParameters(raw_query));
-        }
-        
-        builder.extension(extensions);
+
         let mut req = builder.body(body).map_err(|err| E::custom(err))?;
         if let Some(DeserializeHeaders(headers)) = self.headers {
             ::std::mem::replace(req.headers_mut(), headers);
+        }
+
+        if let Some(raw_path) = self.path_parameters {
+            req.extensions_mut().insert(PathParameters(raw_path));
+        }
+        if let Some(raw_query) = self.query_parameters {
+            req.extensions_mut().insert(QueryParameters(raw_query));
         }
         Ok(req)
     }
@@ -144,14 +143,8 @@ fn deserialize_complex() {
     let PathParameters(path_parameter)=req.extensions().get::<PathParameters>().unwrap();
     let QueryParameters(query_parameter)=req.extensions().get::<QueryParameters>().unwrap();
 
-    for (key, value) in path_parameter{
-        println!("{}, {}", key, value);
-    }
-    for (key, value) in query_parameter{
-        println!("{}, {}", key, value);
-    }
-
-    
+    assert_eq!(path_parameter.get("proxy").unwrap(), "path/to/resource");
+    assert_eq!(query_parameter.get("foo").unwrap(), "bar");
     //println!("{}", extension);
     assert_eq!(req.body().as_str().unwrap(), "{\"test\":\"body\"}");
     assert_eq!(

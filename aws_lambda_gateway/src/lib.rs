@@ -17,6 +17,8 @@ use tower_service::{NewService, Service};
 mod body;
 pub use body::Body;
 mod request;
+pub use request::PathParameters;
+pub use request::QueryParameters;
 pub use request::ApiGatewayProxyRequest;
 mod response;
 pub use response::ApiGatewayProxyResponse;

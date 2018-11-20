@@ -10,6 +10,7 @@ build = "build.rs"
 [features]
 default = ["gateway"]
 gateway = ["aws_lambda_gateway"]
+gateway_extensions = ["aws_lambda_gateway/extensions"]
 
 [dependencies]
 aws_lambda_events = { path = "../aws_lambda_events" }

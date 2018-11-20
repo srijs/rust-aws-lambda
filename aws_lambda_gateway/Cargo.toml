@@ -7,6 +7,9 @@ authors = [
 ]
 workspace = ".."
 
+[features]
+default = ["extensions"]
+
 [dependencies]
 base64 = "0.9.2"
 failure = "0.1.1"
