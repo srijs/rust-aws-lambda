@@ -6,6 +6,8 @@ use http;
 use serde::{de::Error as DeError, de::MapAccess, de::Visitor, Deserialize, Deserializer};
 use std::collections::HashMap;
 use body::Body;
+use extensions::PathParameters;
+use extensions::QueryParameters;
 
 #[derive(Debug)]
 pub struct ApiGatewayProxyRequest(pub(crate) http::Request<Body>);
@@ -38,12 +40,6 @@ struct ApiGatewayProxyRequestDef<'a> {
     #[serde(default, rename = "isBase64Encoded")]
     is_base64_encoded: Option<bool>,
 }
-
-#[derive(Debug, PartialEq)]
-pub struct PathParameters(HashMap<String, String>);
-
-#[derive(Debug, PartialEq)]
-pub struct QueryParameters(HashMap<String, String> );
 
 impl<'a> ApiGatewayProxyRequestDef<'a> {
     fn try_into_http_request<E: DeError>(self) -> Result<http::Request<Body>, E> {
@@ -145,7 +141,6 @@ fn deserialize_complex() {
 
     assert_eq!(path_parameter.get("proxy").unwrap(), "path/to/resource");
     assert_eq!(query_parameter.get("foo").unwrap(), "bar");
-    //println!("{}", extension);
     assert_eq!(req.body().as_str().unwrap(), "{\"test\":\"body\"}");
     assert_eq!(
         req.headers()["Accept"],
