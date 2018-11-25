@@ -2,12 +2,15 @@ use std::borrow::Cow;
 use std::fmt;
 
 use base64;
+use body::Body;
+#[cfg(feature = "extensions")]
+use extensions::PathParameters;
+#[cfg(feature = "extensions")]
+use extensions::QueryParameters;
 use http;
 use serde::{de::Error as DeError, de::MapAccess, de::Visitor, Deserialize, Deserializer};
+#[cfg(feature = "extensions")]
 use std::collections::HashMap;
-use body::Body;
-use extensions::PathParameters;
-use extensions::QueryParameters;
 
 #[derive(Debug)]
 pub struct ApiGatewayProxyRequest(pub(crate) http::Request<Body>);
@@ -33,10 +36,12 @@ struct ApiGatewayProxyRequestDef<'a> {
     headers: Option<DeserializeHeaders>,
     #[serde(default, borrow)]
     body: Option<Cow<'a, str>>,
+    #[cfg(feature = "extensions")]
     #[serde(default, rename = "pathParameters")]
-    path_parameters:Option<HashMap<String, String> >,
+    path_parameters: Option<HashMap<String, String>>,
+    #[cfg(feature = "extensions")]
     #[serde(default, rename = "queryStringParameters")]
-    query_parameters:Option<HashMap<String, String> >,
+    query_parameters: Option<HashMap<String, String>>,
     #[serde(default, rename = "isBase64Encoded")]
     is_base64_encoded: Option<bool>,
 }
@@ -69,11 +74,15 @@ impl<'a> ApiGatewayProxyRequestDef<'a> {
             ::std::mem::replace(req.headers_mut(), headers);
         }
 
-        if let Some(raw_path) = self.path_parameters {
-            req.extensions_mut().insert(PathParameters(raw_path));
-        }
-        if let Some(raw_query) = self.query_parameters {
-            req.extensions_mut().insert(QueryParameters(raw_query));
+        #[cfg(feature = "extensions")]
+        {
+            if let Some(raw_path) = self.path_parameters {
+                req.extensions_mut().insert(PathParameters::from(raw_path));
+            }
+            if let Some(raw_query) = self.query_parameters {
+                req.extensions_mut()
+                    .insert(QueryParameters::from(raw_query));
+            }
         }
         Ok(req)
     }
@@ -104,9 +113,9 @@ impl<'de> Deserialize<'de> for DeserializeHeaders {
                     let header_name = map_key
                         .parse::<http::header::HeaderName>()
                         .map_err(|err| A::Error::custom(err))?;
-                    let header_value = http::header::HeaderValue::from_shared(
-                        map_value.into_owned().into(),
-                    ).map_err(|err| A::Error::custom(err))?;
+                    let header_value =
+                        http::header::HeaderValue::from_shared(map_value.into_owned().into())
+                            .map_err(|err| A::Error::custom(err))?;
                     headers.append(header_name, header_value);
                 }
                 Ok(DeserializeHeaders(headers))
@@ -136,11 +145,15 @@ fn deserialize_complex() {
 
     assert_eq!(req.method(), http::Method::POST);
     assert_eq!(req.uri().path(), "/path/to/resource");
-    let PathParameters(path_parameter)=req.extensions().get::<PathParameters>().unwrap();
-    let QueryParameters(query_parameter)=req.extensions().get::<QueryParameters>().unwrap();
+    #[cfg(feature = "extensions")]
+    {
+        let path_parameter = req.extensions().get::<PathParameters>().unwrap();
+        let query_parameter = req.extensions().get::<QueryParameters>().unwrap();
 
-    assert_eq!(path_parameter.get("proxy").unwrap(), "path/to/resource");
-    assert_eq!(query_parameter.get("foo").unwrap(), "bar");
+        assert_eq!(path_parameter.get("proxy").unwrap(), "path/to/resource");
+        assert_eq!(query_parameter.get("foo").unwrap(), "bar");
+    }
+
     assert_eq!(req.body().as_str().unwrap(), "{\"test\":\"body\"}");
     assert_eq!(
         req.headers()["Accept"],

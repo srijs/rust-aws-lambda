@@ -42,7 +42,8 @@ fn tests(src_dir: &Path) -> Vec<TestDescAndFn> {
         "{}/{}",
         src_dir.to_string_lossy(),
         "tests/fixtures/*"
-    )).expect("some fixtures");
+    ))
+    .expect("some fixtures");
 
     // Loop over matched fixtures.
     for entry in entries {
@@ -58,7 +59,8 @@ fn tests(src_dir: &Path) -> Vec<TestDescAndFn> {
                 let mut text = String::new();
                 reader.read_to_string(&mut text).unwrap();
                 text
-            }).collect();
+            })
+            .collect();
 
         let test_name = fixture_path
             .file_stem()

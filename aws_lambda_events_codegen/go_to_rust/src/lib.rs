@@ -581,7 +581,9 @@ fn parse_go_type_pointer(pairs: Pairs<Rule>) -> Result<GoType, Error> {
             _ => unimplemented!(),
         };
     }
-    Ok(GoType::PointerType(Box::new(pointed_at.expect("something pointed at"))))
+    Ok(GoType::PointerType(Box::new(
+        pointed_at.expect("something pointed at"),
+    )))
 }
 
 fn parse_go_type_primitive(t: &str) -> Result<GoType, Error> {
@@ -656,7 +658,7 @@ fn translate_go_type_to_rust_type(go_type: GoType) -> Result<RustType, Error> {
                     libraries: i.libraries,
                 }
             }
-        },
+        }
         GoType::PointerType(v) => {
             let data = translate_go_type_to_rust_type(*v.clone())?;
             let libraries: HashSet<String> = data.libraries.iter().cloned().collect();
@@ -665,7 +667,7 @@ fn translate_go_type_to_rust_type(go_type: GoType) -> Result<RustType, Error> {
                 value: format!("Option<{}>", data.value),
                 libraries,
             }
-        },
+        }
         GoType::MapType(k, v) => {
             let key_data = translate_go_type_to_rust_type(*k.clone())?;
             let value_data = translate_go_type_to_rust_type(*v.clone())?;

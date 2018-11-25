@@ -25,19 +25,10 @@ struct ParsedEventFile {
 #[structopt(author = "")]
 struct Cli {
     /// Path to `aws-go-sdk` checkout
-    #[structopt(
-        long = "input",
-        name = "AWS_GO_SDK_DIRECTORY",
-        parse(from_os_str)
-    )]
+    #[structopt(long = "input", name = "AWS_GO_SDK_DIRECTORY", parse(from_os_str))]
     sdk_location: PathBuf,
     /// Output directory
-    #[structopt(
-        long = "output",
-        short = "o",
-        name = "DIRECTORY",
-        parse(from_os_str)
-    )]
+    #[structopt(long = "output", short = "o", name = "DIRECTORY", parse(from_os_str))]
     output_location: PathBuf,
     /// Overwrite existing files
     #[structopt(long = "overwrite")]
@@ -330,7 +321,8 @@ main!(|args: Cli, log_level: verbosity| {
         .arg(format!(
             "--git-dir={}",
             args.sdk_location.join(".git").to_string_lossy()
-        )).arg("rev-parse")
+        ))
+        .arg("rev-parse")
         .arg("--verify")
         .arg("HEAD")
         .output()

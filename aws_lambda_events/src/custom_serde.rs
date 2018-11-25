@@ -152,8 +152,8 @@ mod test {
             v: Vec<u8>,
         }
         let data = json!({
-                "v": "SGVsbG8gV29ybGQ=",
-            });
+            "v": "SGVsbG8gV29ybGQ=",
+        });
         let decoded: Test = serde_json::from_value(data).unwrap();
         assert_eq!(
             String::from_utf8(decoded.v).unwrap(),
@@ -186,8 +186,8 @@ mod test {
 
         // Test parsing strings.
         let data = json!({
-                "v": "1507217624302",
-            });
+            "v": "1507217624302",
+        });
         let decoded: Test = serde_json::from_value(data).unwrap();
         assert_eq!(expected, decoded.v,);
         // Test parsing ints.
@@ -195,8 +195,8 @@ mod test {
         assert_eq!(expected, decoded.v,);
         // Test parsing floats.
         let data = json!({
-                "v": 1507217624302.0,
-            });
+            "v": 1507217624302.0,
+        });
         let decoded: Test = serde_json::from_value(data).unwrap();
         assert_eq!(expected, decoded.v,);
     }

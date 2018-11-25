@@ -4,7 +4,9 @@ use futures::IntoFuture;
 use aws_lambda_gateway::NewApiGatewayProxy;
 use aws_lambda_runtime::Handler;
 
-pub use aws_lambda_gateway::{http, Body, PathParameters, QueryParameters};
+pub use aws_lambda_gateway::{http, Body};
+#[cfg(features = "gateway_extensions")]
+pub use aws_lambda_gateway::{PathParameters, QueryParameters};
 
 pub type Request = http::Request<Body>;
 pub type Response = http::Response<Body>;

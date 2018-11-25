@@ -1,5 +1,5 @@
-use custom_serde::*;
 use super::super::encodings::{Base64Data, MillisecondTimestamp};
+use custom_serde::*;
 
 /// `KinesisFirehoseEvent` represents the input event from Amazon Kinesis Firehose. It is used as the input parameter.
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]

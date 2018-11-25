@@ -1,5 +1,5 @@
-use custom_serde::*;
 use chrono::{DateTime, Utc};
+use custom_serde::*;
 
 /// `SimpleEmailEvent` is the outer structure of an event sent via SES.
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]

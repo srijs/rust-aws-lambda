@@ -1,6 +1,6 @@
 language: rust
 script:
-  - cargo test --all
+  - cargo test --all --features="gateway_extensions"
 rust:
   - stable
   - beta

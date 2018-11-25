@@ -41,7 +41,8 @@ where
         Ok(HandlerService {
             f: self.f.clone(),
             _phan: PhantomData,
-        }).into()
+        })
+        .into()
     }
 }
 
