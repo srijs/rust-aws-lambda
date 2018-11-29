@@ -248,6 +248,11 @@ fn parse_struct(pairs: Pairs<Rule>) -> Result<(codegen::Struct, HashSet<String>)
 
     let mut rust_struct = Struct::new(&struct_name.to_camel_case());
 
+    rust_struct.generic("T = Value");
+    rust_struct.bound("T", "DeserializeOwned");
+    rust_struct.bound("T", "Serialize");
+    rust_struct.push_field(Field::new(&"_phantom", "PhantomData<T>"));
+
     // Make it public.
     rust_struct.vis("pub");
 
@@ -271,6 +276,11 @@ fn parse_struct(pairs: Pairs<Rule>) -> Result<(codegen::Struct, HashSet<String>)
     }
 
     let mut libraries: HashSet<String> = HashSet::new();
+
+    libraries.insert("std::marker::PhantomData".to_string());
+    libraries.insert("serde_json::Value".to_string());
+    libraries.insert("serde::de::DeserializeOwned".to_string());
+    libraries.insert("serde::ser::Serialize".to_string());
 
     for f in fields {
         // Translate the name.
@@ -684,21 +694,11 @@ fn translate_go_type_to_rust_type(go_type: GoType) -> Result<RustType, Error> {
         }
         // For now we treat interfaces as a generic JSON value and make callers
         // deal with it.
-        GoType::InterfaceType => {
-            let mut libraries = HashSet::new();
-            libraries.insert("serde_json::Value".to_string());
+        GoType::InterfaceType | GoType::JsonRawType => {
+            let libraries = HashSet::new();
             RustType {
-                annotations: vec![],
-                value: "Value".to_string(),
-                libraries,
-            }
-        }
-        GoType::JsonRawType => {
-            let mut libraries = HashSet::new();
-            libraries.insert("serde_json::Value".to_string());
-            RustType {
-                annotations: vec![],
-                value: "Value".to_string(),
+                annotations: vec!["#[serde(bound=\"\")]".to_string()],
+                value: "T".to_string(),
                 libraries,
             }
         }
