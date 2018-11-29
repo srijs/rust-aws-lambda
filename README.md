@@ -1,5 +1,11 @@
 # Rust on AWS Lambda
 
+**UPDATE 30/11/2018: AWS have released an [official runtime](https://crates.io/crates/lambda_runtime) for Rust ([announcement](https://aws.amazon.com/blogs/opensource/rust-runtime-for-aws-lambda/)).**
+
+**We recommend that you use the official runtime instead. You can still use the [events](https://crates.io/crates/aws_lambda_events) crate. We will also be working on re-writing the gateway integration on top of the new runtime.**
+
+---
+
 This repository contains multiple crates that make it possible to run programs written in Rust directly as functions in AWS Lambda, while keeping a low footprint with regards to memory consumption, bundle size, and start-up speed.
 
 [![Build Status](https://travis-ci.org/srijs/rust-aws-lambda.svg?branch=master)](https://travis-ci.org/srijs/rust-aws-lambda)
