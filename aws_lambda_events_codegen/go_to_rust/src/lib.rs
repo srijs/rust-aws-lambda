@@ -196,7 +196,7 @@ fn parse_local_type_alias(pairs: Pairs<Rule>) -> Result<Option<(String, RustType
     let name = name.expect("parsed name");
     let target = target.expect("parsed target");
 
-    Ok(Some((name, translate_go_type_to_rust_type(target)?)))
+    Ok(Some((name, translate_go_type_to_rust_type(target, None)?)))
 }
 
 fn parse_package_type_alias(pairs: Pairs<Rule>) -> Result<Option<(String, RustType)>, Error> {
@@ -219,7 +219,7 @@ fn parse_package_type_alias(pairs: Pairs<Rule>) -> Result<Option<(String, RustTy
     let name = name.expect("parsed name");
     let target = target.expect("parsed target");
 
-    Ok(Some((name, translate_go_type_to_rust_type(target)?)))
+    Ok(Some((name, translate_go_type_to_rust_type(target, None)?)))
 }
 
 fn parse_struct(pairs: Pairs<Rule>) -> Result<(codegen::Struct, HashSet<String>), Error> {
@@ -248,11 +248,6 @@ fn parse_struct(pairs: Pairs<Rule>) -> Result<(codegen::Struct, HashSet<String>)
 
     let mut rust_struct = Struct::new(&struct_name.to_camel_case());
 
-    rust_struct.generic("T = Value");
-    rust_struct.bound("T", "DeserializeOwned");
-    rust_struct.bound("T", "Serialize");
-    rust_struct.push_field(Field::new(&"_phantom", "PhantomData<T>"));
-
     // Make it public.
     rust_struct.vis("pub");
 
@@ -277,21 +272,34 @@ fn parse_struct(pairs: Pairs<Rule>) -> Result<(codegen::Struct, HashSet<String>)
 
     let mut libraries: HashSet<String> = HashSet::new();
 
-    libraries.insert("std::marker::PhantomData".to_string());
-    libraries.insert("serde_json::Value".to_string());
-    libraries.insert("serde::de::DeserializeOwned".to_string());
-    libraries.insert("serde::ser::Serialize".to_string());
+    let mut generics = 0;
 
     for f in fields {
         // Translate the name.
         let member_name = mangle(&f.name.to_snake_case());
 
+        let mut rust_data = translate_go_type_to_rust_type(f.go_type, Some(&mut generics))?;
+        let mut rust_type = rust_data.value;
+
+        for generic in rust_data.generics {
+            match generic.default {
+                None => {
+                    rust_struct.generic(&generic.value);
+                }
+                Some(default) => {
+                    rust_struct.generic(format!("{}={}", generic.value, default).as_str());
+                }
+            }
+
+            for bound in generic.bounds {
+                rust_struct.bound(&generic.value, bound);
+            }
+        }
+
         // Extract the code and the libraries from the result.
-        let mut rust_data = translate_go_type_to_rust_type(f.go_type)?;
         for lib in rust_data.libraries.iter() {
             libraries.insert(lib.clone());
         }
-        let mut rust_type = rust_data.value;
 
         // Make fields optional if they are optional in the json.
         if f.omit_empty {
@@ -505,6 +513,14 @@ struct RustType {
     annotations: Vec<String>,
     libraries: HashSet<String>,
     value: String,
+    generics: Vec<RustGeneric>,
+}
+
+#[derive(Clone)]
+struct RustGeneric {
+    value: String,
+    default: Option<String>,
+    bounds: Vec<String>,
 }
 
 fn parse_go_type(pairs: Pairs<Rule>) -> Result<GoType, Error> {
@@ -635,11 +651,12 @@ fn make_rust_type_with_no_libraries(value: &str) -> RustType {
     RustType {
         annotations: vec![],
         value: value.to_string(),
+        generics: vec![],
         libraries: HashSet::new(),
     }
 }
 
-fn translate_go_type_to_rust_type(go_type: GoType) -> Result<RustType, Error> {
+fn translate_go_type_to_rust_type(go_type: GoType, generic_counter: Option<&mut usize>) -> Result<RustType, Error> {
     let rust_type = match &go_type {
         GoType::StringType => make_rust_type_with_no_libraries("String"),
         GoType::BoolType => make_rust_type_with_no_libraries("bool"),
@@ -649,57 +666,108 @@ fn translate_go_type_to_rust_type(go_type: GoType) -> Result<RustType, Error> {
         GoType::FloatType => make_rust_type_with_no_libraries("f64"),
         GoType::UserDefined(x) => make_rust_type_with_no_libraries(&x.to_camel_case()),
         GoType::ArrayType(x) => {
-            let mut i = translate_go_type_to_rust_type(*x.clone())?;
-            let mut libraries = HashSet::new();
-            libraries.insert("super::super::encodings::Base64Data".to_string());
+            let mut i = translate_go_type_to_rust_type(*x.clone(), generic_counter)?;
+            
             if i.value == "u8" {
+                let mut libraries = i.libraries.clone();
+                libraries.insert("super::super::encodings::Base64Data".to_string());
                 // Handle []u8 special, as it is base64 encoded.
                 RustType {
-                    annotations: vec![],
+                    annotations: i.annotations,
                     value: "Base64Data".to_string(),
+                    generics: i.generics,
                     libraries: libraries,
                 }
             } else {
                 RustType {
-                    annotations: vec![],
+                    annotations: i.annotations,
                     value: format!("Vec<{}>", i.value),
+                    generics: i.generics,
                     libraries: i.libraries,
                 }
             }
         },
         GoType::PointerType(v) => {
-            let data = translate_go_type_to_rust_type(*v.clone())?;
+            let data = translate_go_type_to_rust_type(*v.clone(), generic_counter)?;
             let libraries: HashSet<String> = data.libraries.iter().cloned().collect();
             RustType {
-                annotations: vec![],
+                annotations: data.annotations,
                 value: format!("Option<{}>", data.value),
+                generics: data.generics,
                 libraries,
             }
         },
         GoType::MapType(k, v) => {
-            let key_data = translate_go_type_to_rust_type(*k.clone())?;
-            let value_data = translate_go_type_to_rust_type(*v.clone())?;
+            // TODO can we use a ref to the option to save this dance?
+            let mut generics = 0;
 
-            let key_libs: HashSet<String> = key_data.libraries.iter().cloned().collect();
-            let value_libs: HashSet<String> = value_data.libraries.iter().cloned().collect();
+            if let Some(ref generic_counter) = generic_counter {
+                generics = **generic_counter;
+            }
 
-            let mut libraries: HashSet<String> = key_libs.union(&value_libs).cloned().collect();
+            let key_data = translate_go_type_to_rust_type(*k.clone(), Some(&mut generics))?;
+            let value_data = translate_go_type_to_rust_type(*v.clone(), Some(&mut generics))?;
+
+            if let Some(mut generic_counter) = generic_counter {
+                *generic_counter = generics;
+            }
+
+            let mut annotations = Vec::new();
+            annotations.extend(key_data.annotations);
+            annotations.extend(value_data.annotations);
+
+            let mut generics = Vec::new();
+            generics.extend(key_data.generics);
+            generics.extend(value_data.generics);
+
+            let mut libraries = HashSet::new();
+            libraries.extend(key_data.libraries);
+            libraries.extend(value_data.libraries);
             libraries.insert("std::collections::HashMap".to_string());
 
             RustType {
-                annotations: vec![],
+                annotations: annotations,
                 value: format!("HashMap<{}, {}>", key_data.value, value_data.value),
+                generics: generics,
                 libraries,
             }
         }
         // For now we treat interfaces as a generic JSON value and make callers
         // deal with it.
         GoType::InterfaceType | GoType::JsonRawType => {
-            let libraries = HashSet::new();
-            RustType {
-                annotations: vec!["#[serde(bound=\"\")]".to_string()],
-                value: "T".to_string(),
-                libraries,
+            let mut libraries = HashSet::new();
+            libraries.insert("serde_json::Value".to_string());
+
+            match generic_counter {
+                Some(mut counter) => {
+                    *counter = *counter + 1;
+                    let next_generic = format!("T{}", counter);
+
+                    libraries.insert("serde::de::DeserializeOwned".to_string());
+                    libraries.insert("serde::ser::Serialize".to_string());
+
+                    RustType {
+                        annotations: vec!["#[serde(bound=\"\")]".to_string()],
+                        value: next_generic.clone(),
+                        generics: vec![RustGeneric {
+                            value: next_generic.clone(),
+                            default: Some("Value".to_string()),
+                            bounds: vec![
+                                "DeserializeOwned".to_string(),
+                                "Serialize".to_string(),
+                            ],
+                        }],
+                        libraries,
+                    }
+                }
+                None => {
+                    RustType {
+                        annotations: vec![],
+                        value: "Value".to_string(),
+                        generics: vec![],
+                        libraries,
+                    }
+                }
             }
         }
         GoType::TimestampSecondsType => {
@@ -708,6 +776,7 @@ fn translate_go_type_to_rust_type(go_type: GoType) -> Result<RustType, Error> {
             RustType {
                 annotations: vec![],
                 value: "SecondTimestamp".to_string(),
+                generics: vec![],
                 libraries,
             }
         }
@@ -718,6 +787,7 @@ fn translate_go_type_to_rust_type(go_type: GoType) -> Result<RustType, Error> {
             RustType {
                 annotations: vec![],
                 value: "MillisecondTimestamp".to_string(),
+                generics: vec![],
                 libraries,
             }
         }
@@ -731,6 +801,7 @@ fn translate_go_type_to_rust_type(go_type: GoType) -> Result<RustType, Error> {
             RustType {
                 annotations: vec![],
                 value: "DateTime<Utc>".to_string(),
+                generics: vec![],
                 libraries,
             }
         }
