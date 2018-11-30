@@ -1,11 +1,16 @@
 use chrono::{DateTime, Utc};
 use custom_serde::*;
+use serde::de::DeserializeOwned;
+use serde::ser::Serialize;
 use serde_json::Value;
 use std::collections::HashMap;
 
 /// `AutoScalingEvent` struct is used to parse the json for auto scaling event types //
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
-pub struct AutoScalingEvent {
+pub struct AutoScalingEvent<T1=Value>
+where T1: DeserializeOwned,
+      T1: Serialize,
+{
     /// The version of event data
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
@@ -38,5 +43,6 @@ pub struct AutoScalingEvent {
     pub resources: Vec<String>,
     #[serde(deserialize_with = "deserialize_lambda_map")]
     #[serde(default)]
-    pub detail: HashMap<String, Value>,
+    #[serde(bound="")]
+    pub detail: HashMap<String, T1>,
 }

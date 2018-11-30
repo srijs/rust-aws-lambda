@@ -1,5 +1,7 @@
 use custom_serde::*;
 use std::collections::HashMap;
+use serde::de::DeserializeOwned;
+use serde::ser::Serialize;
 use serde_json::Value;
 
 /// `ApiGatewayProxyRequest` contains data coming from the API Gateway proxy
@@ -59,7 +61,10 @@ pub struct ApiGatewayProxyResponse {
 /// `ApiGatewayProxyRequestContext` contains the information to identify the AWS account and resources invoking the
 /// Lambda function. It also includes Cognito identity information for the caller.
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
-pub struct ApiGatewayProxyRequestContext {
+pub struct ApiGatewayProxyRequestContext<T1=Value>
+where T1: DeserializeOwned,
+      T1: Serialize,
+{
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "accountId")]
@@ -82,7 +87,8 @@ pub struct ApiGatewayProxyRequestContext {
     pub resource_path: Option<String>,
     #[serde(deserialize_with = "deserialize_lambda_map")]
     #[serde(default)]
-    pub authorizer: HashMap<String, Value>,
+    #[serde(bound="")]
+    pub authorizer: HashMap<String, T1>,
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "httpMethod")]
@@ -263,7 +269,10 @@ pub struct ApiGatewayCustomAuthorizerRequestTypeRequest {
 
 /// `ApiGatewayCustomAuthorizerResponse` represents the expected format of an API Gateway authorization response.
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
-pub struct ApiGatewayCustomAuthorizerResponse {
+pub struct ApiGatewayCustomAuthorizerResponse<T1=Value>
+where T1: DeserializeOwned,
+      T1: Serialize,
+{
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "principalId")]
@@ -272,7 +281,8 @@ pub struct ApiGatewayCustomAuthorizerResponse {
     pub policy_document: ApiGatewayCustomAuthorizerPolicy,
     #[serde(deserialize_with = "deserialize_lambda_map")]
     #[serde(default)]
-    pub context: HashMap<String, Value>,
+    #[serde(bound="")]
+    pub context: HashMap<String, T1>,
     #[serde(rename = "usageIdentifierKey")]
     pub usage_identifier_key: Option<String>,
 }

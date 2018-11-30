@@ -1,5 +1,7 @@
 use custom_serde::*;
 use chrono::{DateTime, Utc};
+use serde::de::DeserializeOwned;
+use serde::ser::Serialize;
 use serde_json::Value;
 use std::collections::HashMap;
 
@@ -28,7 +30,10 @@ pub struct SnsEventRecord {
 }
 
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
-pub struct SnsEntity {
+pub struct SnsEntity<T1=Value>
+where T1: DeserializeOwned,
+      T1: Serialize,
+{
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "Signature")]
@@ -47,8 +52,9 @@ pub struct SnsEntity {
     pub topic_arn: Option<String>,
     #[serde(deserialize_with = "deserialize_lambda_map")]
     #[serde(default)]
+    #[serde(bound="")]
     #[serde(rename = "MessageAttributes")]
-    pub message_attributes: HashMap<String, Value>,
+    pub message_attributes: HashMap<String, T1>,
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "SignatureVersion")]
