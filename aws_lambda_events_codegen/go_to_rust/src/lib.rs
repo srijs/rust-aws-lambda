@@ -154,6 +154,7 @@ struct FieldDef {
     comments: Vec<String>,
     omit_empty: bool,
     go_type: GoType,
+    embedded: bool,
 }
 
 fn parse_comment(c: &str) -> String {
@@ -299,6 +300,12 @@ fn parse_struct(pairs: Pairs<Rule>) -> Result<(codegen::Struct, HashSet<String>)
             }
         }
 
+        if f.embedded {
+                rust_data
+                    .annotations
+                    .push("#[serde(flatten)]".to_string());
+        }
+
         let mut field_defs = vec![];
 
         // Behavior overrides for specific types.
@@ -388,16 +395,35 @@ fn parse_struct_field(pairs: Pairs<Rule>) -> Result<FieldDef, Error> {
     let mut go_type: Option<GoType> = None;
     let mut comments: Vec<String> = vec![];
     let mut is_pointer = false;
+    let mut embedded = false;
 
     for pair in pairs {
         debug!("{:?}", pair);
         let span = pair.clone().into_span();
         match pair.as_rule() {
-            Rule::ident => name = Some(mangle(span.as_str())),
             Rule::json_mapping => json = Some(parse_json_mapping(pair.into_inner())?),
-            Rule::pointer => is_pointer = true,
-            Rule::struct_field_type => go_type = Some(parse_go_type(pair.into_inner())?),
             Rule::doc_comment => comments.push(parse_comment(span.as_str())),
+            Rule::struct_field_decl => {
+                for pair in pair.into_inner() {
+                    let span = pair.clone().into_span();
+                    match pair.as_rule() {
+                        Rule::ident => name = Some(mangle(span.as_str())),
+                        Rule::pointer => is_pointer = true,
+                        Rule::struct_field_type => {
+                            go_type = Some(parse_go_type(pair.into_inner())?)
+                        }
+                        Rule::struct_embedded_field => {
+                            info!("struct_embedded_field found: {:?}", pair);
+
+                            let value = pair.clone().into_span().as_str();
+                            name = Some(mangle(value));
+                            go_type = Some(parse_go_type(pair.into_inner())?);
+                            embedded = true;
+                        },
+                        rule @ _ => panic!("invalid Rule found in struct_field_decl: {:?}", rule),
+                    }
+                }
+            }
             _ => unimplemented!(),
         }
     }
@@ -438,6 +464,7 @@ fn parse_struct_field(pairs: Pairs<Rule>) -> Result<FieldDef, Error> {
         comments,
         omit_empty,
         go_type: go_type.expect("fields have types"),
+        embedded,
     })
 }
 

@@ -1,6 +1,6 @@
 [package]
 name = "aws_lambda_events_codegen"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Christian Legnitto <christian@legnitto.com>"]
 publish = false
 
