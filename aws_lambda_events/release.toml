@@ -1,0 +1,6 @@
+dev-version-ext = "pre"
+pre-release-commit-message = "chore(events): Release {{version}}"
+pro-release-commit-message = "chore(events): Bump version to {{version}}"
+tag-prefix = "aws_lambda_events-v"
+tag-message = "chore(events): Release {{prefix}}{{version}}"
+upload-doc = false
