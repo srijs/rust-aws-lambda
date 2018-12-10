@@ -22,8 +22,16 @@ pub struct ApiGatewayProxyRequest {
     pub headers: HashMap<String, String>,
     #[serde(deserialize_with = "deserialize_lambda_map")]
     #[serde(default)]
+    #[serde(rename = "multiValueHeaders")]
+    pub multi_value_headers: HashMap<String, Vec<String>>,
+    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(default)]
     #[serde(rename = "queryStringParameters")]
     pub query_string_parameters: HashMap<String, String>,
+    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(default)]
+    #[serde(rename = "multiValueQueryStringParameters")]
+    pub multi_value_query_string_parameters: HashMap<String, Vec<String>>,
     #[serde(deserialize_with = "deserialize_lambda_map")]
     #[serde(default)]
     #[serde(rename = "pathParameters")]
@@ -116,6 +124,10 @@ pub struct ApiGatewayRequestIdentity {
     #[serde(default)]
     #[serde(rename = "apiKey")]
     pub api_key: Option<String>,
+    #[serde(deserialize_with = "deserialize_lambda_string")]
+    #[serde(default)]
+    #[serde(rename = "accessKey")]
+    pub access_key: Option<String>,
     #[serde(deserialize_with = "deserialize_lambda_string")]
     #[serde(default)]
     #[serde(rename = "sourceIp")]
@@ -247,8 +259,16 @@ pub struct ApiGatewayCustomAuthorizerRequestTypeRequest {
     pub headers: HashMap<String, String>,
     #[serde(deserialize_with = "deserialize_lambda_map")]
     #[serde(default)]
+    #[serde(rename = "multiValueHeaders")]
+    pub multi_value_headers: HashMap<String, Vec<String>>,
+    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(default)]
     #[serde(rename = "queryStringParameters")]
     pub query_string_parameters: HashMap<String, String>,
+    #[serde(deserialize_with = "deserialize_lambda_map")]
+    #[serde(default)]
+    #[serde(rename = "multiValueQueryStringParameters")]
+    pub multi_value_query_string_parameters: HashMap<String, Vec<String>>,
     #[serde(deserialize_with = "deserialize_lambda_map")]
     #[serde(default)]
     #[serde(rename = "pathParameters")]
