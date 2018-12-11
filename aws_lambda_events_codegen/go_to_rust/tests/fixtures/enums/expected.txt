@@ -1,3 +1,0 @@
-pub type DynamoDBOperationType = String;
-
-pub type DynamoDBSharedIteratorType = String;

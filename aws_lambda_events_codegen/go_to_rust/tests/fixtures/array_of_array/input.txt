@@ -1,3 +1,0 @@
-type SQSMessageAttribute struct {
-    BinaryListValues [][]byte `json:"binaryListValues"`
-}

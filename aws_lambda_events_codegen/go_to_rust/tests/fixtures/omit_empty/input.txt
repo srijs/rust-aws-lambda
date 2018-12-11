@@ -1,3 +1,0 @@
-type Foo struct {
-  bar int `json:"blah,omitempty"`
-}

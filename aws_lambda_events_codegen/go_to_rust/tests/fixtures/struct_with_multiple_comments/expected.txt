@@ -1,6 +1,0 @@
-/// Foo
-/// Bar
-#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
-pub struct Whatever {
-    pub blah: i64,
-}

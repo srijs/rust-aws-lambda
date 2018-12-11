@@ -1,7 +1,0 @@
-type Foo map[string]string
-
-type Slots map[string]*string
-
-type CodeCommitEventTime time.Time
-
-type Bar int

@@ -1,8 +1,0 @@
-// Top level comment 1
-
-import "whatever"
-
-// Top level comment 2
-
-// Doc comment
-type Foo struct { }

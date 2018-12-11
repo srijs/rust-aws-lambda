@@ -4,8 +4,6 @@ members = [
   "aws_lambda",
 
   # Sub-crates
-  "aws_lambda_events",
-  "aws_lambda_events_codegen",
   "aws_lambda_runtime",
   "aws_lambda_gateway",
 

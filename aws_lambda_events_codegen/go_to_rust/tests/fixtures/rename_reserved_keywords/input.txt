@@ -1,3 +1,0 @@
-type Fake struct {
-  type byte
-}

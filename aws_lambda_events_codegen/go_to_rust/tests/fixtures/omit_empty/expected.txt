@@ -1,5 +1,0 @@
-#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
-pub struct Foo {
-    #[serde(rename = "blah")]
-    pub bar: Option<i64>,
-}
