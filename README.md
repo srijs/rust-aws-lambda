@@ -2,7 +2,7 @@
 
 **UPDATE 30/11/2018: AWS have released an [official runtime](https://crates.io/crates/lambda_runtime) for Rust ([announcement](https://aws.amazon.com/blogs/opensource/rust-runtime-for-aws-lambda/)).**
 
-**We recommend that you use the official runtime instead. You can still use the [events](https://crates.io/crates/aws_lambda_events) crate. We will also be working on re-writing the gateway integration on top of the new runtime.**
+**We recommend that you use the official runtime instead. You can still use the [events](https://crates.io/crates/aws_lambda_events) crate, which has moved to [LegNeato/aws-lambda-events](https://github.com/LegNeato/aws-lambda-events).**
 
 ---
 
